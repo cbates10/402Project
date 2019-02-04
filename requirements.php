@@ -1,9 +1,9 @@
 <?php
 
 $servername = "216.96.149.200";
-$database = "graduateformscentral";
-$sqlusername = "root";
-$sqlpassword = "Imbroglio3724!";
+$database = "formscentral";
+$sqlusername = "Casey3724";
+$sqlpassword = "Imbroglio3724";
 
 $mysqli = new mysqli($servername, $sqlusername, $sqlpassword, $database);
 
@@ -13,7 +13,30 @@ if($mysqli->connect_errno) {
 
 $degreeOption = sanitizeInput($argv[1]);
 
-$sql = "SELECT idCourses, substitutionId FROM requiredcourses where idMajorOptions = ?";
+$sql = "SELECT idCourses FROM requiredcourses WHERE idMajorOptions = ?";
+$stmt = $mysqli->prepare($sql);
+if(!$stmt) {
+	die("Could not prepare statement $mysqli->error");
+}
+if(!$stmt->bind_param("s", $degreeOption)) {
+	die("Could not bind parameters $stmt->error");
+}
+$rc = $stmt->execute();
+if(false === $rc) {
+	die("Could not execute statement $stmt->error");
+}
+$stmt->bind_result($requiredCourse);
+
+$requiredCourses = array();
+
+while($stmt->fetch()) {
+	$requiredCourses[$requiredCourse] = array();
+}
+
+$stmt->close();
+
+$sql = "SELECT idCourses, idSubCourse FROM substitutablecourses WHERE idMajorOptions = ?";
+
 $stmt = $mysqli->prepare($sql);
 if(!$stmt) {
 	die("Could not prepare statement $mysqli->error");
@@ -27,15 +50,11 @@ if(false === $rc) {
 }
 $stmt->bind_result($requiredCourse, $substitutableCourse);
 
-$requiredCourses = array();
-
 while($stmt->fetch()) {
-	$coursePair = (object) [
-		"courseId" => $requiredCourse,
-		"substituteCourse" => $substitutableCourse,
-	];
-	array_push($requiredCourses, $coursePair);
+	array_push($requiredCourses[$requiredCourse], $substitutableCourse);
 }
+
+$stmt->close();
 
 $mysqli->close();
 
