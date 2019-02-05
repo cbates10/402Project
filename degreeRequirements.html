@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="utf8">
+        <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <script>
+			var selectedCourses = [];
+            $(document).ready(function(){
+                var xhr = new XMLHttpRequest();
+                xhr.addEventListener("load", courseHandler);
+                xhr.open("GET", "courseCatalog.php");
+                xhr.send();
+
+				xhr = new XMLHttpRequest();
+				xhr.addEventListener("load", degreeHandler);
+				xhr.open("GET", "degreePrograms.php");
+				xhr.send();
+
+				$("#addCourse").click(function() {
+					var selectedCourse = $("#courseList option:selected").text();
+					var closeButton = $("<button/>", {
+						text: "X"
+					});
+					if(!selectedCourses.includes(selectedCourse)){
+						selectedCourses.push(selectedCourse);
+						$("#selectedCourseList").append($("<li>", {
+							value: $("#courseList option:selected").text(),
+							text: $("#courseList option:selected").text()
+						}));	
+					}
+				});
+            });
+            
+			function degreeHandler() {
+				var degreePrograms = JSON.parse(this.response);
+				for(var i in degreePrograms) {
+					$("#degreePrograms").append($("<li>", {
+						value: i,
+						text: i
+					}));
+
+					var degreeOptions = $("<ul>");
+					for(var y in degreePrograms[i].option) {
+						degreeOptions.append($("<li>", {
+							value: y,
+							text: y
+						}));
+					}
+					$("#degreePrograms").append(degreeOptions);
+				}
+			}
+
+            function courseHandler() {
+				console.log(this.response);
+                var courseCatalog = JSON.parse(this.response);
+                for(var i in courseCatalog) {
+                    $("#courseList").append($("<option>", {
+                        value: courseCatalog[i].number,
+                        text: courseCatalog[i].number
+                    })); 
+                }
+            };
+        </script>
+    </head>
+    <body>
+		<div>
+			<ul id="degreePrograms">
+
+			</ul>
+		</div>
+		<div>
+			<select id="courseList">
+            
+			</select>
+			<button id="addCourse" type="button">Add Course</button>
+		</div>
+		<div>
+			<ul id="selectedCourseList">
+
+			</ul>
+		</div>
+    </body>
+</html>
