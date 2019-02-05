@@ -6,50 +6,70 @@
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <script>
-			var selectedCourses = [];
             $(document).ready(function(){
-                var xhr = new XMLHttpRequest();
-                xhr.addEventListener("load", courseHandler);
-				console.log("sending the request");
-                xhr.open("GET", "courseCatalog.php");
-                xhr.send();
+				
+				$("#programForm").submit(function(event) {
+					event.preventDefault();
+					var programId = $("li.selected").val();
 
-				$("#addCourse").click(function() {
-					var selectedCourse = $("#courseList option:selected").text();
-					if(!selectedCourses.includes(selectedCourse)){
-						selectedCourses.push(selectedCourse);
-						$("#selectedCourseList").append($("<li>", {
-							value: $("#courseList option:selected").text(),
-							text: $("#courseList option:selected").text()
-						}));
-					}
+					$.ajax({
+						type: "POST",
+						url: "setProgram.php",
+						data: {programId: programId},
+						dataType: 'html',
+						success: function(html) {
+							if(html) {
+								document.location.href = "";
+							} else {
+								alert("Invalid degree program selection");
+							}
+						}
+					});
 				});
+
+				var xhr = new XMLHttpRequest();
+				xhr.addEventListener("load", degreeHandler);
+				xhr.open("GET", "degreePrograms.php");
+				xhr.send();
+
             });
             
-            function courseHandler() {
-				console.log("inside the handler");
-				console.log(this.response);
-                var courseCatalog = JSON.parse(this.response);
-                for(var i in courseCatalog) {
-                    $("#courseList").append($("<option>", {
-                        value: courseCatalog[i].number,
-                        text: courseCatalog[i].number
-                    })); 
-                }
-            };
+			function degreeHandler() {
+				var degreePrograms = JSON.parse(this.response);
+				for(var degreeName in degreePrograms) {
+					$("#degreePrograms").append($("<li>", {
+						value: degreeName,
+						text: degreeName
+					}));
+
+					var degreeOptions = $("<ul id='sublist'>");
+					for(var degreeOption in degreePrograms[degreeName].option) {
+						degreeOptions.append($("<li>", {
+							value: degreeOption,
+							text: degreeOption
+						}));
+					}
+					$("#degreePrograms").append(degreeOptions);
+				}
+				$("#sublist").click(function(event) {
+					if(event.target.tagName === "LI") {
+						var selected = $("li.selected");
+						if(selected) {
+							selected.removeClass("selected");
+						}
+						event.target.className = "selected";
+					}
+				});
+			}
         </script>
     </head>
     <body>
-		<div>
-			<select id="courseList">
-            
-			</select>
-			<button id="addCourse" type="button">Add Course</button>
-		</div>
-		<div>
-			<ul id="selectedCourseList">
+		<form id="programForm" action="setProgram.php" method="POST">
+			<div>
+				<ul id="degreePrograms">
 
-			</ul>
-		</div>
+				</ul>
+			</div>
+		</form>
     </body>
 </html>
