@@ -6,17 +6,13 @@
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <script>
+			var courseCatalog;
 			var selectedCourses = [];
             $(document).ready(function(){
                 var xhr = new XMLHttpRequest();
                 xhr.addEventListener("load", courseHandler);
                 xhr.open("GET", "courseCatalog.php");
                 xhr.send();
-
-				xhr = new XMLHttpRequest();
-				xhr.addEventListener("load", degreeHandler);
-				xhr.open("GET", "degreePrograms.php");
-				xhr.send();
 
 				$("#addCourse").click(function() {
 					var selectedCourse = $("#courseList option:selected").text();
@@ -33,40 +29,51 @@
 				});
             });
             
-			function degreeHandler() {
-				var degreePrograms = JSON.parse(this.response);
-				for(var i in degreePrograms) {
-					$("#degreePrograms").append($("<li>", {
-						value: i,
-						text: i
-					}));
-
-					var degreeOptions = $("<ul>");
-					for(var y in degreePrograms[i].option) {
-						degreeOptions.append($("<li>", {
-							value: y,
-							text: y
-						}));
-					}
-					$("#degreePrograms").append(degreeOptions);
-				}
-			}
 
             function courseHandler() {
-				console.log(this.response);
-                var courseCatalog = JSON.parse(this.response);
+                courseCatalog = JSON.parse(this.response);
                 for(var i in courseCatalog) {
                     $("#courseList").append($("<option>", {
                         value: courseCatalog[i].number,
                         text: courseCatalog[i].number
                     })); 
                 }
+
+				var xhr = new XMLHttpRequest();
+				xhr.addEventListener("load", requirementsHandler);
+				xhr.open("GET", "requirements.php");
+				xhr.send();
             };
+
+			function requirementsHandler() {
+				console.log(this.response);
+				var requirements = JSON.parse(this.response);
+				var requiredCourses = $("#requiredCourses");
+				for(var i in requirements) {
+					console.log(i);
+					console.log(courseCatalog[i]);
+					requiredCourses.append($("<li>", {
+						value: i,
+						text: courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + courseCatalog[i].hours
+					}));
+					if(requirements[i].length > 0) {
+						var substitutableCourses = $("<ul id='sublist'>");
+						for(var y = 0; y < requirements[i].length; y++) {
+							var courseId = requirements[i][y];
+							substitutableCourses.append($("<li>", {
+								value: requirements[courseId],
+								text: courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + courseCatalog[courseId].hours
+							}));
+						}
+						requiredCourses.append(substitutableCourses);
+					}
+				}
+			}
         </script>
     </head>
     <body>
 		<div>
-			<ul id="degreePrograms">
+			<ul id="requiredCourses">
 
 			</ul>
 		</div>
