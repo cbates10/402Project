@@ -8,25 +8,6 @@
         <script>
             $(document).ready(function(){
 				
-				$("#programForm").submit(function(event) {
-					event.preventDefault();
-					var programId = $("li.selected").val();
-
-					$.ajax({
-						type: "POST",
-						url: "setProgram.php",
-						data: {programId: programId},
-						dataType: 'html',
-						success: function(html) {
-							if(html) {
-								document.location.href = "";
-							} else {
-								alert("Invalid degree program selection");
-							}
-						}
-					});
-				});
-
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", degreeHandler);
 				xhr.open("GET", "degreePrograms.php");
@@ -36,30 +17,36 @@
             
 			function degreeHandler() {
 				var degreePrograms = JSON.parse(this.response);
+
+				/* Iterate through all degree programs and add to DOM as list item */
 				for(var degreeName in degreePrograms) {
 					$("#degreePrograms").append($("<li>", {
+						value: degreeName
+					}).append($("<input>", {
+						type: "radio",
 						value: degreeName,
+						name: "degreeName",
+					})).append($("<label>", {
 						text: degreeName
-					}));
+					}))); 
 
+
+					/* Create nested list under each degree program with the options offered, e.g., Thesis */
 					var degreeOptions = $("<ul id='sublist'>");
 					for(var degreeOption in degreePrograms[degreeName].option) {
 						degreeOptions.append($("<li>", {
 							value: degreeOption,
-							text: degreeOption
-						}));
-					}
+						}).append($("<input>", {
+							type: "radio",
+							value: degreeOption,
+							name: "degreeOption",
+							required: true
+						})).append($("<label>", {
+							text: degreeOption	
+						})));
+					} 
 					$("#degreePrograms").append(degreeOptions);
 				}
-				$("#sublist").click(function(event) {
-					if(event.target.tagName === "LI") {
-						var selected = $("li.selected");
-						if(selected) {
-							selected.removeClass("selected");
-						}
-						event.target.className = "selected";
-					}
-				});
 			}
         </script>
     </head>
@@ -70,6 +57,7 @@
 
 				</ul>
 			</div>
+			<input type="submit"></input> 
 		</form>
     </body>
 </html>
