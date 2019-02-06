@@ -11,24 +11,33 @@ if($mysqli->connect_errno) {
 	die("Failed to connect to MYSQL: ($mysqli->connect_errno) $mysqli->connect_error");
 }
 
-$degreeOption = sanitizeInput("idMajorOption");
+$subject = sanitizeInput("degreeName");
+$option = sanitizeInput("degreeOption");
 
-$sql = "SELECT * FROM majoroptions WHERE idMajorOptions = ?";
+$sql = "SELECT idMajorOptions FROM majoroptions WHERE subject = ? AND name = ?";
 
 $stmt = $mysqli->prepare($sql);
 if(!$stmt) {
 	die("Could not prepare statement $mysqli->error");
 }
+if(!$stmt->bind_param("ss", $subject, $option)) {
+	die("Could not bind parameters $mysqli->error");
+}
 $rc = $stmt->execute();
 if(false === $rc) {
 	die("Could not execute statement $stmt->error");
 }
-$stmt->store_result();
 
-if($stmt_num_rows === 1) {
+$stmt->bind_result($idMajorOptions);
+
+if($stmt->fetch()) {
 	session_start();
-	$_SESSION["idMajorOption"] = $degreeOption;
-	echo "success";
+
+	$_SESSION["idMajorOptions"] = $idMajorOptions;
+	header("Location: degreeRequirements.html");
+	die();	
+} else {
+	header("Location: index.html");
 	die();
 }
 
@@ -37,7 +46,6 @@ $mysqli->close();
 
 function sanitizeInput($field) {
 	if(!isset($_POST[$field])) {
-		echo "value is not set for $field";
 		$data = "";
 	} else {
 		$data = trim($_POST[$field]);
