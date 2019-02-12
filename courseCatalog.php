@@ -22,6 +22,7 @@ $courses = array();
 if($result->num_rows > 0) {
 	while($row = $result->fetch_assoc()) {
 		$courses[$row["idCourses"]] = new stdClass();
+		$courses[$row["idCourses"]]->prefix = $row["coursePrefix"];
 		$courses[$row["idCourses"]]->number = $row["courseNumber"];
 		$courses[$row["idCourses"]]->hours = $row["courseHours"];
 		$courses[$row["idCourses"]]->name = $row["courseName"];
