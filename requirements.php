@@ -28,10 +28,14 @@ if(false === $rc) {
 }
 $stmt->bind_result($requiredCourse);
 
-$requiredCourses = array();
+$requirements = new stdClass();
+
+$requirements->requiredCourses = array();
+
+//$requiredCourses = array();
 
 while($stmt->fetch()) {
-	$requiredCourses[$requiredCourse] = array();
+	$requirements->requiredCourses[$requiredCourse] = array();
 }
 
 $stmt->close();
@@ -52,15 +56,38 @@ if(false === $rc) {
 $stmt->bind_result($requiredCourse, $substitutableCourse);
 
 while($stmt->fetch()) {
-	array_push($requiredCourses[$requiredCourse], $substitutableCourse);
+	array_push($requirements->requiredCourses[$requiredCourse], $substitutableCourse);
+}
+
+$stmt->close();
+
+$sql = "SELECT requiredHours, 500LevelHours, outsideHours FROM majoroptions WHERE idMajorOptions = ?";
+
+$stmt = $mysqli->prepare($sql);
+if(!$stmt) {
+	die("Could not prepare statement $mysqli->error");
+}
+if(!$stmt->bind_param("s", $degreeOption)) {
+	die("Could not bind parameters $stmt->error");
+}
+$rc = $stmt->execute();
+if(false === $rc) {
+	die("Could not execute statement $stmt->error");
+}
+$stmt->bind_result($requiredHours, $graduateHours, $outsideHours);
+
+if($stmt->fetch()) {
+	$requirements->requiredHours = $requiredHours;
+	$requirements->graduateHours = $graduateHours;
+	$requirements->outsideHours = $outsideHours;
 }
 
 $stmt->close();
 
 $mysqli->close();
 
-$requiredCourses = json_encode($requiredCourses);
-echo $requiredCourses;
+$requirements = json_encode($requirements);
+echo $requirements;
 
 function sanitizeInput($data) {
 	$data = trim($data);
