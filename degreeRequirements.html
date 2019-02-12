@@ -5,10 +5,27 @@
         <meta charset="utf8">
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
         <script>
 			var courseCatalog;
 			var selectedCourses = [];
             $(document).ready(function(){
+			
+				$("#requirementsForm").submit(function(event) {
+					event.preventDefault();
+					
+					var data = [];
+					var courseCounter = 1;
+					$("#selectedCourseList li").each(function() {
+						console.log($(this).text());
+						data["MajorCourseNamePrefix" + courseCounter] = courseCatalog[$(this).val()].prefix;
+						data["MajorCourseNumber" + courseCounter] = $(this).text();
+						data["MajorCourseTitle" + courseCounter] = courseCatalog[$(this).val()].name;
+						data["MajorCourseHours" + (courseCounter++)] = courseCatalog[$(this).val()].hours;
+					});
+					createForm(data);
+				}); 			
+			
                 var xhr = new XMLHttpRequest();
                 xhr.addEventListener("load", courseHandler);
                 xhr.open("GET", "courseCatalog.php");
@@ -22,20 +39,34 @@
 					if(!selectedCourses.includes(selectedCourse)){
 						selectedCourses.push(selectedCourse);
 						$("#selectedCourseList").append($("<li>", {
-							value: $("#courseList option:selected").text(),
+							value: $("#courseList option:selected").val(),
 							text: $("#courseList option:selected").text()
 						}));	
 					}
 				});
             });
             
+			function createForm(data) {
+				var form = document.createElement("form");
+				document.body.appendChild(form);
+				form.action = "generateForm.php";
+				form.method = "POST";
+				for(var name in data) {
+					var input = document.createElement("input");
+					input.type = "hidden";
+					input.name = name;
+					input.value = data[name];
+					form.appendChild(input);
+				}
+				form.submit();
+			};
 
             function courseHandler() {
                 courseCatalog = JSON.parse(this.response);
                 for(var i in courseCatalog) {
                     $("#courseList").append($("<option>", {
-                        value: courseCatalog[i].number,
-                        text: courseCatalog[i].number
+                        value: i,
+                        text: courseCatalog[i].prefix + " " + courseCatalog[i].number
                     })); 
                 }
 
@@ -49,20 +80,20 @@
 				console.log(this.response);
 				var requirements = JSON.parse(this.response);
 				var requiredCourses = $("#requiredCourses");
-				for(var i in requirements) {
+				for(var i in requirements.requiredCourses) {
 					console.log(i);
 					console.log(courseCatalog[i]);
 					requiredCourses.append($("<li>", {
 						value: i,
-						text: courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + courseCatalog[i].hours
+						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + courseCatalog[i].hours
 					}));
-					if(requirements[i].length > 0) {
+					if(requirements.requiredCourses[i].length > 0) {
 						var substitutableCourses = $("<ul id='sublist'>");
-						for(var y = 0; y < requirements[i].length; y++) {
-							var courseId = requirements[i][y];
+						for(var y = 0; y < requirements.requiredCourses[i].length; y++) {
+							var courseId = requirements.requiredCourses[i][y];
 							substitutableCourses.append($("<li>", {
-								value: requirements[courseId],
-								text: courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + courseCatalog[courseId].hours
+								value: courseCatalog[courseId],
+								text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + courseCatalog[courseId].hours
 							}));
 						}
 						requiredCourses.append(substitutableCourses);
@@ -83,10 +114,13 @@
 			</select>
 			<button id="addCourse" type="button">Add Course</button>
 		</div>
-		<div>
-			<ul id="selectedCourseList">
+		<form id="requirementsForm" action="generateForm.php" method="POST">
+			<div>
+				<ul id="selectedCourseList">
 
-			</ul>
-		</div>
+				</ul>
+			</div>
+			<input type="submit"></input>
+		</form>
     </body>
 </html>
