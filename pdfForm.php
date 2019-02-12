@@ -4,7 +4,7 @@
 * The following class was derived from the PDFtk tutorial found on sitepoint at the following
 * url: https://www.sitepoint.com/filling-pdf-forms-pdftk-php/
 */
-class PdfForm {
+class pdfForm {
 	
 	private $pdfurl;
 	
@@ -18,7 +18,7 @@ class PdfForm {
 	}
 	
 	private function tmpfile() {
-		return tempnum(sys_get_temp_dir(), gethostname());
+		return tempnam(sys_get_temp_dir(), gethostname());
 	}
 	
 	/**
@@ -73,3 +73,5 @@ class PdfForm {
 	}
 	
 }
+
+?>
