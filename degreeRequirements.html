@@ -1,51 +1,92 @@
 <!DOCTYPE html>
 <html>
-    
     <head>
         <meta charset="utf8">
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+		<script type="text/javascript" src="CookieParser.js"></script>
         <script>
 			var courseCatalog;
 			var selectedCourses = [];
+			var requiredCourses = [];
             $(document).ready(function(){
-			
-				$("#requirementsForm").submit(function(event) {
-					event.preventDefault();
+				
+				displayUserInfo();
+				
+				$("#candidacyForm").click(function(event) {
 					
 					var data = [];
 					var courseCounter = 1;
 					$("#selectedCourseList li").each(function() {
-						console.log($(this).text());
+						var grade = $(this).find("input");
+						data["FirstName"] = getCookie("firstName");
+						data["LastName"] = getCookie("lastName");
+						data["MiddleName"] = getCookie("middleName");
+						data["Email"] = getCookie("email");
+						data["StudentID"] = getCookie("studentID");
+						data["Major"] = getCookie("program");
+						data["ThesisType"] = getCookie("option");
+						data["MajorGrade" + courseCounter] = grade.val();
 						data["MajorCourseNamePrefix" + courseCounter] = courseCatalog[$(this).val()].prefix;
-						data["MajorCourseNumber" + courseCounter] = $(this).text();
+						data["MajorCourseNumber" + courseCounter] = courseCatalog[$(this).val()].number;
 						data["MajorCourseTitle" + courseCounter] = courseCatalog[$(this).val()].name;
 						data["MajorCourseHours" + (courseCounter++)] = courseCatalog[$(this).val()].hours;
 					});
-					createForm(data);
+					createForm(data).submit();
 				}); 			
-			
+				
                 var xhr = new XMLHttpRequest();
                 xhr.addEventListener("load", courseHandler);
                 xhr.open("GET", "courseCatalog.php");
                 xhr.send();
 
 				$("#addCourse").click(function() {
-					var selectedCourse = $("#courseList option:selected").text();
+					var selectedCourse = $("#courseList option:selected").val();
 					var closeButton = $("<button/>", {
 						text: "X"
 					});
 					if(!selectedCourses.includes(selectedCourse)){
 						selectedCourses.push(selectedCourse);
+						
+						var $input = $("<input>", {
+							type: "text"
+						});
+						
+						$input.attr("size", "3");
+						$input.attr("maxlength", "1");
 						$("#selectedCourseList").append($("<li>", {
 							value: $("#courseList option:selected").val(),
 							text: $("#courseList option:selected").text()
-						}));	
+						}).append($input));
+						
+						if(requiredCourses[selectedCourse]) {
+						console.log(requiredCourses);
+							requiredCourses[selectedCourse].content = true;
+							if(!requiredCourses.find(isFalse)) {
+								$("#candidacyForm").removeAttr("disabled");
+							}
+						}
+						for(var i in requiredCourses) {
+							console.log("course index " + i + " is " + requiredCourses[i].content);
+						}
 					}
 				});
             });
             
+			function displayUserInfo() {
+				$("#option").text(getCookie("Option"));
+				$("#program").text(getCookie("Program"));
+			}
+			
+			function isFalse(course) {
+				if(course) {
+					return course.content === false;
+				} else {
+					return false;
+				}
+			};
+			
 			function createForm(data) {
 				var form = document.createElement("form");
 				document.body.appendChild(form);
@@ -58,7 +99,7 @@
 					input.value = data[name];
 					form.appendChild(input);
 				}
-				form.submit();
+				return form;
 			};
 
             function courseHandler() {
@@ -79,14 +120,18 @@
 			function requirementsHandler() {
 				console.log(this.response);
 				var requirements = JSON.parse(this.response);
-				var requiredCourses = $("#requiredCourses");
+				var requiredList = $("#requiredCourses");
 				for(var i in requirements.requiredCourses) {
+					var courseTaken = {content: false};
 					console.log(i);
 					console.log(courseCatalog[i]);
-					requiredCourses.append($("<li>", {
+					requiredList.append($("<li>", {
 						value: i,
 						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + courseCatalog[i].hours
 					}));
+					
+					requiredCourses[i] = courseTaken;
+					console.log("inserting boolean for courseId " + i);
 					if(requirements.requiredCourses[i].length > 0) {
 						var substitutableCourses = $("<ul id='sublist'>");
 						for(var y = 0; y < requirements.requiredCourses[i].length; y++) {
@@ -95,8 +140,10 @@
 								value: courseCatalog[courseId],
 								text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + courseCatalog[courseId].hours
 							}));
+							requiredCourses[courseId] = courseTaken;
+							console.log("Inserting boolean for courseId " + courseId);
 						}
-						requiredCourses.append(substitutableCourses);
+						requiredList.append(substitutableCourses);
 					}
 				}
 			}
@@ -104,6 +151,8 @@
     </head>
     <body>
 		<div>
+			<p>Program: <span id="program"></span> <span id="option"></span></p>
+			<h2>Required Courses</h2>
 			<ul id="requiredCourses">
 
 			</ul>
@@ -114,13 +163,12 @@
 			</select>
 			<button id="addCourse" type="button">Add Course</button>
 		</div>
-		<form id="requirementsForm" action="generateForm.php" method="POST">
-			<div>
-				<ul id="selectedCourseList">
+		
+		<div>
+			<ul id="selectedCourseList">
 
-				</ul>
-			</div>
-			<input type="submit"></input>
-		</form>
+			</ul>
+		</div>
+		<button id="candidacyForm" type="button" disabled>Admission To Candidacy</button>
     </body>
 </html>
