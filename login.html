@@ -24,69 +24,14 @@
 		
 			$("input[name='userType']").change(function(){
 				if($(this).val() == "student") {
-					generateStudentForm();
+					$("#staffInfo").hide();
+					$("#studentInfo").show();
 				} else if($(this).val() == "staff") {
-					clearStudentForm();
+					$("#studentInfo").hide();
+					$("#staffInfo").show();
 				}
 			});
 		});
-		
-		function clearStaffForm() {
-			$("#staffInfo").empty();
-		}
-		
-		function clearStudentForm() {
-			$("#studentInfo").empty();
-		}
-		
-		function generateStudentForm() {
-			var $studentForm = $("#studentInfo");
-			var $input = $("<input>", {
-				id: "firstName",
-				type: "text",
-				name: "firstName"
-			});
-			var $label = $("<label>", {
-				text: "First Name"
-			});
-			$studentForm.append($label).append($input);
-			var $input = $("<input>", {
-				id: "middleName",
-				type: "text",
-				name: "middleName"
-			});
-			var $label = $("<label>", {
-				text: "Middle Name"
-			});
-			$studentForm.append($label).append($input);
-			var $input = $("<input>", {
-				id: "lastName",
-				type: "text",
-				name: "lastName"
-			});
-			var $label = $("<label>", {
-				text: "Last Name"
-			});
-			$studentForm.append($label).append($input).append($("<br>"));
-			var $input = $("<input>", {
-				id: "studentID",
-				type: "number",
-				name: "studentID"
-			});
-			var $label = $("<label>", {
-				text: "Student ID"
-			});
-			$studentForm.append($label).append($input);
-			var $input = $("<input>", {
-				id: "email",
-				type: "email",
-				name: "email"
-			});
-			var $label = $("<label>", {
-				text: "Email Address"
-			});
-			$studentForm.append($label).append($input);
-		}
 		</script>
 	</head>
 	<body>
@@ -94,9 +39,15 @@
 	<form id="loginForm" action="login.php" method="POST">
 		<h3>I am a...</h3>
 		<input type="radio" name="userType" value="student">Student</input>
-		<div id="studentInfo">
-		</div>
 		<br>
+		<div id="studentInfo" hidden>
+			<label for="firstName">First Name</label><input id="firstName" type="text" name="firstName"></input>
+			<label for="middeName">Middle Name</label><input id="middleName" type="text" name="middleName"></input>
+			<label for="lastName">Last Name</label><input id="lastName" type="text" name="lastName"></input>
+			<br>
+			<label for="studentID">Student ID</label><input id="studentID" type="text" name="studentID"></input>
+			<label for="email">Email</label><input id="email" type="email" name="email"></input>
+		</div>
 		<input type="radio" name="userType" value="staff">Staff Member</input>
 		<div id="staffInfo">
 		</div>
