@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="utf8">
+        <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <script>
+            $(document).ready(function(){
+				
+				var xhr = new XMLHttpRequest();
+				xhr.addEventListener("load", degreeHandler);
+				xhr.open("GET", "degreePrograms.php");
+				xhr.send();
+
+            });
+            
+			function degreeHandler() {
+				console.log(this.response);
+				var degreePrograms = JSON.parse(this.response);
+
+				/* Iterate through all degree programs and add to DOM as list item */
+				for(var degreeName in degreePrograms) {
+					$("#degreePrograms").append($("<li>", {
+						value: degreeName
+					}).append($("<input>", {
+						type: "radio",
+						value: degreeName,
+						name: "degreeName",
+					})).append($("<label>", {
+						text: degreeName
+					}))); 
+
+
+					/* Create nested list under each degree program with the options offered, e.g., Thesis */
+					var degreeOptions = $("<ul id='sublist'>");
+					for(var degreeOption in degreePrograms[degreeName].option) {
+						degreeOptions.append($("<li>", {
+							value: degreeOption,
+						}).append($("<input>", {
+							type: "radio",
+							value: degreeOption,
+							name: "degreeOption",
+							required: true
+						})).append($("<label>", {
+							text: degreeOption	
+						})));
+					} 
+					$("#degreePrograms").append(degreeOptions);
+				}
+			}
+        </script>
+    </head>
+    <body>
+		<form id="programForm" action="setProgram.php" method="POST">
+			<div>
+				<ul id="degreePrograms">
+
+				</ul>
+			</div>
+			<input type="submit"></input> 
+		</form>
+    </body>
+</html>
