@@ -9,16 +9,30 @@
 		$(document).ready(function(){
 			
 			$("#loginForm input[type='submit']").click(function(event) {
+				event.preventDefault();
 				var selection = $("input[name='userType']:checked").val();
 				if(selection == "student") {
 					// If the user is a student then do not submit to server. Instead set cookies
-					event.preventDefault();
 					document.cookie = "firstName=" + $("#firstName").val();
 					document.cookie = "lastName=" + $("#lastName").val();
 					document.cookie = "middleName=" + $("#middleName").val();
 					document.cookie = "email=" + $("#email").val();
 					document.cookie = "studentID=" + $("#studentID").val();
 					window.location.href = "degrees.html";
+				} else if(selection == "staff") {
+					$.ajax({
+						type: "POST",
+						url: "../scripts/authenticateUser.php",
+						data: {username: $("input[name='username']").val(), password: $("input[name='password']").val() },
+						dataType: "html",
+						success: function(html) {
+							if(html) {
+								console.log(html);
+							} else {
+								alert("Login unsuccessful. Invalid username or password");
+							}
+						}
+					});
 				}
 			});
 		
@@ -36,20 +50,22 @@
 	</head>
 	<body>
 	<h1>EECS Graduate Forms Central</h1>
-	<form id="loginForm" action="login.php" method="POST">
+	<form id="loginForm" action="../scripts/authenticateUser.php" method="POST">
 		<h3>I am a...</h3>
 		<input type="radio" name="userType" value="student">Student</input>
 		<br>
 		<div id="studentInfo" hidden>
-			<label for="firstName">First Name</label><input id="firstName" type="text" name="firstName"></input>
-			<label for="middeName">Middle Name</label><input id="middleName" type="text" name="middleName"></input>
-			<label for="lastName">Last Name</label><input id="lastName" type="text" name="lastName"></input>
+			<label for="firstName">First Name</label><input id="firstName" type="text" name="firstName" required></input>
+			<label for="middeName">Middle Name</label><input id="middleName" type="text" name="middleName" required></input>
+			<label for="lastName">Last Name</label><input id="lastName" type="text" name="lastName" required></input>
 			<br>
-			<label for="studentID">Student ID</label><input id="studentID" type="text" name="studentID"></input>
-			<label for="email">Email</label><input id="email" type="email" name="email"></input>
+			<label for="studentID">Student ID</label><input id="studentID" type="text" name="studentID" required></input>
+			<label for="email">Email</label><input id="email" type="email" name="email" required></input>
 		</div>
 		<input type="radio" name="userType" value="staff">Staff Member</input>
-		<div id="staffInfo">
+		<div id="staffInfo" hidden>
+			<label for="username">Username</label><input id="username" type="text" name="username" required></input>
+			<label for="password">Password</label><input id="password" type="password" name="password" required></input>
 		</div>
 		<br>
 		<input type="submit"></input>
