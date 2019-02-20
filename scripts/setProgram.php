@@ -32,17 +32,11 @@ $stmt->bind_result($idMajorOptions);
 
 if($stmt->fetch()) {
 	session_start();
-	$cookie_name = "program";
-	$cookie_value = $subject;
-	setcookie($cookie_name, $cookie_value);
-	$cookie_name = "option";
-	$cookie_value = $option;
-	setcookie($cookie_name, $cookie_value);
-	$_SESSION["idMajorOptions"] = $idMajorOptions;
-	header("Location: degreeRequirements.html");
+	$_SESSION["idMajorOptions"] = $idMajorOptions; 
+	header("Location: ../routes/degreeRequirements.html");
 	die();	
 } else {
-	header("Location: index.html");
+	header("Location: ../routes/degrees.html");
 	die();
 }
 

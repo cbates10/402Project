@@ -7,7 +7,7 @@
 		$data[$key] = $value;
 	} 
 	
-	$pdf = new pdfForm("admission_to_candidacy.pdf", $data);
+	$pdf = new pdfForm("../admission_to_candidacy.pdf", $data);
 	
 	$pdf->download();
 ?>

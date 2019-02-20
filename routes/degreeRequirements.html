@@ -5,7 +5,7 @@
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
-		<script type="text/javascript" src="CookieParser.js"></script>
+		<script type="text/javascript" src="../scripts/CookieParser.js"></script>
         <script>
 			var courseCatalog;
 			var selectedCourses = [];
@@ -38,7 +38,7 @@
 				
                 var xhr = new XMLHttpRequest();
                 xhr.addEventListener("load", courseHandler);
-                xhr.open("GET", "courseCatalog.php");
+                xhr.open("GET", "../scripts/courseCatalog.php");
                 xhr.send();
 
 				$("#addCourse").click(function() {
@@ -75,8 +75,9 @@
             });
             
 			function displayUserInfo() {
-				$("#option").text(getCookie("Option"));
-				$("#program").text(getCookie("Program"));
+				console.log("Cookie is " + getCookie("option"));
+				$("#option").text(getCookie("option"));
+				$("#program").text(getCookie("program"));
 			}
 			
 			function isFalse(course) {
@@ -90,7 +91,7 @@
 			function createForm(data) {
 				var form = document.createElement("form");
 				document.body.appendChild(form);
-				form.action = "generateForm.php";
+				form.action = "../scripts/generateForm.php";
 				form.method = "POST";
 				for(var name in data) {
 					var input = document.createElement("input");
@@ -113,7 +114,7 @@
 
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", requirementsHandler);
-				xhr.open("GET", "requirements.php");
+				xhr.open("GET", "../scripts/requirements.php");
 				xhr.send();
             };
 

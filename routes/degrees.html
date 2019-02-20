@@ -10,8 +10,13 @@
 				
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", degreeHandler);
-				xhr.open("GET", "degreePrograms.php");
+				xhr.open("GET", "../scripts/degreePrograms.php");
 				xhr.send();
+				
+				$("#programForm").submit(function() {
+					document.cookie = "program=" + $("input[name='degreeName']:checked").val();
+					document.cookie = "option=" + $("input[name='degreeOption']:checked").val();
+				});
 
             });
             
@@ -52,7 +57,7 @@
         </script>
     </head>
     <body>
-		<form id="programForm" action="setProgram.php" method="POST">
+		<form id="programForm" action="../scripts/setProgram.php" method="POST">
 			<div>
 				<ul id="degreePrograms">
 
