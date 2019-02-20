@@ -1,64 +1,58 @@
 <!DOCTYPE html>
 <html>
-    
     <head>
         <meta charset="utf8">
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-        <script>
-            $(document).ready(function(){
-				
-				var xhr = new XMLHttpRequest();
-				xhr.addEventListener("load", degreeHandler);
-				xhr.open("GET", "degreePrograms.php");
-				xhr.send();
-
-            });
-            
-			function degreeHandler() {
-				console.log(this.response);
-				var degreePrograms = JSON.parse(this.response);
-
-				/* Iterate through all degree programs and add to DOM as list item */
-				for(var degreeName in degreePrograms) {
-					$("#degreePrograms").append($("<li>", {
-						value: degreeName
-					}).append($("<input>", {
-						type: "radio",
-						value: degreeName,
-						name: "degreeName",
-					})).append($("<label>", {
-						text: degreeName
-					}))); 
-
-
-					/* Create nested list under each degree program with the options offered, e.g., Thesis */
-					var degreeOptions = $("<ul id='sublist'>");
-					for(var degreeOption in degreePrograms[degreeName].option) {
-						degreeOptions.append($("<li>", {
-							value: degreeOption,
-						}).append($("<input>", {
-							type: "radio",
-							value: degreeOption,
-							name: "degreeOption",
-							required: true
-						})).append($("<label>", {
-							text: degreeOption	
-						})));
-					} 
-					$("#degreePrograms").append(degreeOptions);
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+		<script>
+		$(document).ready(function(){
+			
+			$("#loginForm input[type='submit']").click(function(event) {
+				var selection = $("input[name='userType']:checked").val();
+				if(selection == "student") {
+					// If the user is a student then do not submit to server. Instead set cookies
+					event.preventDefault();
+					document.cookie = "firstName=" + $("#firstName").val();
+					document.cookie = "lastName=" + $("#lastName").val();
+					document.cookie = "middleName=" + $("#middleName").val();
+					document.cookie = "email=" + $("#email").val();
+					document.cookie = "studentID=" + $("#studentID").val();
+					window.location.href = "degrees.html";
 				}
-			}
-        </script>
-    </head>
-    <body>
-		<form id="programForm" action="setProgram.php" method="POST">
-			<div>
-				<ul id="degreePrograms">
-
-				</ul>
-			</div>
-			<input type="submit"></input> 
-		</form>
-    </body>
+			});
+		
+			$("input[name='userType']").change(function(){
+				if($(this).val() == "student") {
+					$("#staffInfo").hide();
+					$("#studentInfo").show();
+				} else if($(this).val() == "staff") {
+					$("#studentInfo").hide();
+					$("#staffInfo").show();
+				}
+			});
+		});
+		</script>
+	</head>
+	<body>
+	<h1>EECS Graduate Forms Central</h1>
+	<form id="loginForm" action="login.php" method="POST">
+		<h3>I am a...</h3>
+		<input type="radio" name="userType" value="student">Student</input>
+		<br>
+		<div id="studentInfo" hidden>
+			<label for="firstName">First Name</label><input id="firstName" type="text" name="firstName"></input>
+			<label for="middeName">Middle Name</label><input id="middleName" type="text" name="middleName"></input>
+			<label for="lastName">Last Name</label><input id="lastName" type="text" name="lastName"></input>
+			<br>
+			<label for="studentID">Student ID</label><input id="studentID" type="text" name="studentID"></input>
+			<label for="email">Email</label><input id="email" type="email" name="email"></input>
+		</div>
+		<input type="radio" name="userType" value="staff">Staff Member</input>
+		<div id="staffInfo">
+		</div>
+		<br>
+		<input type="submit"></input>
+	</form>
+	</body>
 </html>
