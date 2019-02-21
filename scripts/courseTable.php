@@ -21,8 +21,9 @@ $queryRecords = mysqli_query($conn, $sql) or die("error to fetch course data");
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script type="text/javascript" src="jquery-1.11.1.min.js"></script>
-<link rel="stylesheet" type="text/css" href="bootstrap.min.css"/>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
 </head>
 <body>
 <div class="container" style="padding:50px 250px;">

@@ -26,8 +26,8 @@
 						data: {username: $("input[name='username']").val(), password: $("input[name='password']").val() },
 						dataType: "html",
 						success: function(html) {
-							if(html) {
-								console.log(html);
+							if(html === "success") {
+								window.location.href = "../scripts/courseTable.php";
 							} else {
 								alert("Login unsuccessful. Invalid username or password");
 							}
