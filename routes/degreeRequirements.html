@@ -6,10 +6,13 @@
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
 		<script type="text/javascript" src="../scripts/CookieParser.js"></script>
+		<script type="text/javascript" src="../scripts/CourseObserver.js"></script>
+		<script type="text/javascript" src="../scripts/Requirements.js"></script>
         <script>
 			var courseCatalog;
 			var selectedCourses = [];
-			var requiredCourses = [];
+			var courseObserver = new CourseObserver();
+			
             $(document).ready(function(){
 				
 				displayUserInfo();
@@ -48,6 +51,7 @@
 					});
 					if(!selectedCourses.includes(selectedCourse)){
 						selectedCourses.push(selectedCourse);
+						courseObserver.broadcast(selectedCourse);
 						
 						var $input = $("<input>", {
 							type: "text"
@@ -59,17 +63,6 @@
 							value: $("#courseList option:selected").val(),
 							text: $("#courseList option:selected").text()
 						}).append($input));
-						
-						if(requiredCourses[selectedCourse]) {
-						console.log(requiredCourses);
-							requiredCourses[selectedCourse].content = true;
-							if(!requiredCourses.find(isFalse)) {
-								$("#candidacyForm").removeAttr("disabled");
-							}
-						}
-						for(var i in requiredCourses) {
-							console.log("course index " + i + " is " + requiredCourses[i].content);
-						}
 					}
 				});
             });
@@ -79,14 +72,6 @@
 				$("#option").text(getCookie("option"));
 				$("#program").text(getCookie("program"));
 			}
-			
-			function isFalse(course) {
-				if(course) {
-					return course.content === false;
-				} else {
-					return false;
-				}
-			};
 			
 			function createForm(data) {
 				var form = document.createElement("form");
@@ -122,31 +107,46 @@
 				console.log(this.response);
 				var requirements = JSON.parse(this.response);
 				var requiredList = $("#requiredCourses");
+				
+				var requirement = new Requirements();
+				
 				for(var i in requirements.requiredCourses) {
-					var courseTaken = {content: false};
+					requirement.addRequiredCourse(i);
 					console.log(i);
 					console.log(courseCatalog[i]);
+					if(courseCatalog[i].lowHours != courseCatalog[i].highHours) {
+						var hourString = courseCatalog[i].lowHours + " - " + courseCatalog[i].highHours;
+					} else {
+						var hourString = courseCatalog[i].highHours;
+					}
 					requiredList.append($("<li>", {
 						value: i,
-						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + courseCatalog[i].hours
+						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + hourString
 					}));
 					
-					requiredCourses[i] = courseTaken;
-					console.log("inserting boolean for courseId " + i);
 					if(requirements.requiredCourses[i].length > 0) {
 						var substitutableCourses = $("<ul id='sublist'>");
 						for(var y = 0; y < requirements.requiredCourses[i].length; y++) {
 							var courseId = requirements.requiredCourses[i][y];
+							requirement.addRequiredCourse(courseId);
+							requirement.setSubstitutableCourses(i, courseId);
+							if(courseCatalog[i].lowHours != courseCatalog[i].highHours) {
+								var hourString = courseCatalog[courseId].lowHours + " - " + courseCatalog[courseId].highHours;
+							} else {
+								var hourString = courseCatalog[courseId].highHours;
+							}
 							substitutableCourses.append($("<li>", {
 								value: courseCatalog[courseId],
-								text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + courseCatalog[courseId].hours
+								text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + hourString
 							}));
-							requiredCourses[courseId] = courseTaken;
-							console.log("Inserting boolean for courseId " + courseId);
 						}
 						requiredList.append(substitutableCourses);
 					}
 				}
+				requirement.setFufilledOperation(function() {
+					$("#candidacyForm").removeAttr("disabled");
+				});
+				courseObserver.subscribe(requirement.addCourse.bind(requirement));
 			}
         </script>
     </head>
