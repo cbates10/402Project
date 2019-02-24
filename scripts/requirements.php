@@ -1,9 +1,7 @@
 <?php
 
-$servername = "localhost";
-$database = "graduatecentral";
-$sqlusername = "root";
-$sqlpassword = "Imbroglio3724";
+include 'DatabaseInfo.php';
+
 $mysqli = new mysqli($servername, $sqlusername, $sqlpassword, $database);
 
 session_start();
