@@ -1,8 +1,8 @@
 <?php
 
-$servername = "216.96.149.200";
-$database = "formscentral";
-$sqlusername = "Casey3724";
+$servername = "localhost";
+$database = "graduatecentral";
+$sqlusername = "root";
 $sqlpassword = "Imbroglio3724";
 
 $mysqli = new mysqli($servername, $sqlusername, $sqlpassword, $database);
@@ -11,7 +11,7 @@ if($mysqli->connect_errno) {
 	die("Failed to connect to MYSQL: ($mysqli->connect_errno) $mysqli->connect_error");
 }
 
-$sql = "SELECT * FROM majoroptions ORDER BY subject";
+$sql = "SELECT * FROM objects NATURAL JOIN types WHERE type = 'Degree Program' ORDER BY subject";
 
 $result = $mysqli->query($sql);
 

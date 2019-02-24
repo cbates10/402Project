@@ -1,8 +1,8 @@
 <?php
 
-$servername = "216.96.149.200";
-$database = "formscentral";
-$sqlusername = "Casey3724";
+$servername = "localhost";
+$database = "graduatecentral";
+$sqlusername = "root";
 $sqlpassword = "Imbroglio3724";
 $mysqli = new mysqli($servername, $sqlusername, $sqlpassword, $database);
 
@@ -12,9 +12,9 @@ if($mysqli->connect_errno) {
 	die("Failed to connect to MYSQL: ($mysqli->connect_errno) $mysqli->connect_error");
 }
 
-$degreeOption = $_SESSION["idMajorOptions"];
+$degreeOption = $_SESSION["idObjects"];
 
-$sql = "SELECT idCourses FROM requiredcourses WHERE idMajorOptions = ?";
+$sql = "SELECT idCourses FROM requiredcourses WHERE idObjects = ?";
 $stmt = $mysqli->prepare($sql);
 if(!$stmt) {
 	die("Could not prepare statement $mysqli->error");
@@ -32,15 +32,13 @@ $requirements = new stdClass();
 
 $requirements->requiredCourses = array();
 
-//$requiredCourses = array();
-
 while($stmt->fetch()) {
 	$requirements->requiredCourses[$requiredCourse] = array();
 }
 
 $stmt->close();
 
-$sql = "SELECT idCourses, idSubCourse FROM substitutablecourses WHERE idMajorOptions = ?";
+$sql = "SELECT idCourses, idSubCourse FROM substitutablecourses WHERE idObjects = ?";
 
 $stmt = $mysqli->prepare($sql);
 if(!$stmt) {
@@ -61,7 +59,7 @@ while($stmt->fetch()) {
 
 $stmt->close();
 
-$sql = "SELECT requiredHours, 500LevelHours, outsideHours FROM majoroptions WHERE idMajorOptions = ?";
+$sql = "SELECT requiredHours, 400Hours, 500Hours FROM objects NATURAL LEFT JOIN 400hours NATURAL LEFT JOIN 500hours WHERE idObjects = ?";
 
 $stmt = $mysqli->prepare($sql);
 if(!$stmt) {
@@ -74,12 +72,12 @@ $rc = $stmt->execute();
 if(false === $rc) {
 	die("Could not execute statement $stmt->error");
 }
-$stmt->bind_result($requiredHours, $graduateHours, $outsideHours);
+$stmt->bind_result($requiredHours, $hours400, $hours500);
 
 if($stmt->fetch()) {
 	$requirements->requiredHours = $requiredHours;
-	$requirements->graduateHours = $graduateHours;
-	$requirements->outsideHours = $outsideHours;
+	$requirements->hours400 = $hours400;
+	$requirements->hours500 = $hours500;
 }
 
 $stmt->close();

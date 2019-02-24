@@ -1,8 +1,8 @@
 <?php
 
-$servername = "216.96.149.200";
-$database = "formscentral";
-$sqlusername = "Casey3724";
+$servername = "localhost";
+$database = "graduatecentral";
+$sqlusername = "root";
 $sqlpassword = "Imbroglio3724";
 
 $mysqli = new mysqli($servername, $sqlusername, $sqlpassword, $database);

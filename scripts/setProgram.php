@@ -1,8 +1,8 @@
 <?php
 
-$servername = "216.96.149.200";
-$database = "formscentral";
-$sqlusername = "Casey3724";
+$servername = "localhost";
+$database = "graduatecentral";
+$sqlusername = "root";
 $sqlpassword = "Imbroglio3724";
 
 $mysqli = new mysqli($servername, $sqlusername, $sqlpassword, $database);
@@ -14,7 +14,7 @@ if($mysqli->connect_errno) {
 $subject = sanitizeInput("degreeName");
 $option = sanitizeInput("degreeOption");
 
-$sql = "SELECT idMajorOptions FROM majoroptions WHERE subject = ? AND name = ?";
+$sql = "SELECT idObjects FROM objects WHERE subject = ? AND name = ?";
 
 $stmt = $mysqli->prepare($sql);
 if(!$stmt) {
@@ -32,7 +32,7 @@ $stmt->bind_result($idMajorOptions);
 
 if($stmt->fetch()) {
 	session_start();
-	$_SESSION["idMajorOptions"] = $idMajorOptions; 
+	$_SESSION["idObjects"] = $idMajorOptions; 
 	header("Location: ../routes/degreeRequirements.html");
 	die();	
 } else {
