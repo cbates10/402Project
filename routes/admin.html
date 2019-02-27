@@ -6,59 +6,36 @@
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
         <script>
+            $(document).ready(function(){
                 var xhr = new XMLHttpRequest();
-                xhr.addEventListener("load", courseHandler);
+                xhr.addEventListener("load", catalogHandler);
                 xhr.open("GET", "../scripts/courseCatalog.php");
                 xhr.send();
-
-                function courseHandler() {
+            });
+                
+            function catalogHandler(){
+                console.log(this.reponse);
                 courseCatalog = JSON.parse(this.response);
                 for(var i in courseCatalog) {
-                    var $row = $("<tr>");
-                    $($row).append($("<td>",{
+                    $("#catalogList").append($("<option>", {
                         value: i,
-                        text: courseCatalog[i].prefix
-                    })).append($("<td>",{
-                        value: i,
-                        text: courseCatalog[i].number
-                    })).append($("<td>",{
-                        value: i,
-                        text: courseCatalog[i].name
-                    })).append($("<td>", {
-                        value: i,
-                        text: courseCatalog[i].hours
-                    }));
-                    $("#courseTable").append($row);
+                        text: courseCatalog[i].prefix + " " + courseCatalog[i].number
+                    })); 
                 }
-            };
+            }
+
         </script>
         <style>
-            table {
-                font-family: Arial, Helvetica, sans-serif;
-                border-collapse: collapse;
-                width: 100%;
-            }
 
-            td,th{
-                border: 1px solid #dddddd;
-                text-align: left;
-                padding: 8px;
-            }
-
-            tr:nth-child(even){
-                background-color: #dddddd;
-            }
         </style>
     </head>
     <body>
-        <h2>Courses Table</h2>
-        <table id="courseTable">
-            <tr>
-                <th>Prefix</th>
-                <th>CourseNumber</th>
-                <th>CourseName</th>
-                <td>CourseHours</td>
-            </tr>
-        </table>
+        <button><a href="../scripts/courseTable.php">Courses</a></button><button><a href="addremove.html">Add/Remove Course</a></button>
+        <div>
+            <select id = "catalogList">
+
+            </select>
+            <button id="selectCatalog" type="button">Select Catalog</button>
+        </div>
     </body>
 </html>
