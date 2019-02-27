@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf8">
+		<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+		<script>
+			$(document).ready(function(){
+				var xhr = new XMLHttpRequest();
+				xhr.addEventListener("load", courseHandler);
+				xhr.open("GET", "../scripts/courseCatalog.php");
+				xhr.send();
+
+				$("#addCourse input[type='submit']").click(function(event){
+					event.preventDefault();
+
+					$.ajax({
+						type: "POST",
+						url:"../scripts/addCourse.php",
+						data: {coursePrefix: $("#prefix option:selected").val(), courseNumber: $("input[name='courseNumber']").val(), courseName: $("input[name='courseName']").val(), courseHours: $("input[name='courseHours']").val()},
+						dataType: "html",
+						success: function(html) {
+							
+							if(html == "success"){
+								alert("course added");
+							} else{
+
+								alert(html);
+							}
+						}
+					});
+				})
+
+					$("#removeCourse input[type='submit']").click(function(event){
+					event.preventDefault();
+
+					$.ajax({
+						type: "POST",
+						url:"../scripts/removeCourse.php",
+						data: {idCourses: $("#courseList option:selected").val()},
+						dataType: "html",
+						success: function(html) {
+							
+							if(html == "success"){
+								alert("course removed");
+							} else{
+
+								alert(html);
+							}
+						}
+					});
+				})
+
+			});
+			
+			var courseCatalog;
+			function courseHandler(){
+				console.log("Here");
+				courseCatalog = JSON.parse(this.response);
+				for(var i in courseCatalog){
+					$("#courseList").append($("<option>", {
+						value: i,
+						text: courseCatalog[i].prefix + " " + courseCatalog[i].number
+					}));
+				}
+			}
+		</script>
+
+	</head>
+	<body>
+		<h1>Add Course</h1>
+		<form action="../scripts/addCourse.php" id="addCourse" method="POST"> Prefix:
+			<!--<input type="text" name="prefix">-->
+			<select id ="prefix" name="coursePrefix" form="addCourse">
+				<option value="COSC">COSC</option>
+				<option value="EECS">EECS</option>
+			</select> Course Number:
+			<input type="number" name="courseNumber"> Name:
+			<input type="text" name="courseName"> Hours:
+			<input type="number" name="courseHours">
+			<input type="submit" value="Add Course">
+		</form>
+
+		<h2>Remove Course</h2>
+		<form action="../scripts/removeCourse.php" id="removeCourse" method="POST">
+			<select id="courseList">
+
+			</select>
+			<input type="submit" value="Remove Course"> 
+		</form>
+
+	</body>
+
+</html>
