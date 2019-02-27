@@ -19,7 +19,7 @@
                 for(var i in courseCatalog) {
                     $("#catalogList").append($("<option>", {
                         value: i,
-                        text: courseCatalog[i].prefix + " " + courseCatalog[i].number
+                        text: courseCatalog[i].prefix
                     })); 
                 }
             }
@@ -36,6 +36,26 @@
 
             </select>
             <button id="selectCatalog" type="button">Select Catalog</button>
+        </div>
+        <div>
+            <h2>Computer Science</h2>
+            <h4>Masters</h4>
+            <ul id = "Masters">
+                <li><a href="">Catalog</a></li>
+                Thesis               
+                <li><a href="../scripts/courseTable.php">Courses</a></li>
+                <li><a href="addremove.html">Add/Remove Course</a></li>
+                Non-Thesis               
+                <li><a href="../scripts/courseTable.php">Courses</a></li>
+                <li><a href="addremove.html">Add/Remove Course</a></li>
+
+            </ul>
+            <h4>Ph.D</h4>
+            <ul id = "Ph.d">
+                <li><a href="">Catalog</a></li>
+                <li><a href="../scripts/courseTable.php">Courses</a></li>
+                <li><a href="addremove.html">Add/Remove Course</a></li>
+            </ul>
         </div>
     </body>
 </html>
