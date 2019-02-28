@@ -1,12 +1,9 @@
 
 <?php
     /* Database connection start */
-    $servername = "216.96.149.200";
-    $database = "formscentral";
-    $username = "Casey3724";
-    $password = "Imbroglio3724";
+	include 'DatabaseInfo.php';
     
-    $mysqli = new mysqli($servername, $username, $password, $database);
+    $mysqli = new mysqli($servername, $sqlusername, $sqlpassword, $database);
     if($mysqli->connect_errno) {
         die("Failed to connect to MYSQL: ($mysqli->connect_errno) $mysqli->connect_error");
     }
@@ -27,12 +24,18 @@
             $sql = "UPDATE courses SET courseName = ? WHERE idCourses = ?";
             $type = "s";
             break;
-        case "courseHours" :
-            $sql = "UPDATE courses SET courseHours = ? WHERE idCourses = ?";
+        case "courseHoursLow" :
+            $sql = "UPDATE courses SET courseHoursLow = ? WHERE idCourses = ?";
+            $type = "i";
+            break;
+		case "courseHoursHigh" :
+            $sql = "UPDATE courses SET courseHoursHigh = ? WHERE idCourses = ?";
             $type = "i";
             break;
     }
     
+	echo $_POST["field"];
+	
     $stmt = $mysqli->prepare($sql);
     if(!$stmt) {
         die("Could not prepare statement $mysqli->error");
@@ -50,8 +53,8 @@
     $mysqli->close();
     
 	// send data as json format */
-    $msg = array('status' => !$error, 'msg' => 'Sucessfully updated database');
-    echo json_encode($msg);
+    //$msg = array('status' => !$error, 'msg' => 'Sucessfully updated database');
+    //echo json_encode($msg);
     
 ?>
 	
