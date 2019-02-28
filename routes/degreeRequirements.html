@@ -30,12 +30,12 @@
 					data["ThesisType"] = getCookie("option");
 					$("#courseTableBody tr.courseEntry").each(function() {
 						var courseId = $(this).attr("id");
-						var $children = $(this).children();
-						data["MajorGrade" + courseCounter] = $children.find("#grade").text();
-						data["MajorCourseHours" + courseCounter] = $children.find("#hours").text();
-						data["MajorCourseNamePrefix" + courseCounter] = courseCatalog[$(this).val()].prefix;
-						data["MajorCourseNumber" + courseCounter] = courseCatalog[$(this).val()].number;
-						data["MajorCourseTitle" + (courseCounter++)] = courseCatalog[$(this).val()].name;
+						data["MajorGrade" + courseCounter] = $(this).find("#grade").text();
+						data["MajorCourseHours" + courseCounter] = $(this).find("#hours").text();
+						data["MajorCourseYear" + courseCounter] = $(this).find("#year").text() + "/" + $(this).find("#term").text();
+						data["MajorCourseNamePrefix" + courseCounter] = courseCatalog[courseId].prefix;
+						data["MajorCourseNumber" + courseCounter] = courseCatalog[courseId].number;
+						data["MajorCourseTitle" + (courseCounter++)] = courseCatalog[courseId].name;
 					});
 					createForm(data).submit();
 				}); 			
@@ -87,6 +87,9 @@
 						})).append($("<td>", {
 							id: "term",
 							text: $("#term option:selected").val()
+						})).append($("<td>", {
+							id: "hours",
+							text: $("#hours").val()
 						}));
 						$("#courseTableBody").append($row);
 					}
@@ -232,6 +235,7 @@
 						<th>Grade</th>
 						<th>Year</th>
 						<th>Term</th>
+						<th>Hours</th>
 					</tr>
 				</tbody>
 			</table>
