@@ -21,20 +21,21 @@
 					
 					var data = [];
 					var courseCounter = 1;
-					$("#selectedCourseList li").each(function() {
-						var grade = $(this).find("input");
-						data["FirstName"] = getCookie("firstName");
-						data["LastName"] = getCookie("lastName");
-						data["MiddleName"] = getCookie("middleName");
-						data["Email"] = getCookie("email");
-						data["StudentID"] = getCookie("studentID");
-						data["Major"] = getCookie("program");
-						data["ThesisType"] = getCookie("option");
-						data["MajorGrade" + courseCounter] = grade.val();
+					data["FirstName"] = getCookie("firstName");
+					data["LastName"] = getCookie("lastName");
+					data["MiddleName"] = getCookie("middleName");
+					data["Email"] = getCookie("email");
+					data["StudentID"] = getCookie("studentID");
+					data["Major"] = getCookie("program");
+					data["ThesisType"] = getCookie("option");
+					$("#courseTableBody tr.courseEntry").each(function() {
+						var courseId = $(this).attr("id");
+						var $children = $(this).children();
+						data["MajorGrade" + courseCounter] = $children.find("#grade").text();
+						data["MajorCourseHours" + courseCounter] = $children.find("#hours").text();
 						data["MajorCourseNamePrefix" + courseCounter] = courseCatalog[$(this).val()].prefix;
 						data["MajorCourseNumber" + courseCounter] = courseCatalog[$(this).val()].number;
-						data["MajorCourseTitle" + courseCounter] = courseCatalog[$(this).val()].name;
-						data["MajorCourseHours" + (courseCounter++)] = courseCatalog[$(this).val()].hours;
+						data["MajorCourseTitle" + (courseCounter++)] = courseCatalog[$(this).val()].name;
 					});
 					createForm(data).submit();
 				}); 			
@@ -43,8 +44,25 @@
                 xhr.addEventListener("load", courseHandler);
                 xhr.open("GET", "../scripts/courseCatalog.php");
                 xhr.send();
-
+				
 				$("#addCourse").click(function() {
+					$("#courseMenu").show();
+				});
+				
+				$("#submitCourse").click(function(event) {
+					event.preventDefault();
+					if(!$("#grade")[0].checkValidity()){
+						alert("Grade is invalid");
+						return false;
+					}
+					if(!$("#year")[0].checkValidity()) {
+						alert("Year is invalid");
+						return false;
+					}
+					if(!$("#hours")[0].checkValidity()) {
+						alert("Hours is invalid");
+						return false;
+					}
 					var selectedCourse = $("#courseList option:selected").val();
 					var closeButton = $("<button/>", {
 						text: "X"
@@ -53,18 +71,30 @@
 						selectedCourses.push(selectedCourse);
 						courseObserver.broadcast(selectedCourse);
 						
-						var $input = $("<input>", {
-							type: "text"
+						var $row = $("<tr>", {
+							class: "courseEntry",
+							id: $("#courseList option:selected").val()
 						});
-						
-						$input.attr("size", "3");
-						$input.attr("maxlength", "1");
-						$("#selectedCourseList").append($("<li>", {
-							value: $("#courseList option:selected").val(),
+						$row.append($("<td>", {
+							id: "courseNumber",
 							text: $("#courseList option:selected").text()
-						}).append($input));
+						})).append($("<td>", {
+							id: "grade",
+							text: $("#grade").val()
+						})).append($("<td>", {
+							id: "year",
+							text: $("#year").val()
+						})).append($("<td>", {
+							id: "term",
+							text: $("#term option:selected").val()
+						}));
+						$("#courseTableBody").append($row);
 					}
+					$("#grade").val("");
+					$("#year").val("");
+					$("#courseMenu").hide();
 				});
+				
             });
             
 			function displayUserInfo() {
@@ -87,7 +117,17 @@
 				}
 				return form;
 			};
-
+			
+			function setCourseHours(courseId) {
+				if(courseCatalog[courseId].lowHours != courseCatalog[courseId].highHours) {
+					$("#hours").val("");
+					$("#hours").attr("placeholder", courseCatalog[courseId].lowHours + "-" + courseCatalog[courseId].highHours); 
+				} else {
+					$("#hours").val(courseCatalog[courseId].lowHours);
+				}
+				
+			}
+			
             function courseHandler() {
                 courseCatalog = JSON.parse(this.response);
                 for(var i in courseCatalog) {
@@ -96,7 +136,13 @@
                         text: courseCatalog[i].prefix + " " + courseCatalog[i].number
                     })); 
                 }
+				
+				setCourseHours($("#courseList option:selected").val());
 
+				$("#courseList").change(function() {
+					setCourseHours($(this).val());
+				});
+				
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", requirementsHandler);
 				xhr.open("GET", "../scripts/requirements.php");
@@ -158,17 +204,37 @@
 
 			</ul>
 		</div>
+		<button id="addCourse" type="button">Add Course</button>
+		<br>
+		<br>
 		<div>
-			<select id="courseList">
+			<form id="courseMenu" hidden>
+				<select id="courseList">
             
-			</select>
-			<button id="addCourse" type="button">Add Course</button>
+				</select>
+				<label for="grade">Grade</label><input type="text" id="grade" name="grade" size="1" maxlength="1" pattern="[ABCDF]{1}" required></input>
+				<label for="year">Year</label><input type="number" id="year" style="width:50px" required></input>
+				<label for="term">Term</label>
+				<select id="term">
+					<option id="fall" value="Fall">Fall</option>
+					<option id="spring" value="Spring">Spring</option>
+					<option id="summer" value="Summer">Summer</option>
+				</select>
+				<label for="hours">Hours</label><input type="number" id="hours" name="hours" style="width:50px" required></input>
+				<input id="submitCourse" type="submit"></input>
+			</form>
 		</div>
-		
 		<div>
-			<ul id="selectedCourseList">
-
-			</ul>
+			<table id="courseTable">
+				<tbody id="courseTableBody">
+					<tr>
+						<th>Course</th>
+						<th>Grade</th>
+						<th>Year</th>
+						<th>Term</th>
+					</tr>
+				</tbody>
+			</table>
 		</div>
 		<button id="candidacyForm" type="button" disabled>Admission To Candidacy</button>
     </body>
