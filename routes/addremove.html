@@ -14,25 +14,24 @@
 
 				$("#addCourse input[type='submit']").click(function(event){
 					event.preventDefault();
-
+					console.log($("#prefix option:selected").val());
+					console.log($("input[name='courseNumber']").val());
+					console.log($("input[name='courseName']").val());
+					console.log($("input[name='courseHours']").val());
 					$.ajax({
 						type: "POST",
 						url:"../scripts/addCourse.php",
-						data: {coursePrefix: $("#prefix option:selected").val(), courseNumber: $("input[name='courseNumber']").val(), courseName: $("input[name='courseName']").val(), courseHours: $("input[name='courseHours']").val()},
+						data: {coursePrefix: $("#prefix option:selected").val(), courseNumber: $("input[name='courseNumber']").val(), courseName: $("input[name='courseName']").val(), courseHoursLow: $("input[name='courseHoursLow']").val(), courseHoursHigh: $("input[name='courseHoursHigh']").val()},
 						dataType: "html",
 						success: function(html) {
 							
-							if(html == "success"){
-								alert("course added");
-							} else{
-
-								alert(html);
-							}
+							alert(html);
+						
 						}
 					});
 				})
 
-					$("#removeCourse input[type='submit']").click(function(event){
+				$("#removeCourse input[type='submit']").click(function(event){
 					event.preventDefault();
 
 					$.ajax({
@@ -77,8 +76,9 @@
 				<option value="EECS">EECS</option>
 			</select> Course Number:
 			<input type="number" name="courseNumber"> Name:
-			<input type="text" name="courseName"> Hours:
-			<input type="number" name="courseHours">
+			<input type="text" name="courseName"> Low Hours:
+			<input type="number" name="courseHoursLow"> High Hours:
+			<input type="number" name="courseHoursHigh">
 			<input type="submit" value="Add Course">
 		</form>
 
