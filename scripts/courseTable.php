@@ -1,12 +1,9 @@
 <?php
 
 /* Database connection start */
-$servername = "216.96.149.200";
-$database = "formscentral";
-$username = "Casey3724";
-$password = "Imbroglio3724";
+include 'DatabaseInfo.php';
     
-$conn = mysqli_connect($servername, $username, $password, $database) or die("Connection failed: " . mysqli_connect_error());
+$conn = mysqli_connect($servername, $sqlusername, $sqlpassword, $database) or die("Connection failed: " . mysqli_connect_error());
     
 /* check connection */
 if (mysqli_connect_errno()) {
@@ -34,7 +31,8 @@ $queryRecords = mysqli_query($conn, $sql) or die("error to fetch course data");
          <th>Prefix</th>
          <th>Number</th>
          <th>Course</th>
-         <th>Hours</th>
+         <th>HoursLow</th>
+		 <th>HoursHigh</th>
       </tr>
    </thead>
    <tbody id="_editable_table">
@@ -43,7 +41,8 @@ $queryRecords = mysqli_query($conn, $sql) or die("error to fetch course data");
          <td class="editable-col" contenteditable="true" col-index='0' oldVal ="<?php echo $res['coursePrefix'];?>" value="coursePrefix"><?php echo $res['coursePrefix'];?></td>
          <td class="editable-col" contenteditable="true" col-index='1' oldVal ="<?php echo $res['courseNumber'];?>" value="courseNumber"><?php echo $res['courseNumber'];?></td>
          <td class="editable-col" contenteditable="true" col-index='2' oldVal ="<?php echo $res['courseName'];?>" value="courseName"><?php echo $res['courseName'];?></td>
-        <td class="editable-col" contenteditable="true" col-index='3' oldVal ="<?php echo $res['courseHours'];?>" value="courseHours"><?php echo $res['courseHours'];?></td>
+         <td class="editable-col" contenteditable="true" col-index='3' oldVal ="<?php echo $res['courseHoursLow'];?>" value="courseHoursLow"><?php echo $res['courseHoursLow'];?></td>
+		 <td class="editable-col" contenteditable="true" col-index='3' oldVal ="<?php echo $res['courseHoursHigh'];?>" value="courseHoursHigh"><?php echo $res['courseHoursHigh'];?></td>
       </tr>
 	  <?php endforeach;?>
    </tbody>
@@ -72,7 +71,7 @@ $(document).ready(function(){
 					type: "POST",  
 					url: "editCourse.php",
 					data: data,
-					dataType: "json",
+					dataType: "html",
 					success: function(response)  
 					{
                         console.log(response);
