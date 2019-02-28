@@ -6,59 +6,60 @@
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
         <script>
-                var xhr = new XMLHttpRequest();
-                xhr.addEventListener("load", courseHandler);
-                xhr.open("GET", "../scripts/courseCatalog.php");
-                xhr.send();
+			$(document).ready(function(){
+				
+				var xhr = new XMLHttpRequest();
+				xhr.addEventListener("load", degreeHandler);
+				xhr.open("GET", "../scripts/degreePrograms.php");
+				xhr.send();
 
-                function courseHandler() {
-                courseCatalog = JSON.parse(this.response);
-                for(var i in courseCatalog) {
-                    var $row = $("<tr>");
-                    $($row).append($("<td>",{
-                        value: i,
-                        text: courseCatalog[i].prefix
-                    })).append($("<td>",{
-                        value: i,
-                        text: courseCatalog[i].number
-                    })).append($("<td>",{
-                        value: i,
-                        text: courseCatalog[i].name
-                    })).append($("<td>", {
-                        value: i,
-                        text: courseCatalog[i].hours
-                    }));
-                    $("#courseTable").append($row);
-                }
-            };
+            });
+            
+			function degreeHandler() {
+				console.log(this.response);
+				var degreePrograms = JSON.parse(this.response);
+
+				/* Iterate through all degree programs and add to DOM as list item */
+				for(var degreeName in degreePrograms) {
+					$("#masters").append($("<li>", {
+						value: degreeName
+					}).append($("<label>", {
+						text: degreeName
+					}))); 
+
+
+					/* Create nested list under each degree program with the options offered, e.g., Thesis */
+					var degreeOptions = $("<ul id='sublist'>");
+					for(var degreeOption in degreePrograms[degreeName].option) {
+						degreeOptions.append($("<li>", {
+							value: degreeOption,
+						}).append($("<label>", {
+							text: degreeOption
+						})).append($("<button>", {
+							text: "Modify"	
+						})));
+					} 
+					$("#masters").append(degreeOptions);
+				}
+			}
+
         </script>
         <style>
-            table {
-                font-family: Arial, Helvetica, sans-serif;
-                border-collapse: collapse;
-                width: 100%;
-            }
 
-            td,th{
-                border: 1px solid #dddddd;
-                text-align: left;
-                padding: 8px;
-            }
-
-            tr:nth-child(even){
-                background-color: #dddddd;
-            }
         </style>
     </head>
     <body>
-        <h2>Courses Table</h2>
-        <table id="courseTable">
-            <tr>
-                <th>Prefix</th>
-                <th>CourseNumber</th>
-                <th>CourseName</th>
-                <td>CourseHours</td>
-            </tr>
-        </table>
+        <div>
+            <h4>Masters</h4>
+            <ul id="masters">
+                <li><a href="../scripts/courseTable.php">Catalog</a></li>         
+                <li><a href="addremove.html">Add/Remove Course</a></li>
+            </ul>
+            <h4>Ph.D</h4>
+            <ul id = "Ph.d">
+                <li><a href="../scripts/courseTable.php">Catalog</a></li>
+                <li><a href="addremove.html">Add/Remove Course</a></li>
+            </ul>
+        </div>
     </body>
 </html>
