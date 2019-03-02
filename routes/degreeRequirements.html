@@ -40,10 +40,20 @@
 					createForm(data).submit();
 				}); 			
 				
-                var xhr = new XMLHttpRequest();
+				$.ajax({
+					type: "POST",
+					url: "../scripts/courseCatalog.php",
+					data: {catalogName: getCookie("program") },
+					dataType: "json",
+					success: function(json) {
+						courseHandler(json);
+					}
+				});
+				
+               /* var xhr = new XMLHttpRequest();
                 xhr.addEventListener("load", courseHandler);
                 xhr.open("GET", "../scripts/courseCatalog.php");
-                xhr.send();
+                xhr.send(); */
 				
 				$("#addCourse").click(function() {
 					$("#courseMenu").show();
@@ -131,8 +141,8 @@
 				
 			}
 			
-            function courseHandler() {
-                courseCatalog = JSON.parse(this.response);
+            function courseHandler(json) {
+                courseCatalog = json;
                 for(var i in courseCatalog) {
                     $("#courseList").append($("<option>", {
                         value: i,
