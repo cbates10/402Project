@@ -10,23 +10,34 @@ if($con->connect_errno) {
 	die("Failed to connect to MYSQL: ($mysql->connect_errno) $mysqli->connect_error");
 }
 
-$sql = "SELECT * FROM courses";
+$sql = "select idCourses, coursePrefix, courseNumber, courseHoursLow, courseHoursHigh, courseName from catalogmapping natural join catalognames natural join courses where catalogName = ?";
 
-$result = $con->query($sql);
+$stmt = $con->prepare($sql);
+if(!$stmt) {
+	die("Could not prepare statement $con->error");
+}
+if(!$stmt->bind_param("s", $_POST["catalogName"])) {
+	die("Could not bind parameters $stmt->error");
+}
+$rc = $stmt->execute();
+if(false === $rc) {
+	die("Could not execute statement $stmt->error");
+}
+
+$stmt->bind_result($idCourses, $coursePrefix, $courseNumber, $courseHoursLow, $courseHoursHigh, $courseName);
 
 $courses = array();
 
-if($result->num_rows > 0) {
-	while($row = $result->fetch_assoc()) {
-		$courses[$row["idCourses"]] = new stdClass();
-		$courses[$row["idCourses"]]->prefix = $row["coursePrefix"];
-		$courses[$row["idCourses"]]->number = $row["courseNumber"];
-		$courses[$row["idCourses"]]->lowHours = $row["courseHoursLow"];
-		$courses[$row["idCourses"]]->highHours = $row["courseHoursHigh"];
-		$courses[$row["idCourses"]]->name = $row["courseName"];
-	}
+while($stmt->fetch()) {
+	$courses[$idCourses] = new stdClass();
+	$courses[$idCourses]->prefix = $coursePrefix;
+	$courses[$idCourses]->number = $courseNumber;
+	$courses[$idCourses]->lowHours = $courseHoursLow;
+	$courses[$idCourses]->highHours = $courseHoursHigh;
+	$courses[$idCourses]->name = $courseName;
 }
 
+$stmt->close();
 $con->close();
 
 $courses = json_encode($courses);
