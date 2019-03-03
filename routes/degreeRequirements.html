@@ -170,6 +170,7 @@
 				
 				/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
 				for(var i in requirements["Degree Program"].requiredCourses) {
+					console.log("Adding required course");
 					requirement.addRequiredCourse(i); // Add the courseId of the required course to the requirements object
 					
 					console.log(i);
@@ -215,18 +216,18 @@
 				certificateRequirementsHandler(requirements["Certificate"]);
 			}
 			
+			function certificateCourseEvent() {
+				$(this).attr("style", "color:green");
+			}
+			
 			function certificateRequirementsHandler(certificates) {
-				console.log("Inside the certificate handler");
 				if(certificates.length > 0) {
-					console.log("certificates found");
 					$("#certificateContainer").show();
 				}
 				var $certificateEntry = $("#certificateList");
 				certificates.forEach(function(certificate) {
 					var requirement = new Requirements();
-					
-					console.log(certificate.name);
-					
+
 					$certificateEntry.append($("<li>", {
 						text: certificate.name
 					}));
@@ -236,13 +237,11 @@
 					});
 					
 					for(var i in certificate.requiredCourses) {
-						requirement.addRequiredCourse(i); // Add the courseId of the required course to the requirements object
-
-						$courseList.append($("<li>", {
+						var $courseItem = $("<li>", {
 							text: courseCatalog[i].prefix + " " + courseCatalog[i].number
-						}));
-						console.log(i);
-						console.log(courseCatalog[i]);
+						});
+						$courseList.append($courseItem);
+						requirement.addRequiredCourse(i, certificateCourseEvent.bind($courseItem)); 
 						
 						/* Check to see if any of the courses have substitutions that may be taken in place of required course */
 						if(certificate.requiredCourses[i].length > 0) {
@@ -251,17 +250,22 @@
 							});
 							for(var y = 0; y < certificate.requiredCourses[i].length; y++) {
 								var courseId = certificate.requiredCourses[i][y];
-								requirement.addRequiredCourse(courseId);
+
 								requirement.setSubstitutableCourses(i, courseId);
-								$certificateSubEntry.append($("<li>", {
+								var $courseItem = $("<li>", {
 									text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number
-								}));
+								});	
+								requirement.addRequiredCourse(courseId, certificateCourseEvent.bind($courseItem));
+								$certificateSubEntry.append($courseItem);
 							}
 							$courseList.append($certificateSubEntry);
 						}
 					}
 					$certificateEntry.append($courseList);
 					$("#certificateContainer").append($certificateEntry);
+					requirement.setFufilledOperation(function() {
+						alert(certificate.name + " earned");
+					});
 					courseObserver.subscribe(requirement.addCourse.bind(requirement));
 				});
 			}
@@ -311,7 +315,6 @@
 		<button id="candidacyForm" type="button" disabled>Admission To Candidacy</button>
 		<div id="certificateContainer" hidden>
 			<h2>Certificates</h2>
-			<br>
 			<ul id="certificateList">
 			</ul>
 		</div>
