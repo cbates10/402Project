@@ -13,7 +13,7 @@ if($mysqli->connect_errno) {
 $degreeOption = $_SESSION["idObjects"];
 
 /* Build the array for all objects to retrieve for the degree program */
-$sqlObjects = "SELECT idObjects, type FROM objectmapping NATURAL JOIN objects NATURAL JOIN types WHERE idObjectDegree = ?";
+$sqlObjects = "SELECT idObjects, type, name FROM objectmapping NATURAL JOIN objects NATURAL JOIN types WHERE idObjectDegree = ?";
 $stmtObjects = $mysqli->prepare($sqlObjects);
 if(!$stmtObjects) {
 	die("Could not prepare statement $mysqli->error");
@@ -23,18 +23,22 @@ if(!$stmtObjects->bind_param("i", $degreeOption)) {
 }
 $rc = $stmtObjects->execute();
 if(false === $rc) {
-	echo 1;
 	die("Could not execute statement $stmt->error");
 }
-$stmtObjects->bind_result($idObjects, $type);
+$stmtObjects->bind_result($idObjects, $type, $name);
+
 $objects = array();
-$types = array();
-array_push($objects, $degreeOption);
-array_push($types, "Degree Program");
+$object = new stdClass();
+$object->idObjects = $degreeOption;
+$object->type = "Degree Program";
+array_push($objects, $object);
 
 while($stmtObjects->fetch()) {
-	array_push($objects, $idObjects);
-	array_push($types, $type);
+	$object = new stdClass();
+	$object->idObjects = $idObjects;
+	$object->type = $type;
+	$object->name = $name;
+	array_push($objects, $object);
 }
 $stmtObjects->close();
 
@@ -58,19 +62,21 @@ if(!$stmtHours) {
 }
 
 /* Initialize requirements */
-$requirements = new stdClass();
+$requirements = array();
 $sqlTypes = "SELECT type FROM types";
 $result = $mysqli->query($sqlTypes);
 if($result->num_rows > 0) {
 	while($row = $result->fetch_assoc()) {
 		$field = $row["type"];
-		$requirements->$field = array();
+		if($field !== "Degree Program") {
+			$requirements[$field] = array();
+		}
 	}
 }
 
 
 for($x = 0; $x < count($objects); $x++) {
-	if(!$stmtCourses->bind_param("i", $objects[$x])) {
+	if(!$stmtCourses->bind_param("i", $objects[$x]->idObjects)) {
 		die("Could not bind parameters $stmtCourses->error");
 	}
 	
@@ -90,7 +96,7 @@ for($x = 0; $x < count($objects); $x++) {
 	}
 	$stmtCourses->free_result();
 	
-	if(!$stmtSubCourses->bind_param("i", $objects[$x])) {
+	if(!$stmtSubCourses->bind_param("i", $objects[$x]->idObjects)) {
 		die("Could not bind parameters $stmtSubCourses->error");
 	}
 	$rc = $stmtSubCourses->execute();
@@ -104,7 +110,7 @@ for($x = 0; $x < count($objects); $x++) {
 	}
 	$stmtSubCourses->free_result();
 	
-	if(!$stmtHours->bind_param("i", $objects[$x])) {
+	if(!$stmtHours->bind_param("i", $objects[$x]->idObjects)) {
 		die("Could not bind parameters $stmtSubCourses->error");
 	}
 
@@ -121,8 +127,13 @@ for($x = 0; $x < count($objects); $x++) {
 	}
 	$stmtHours->free_result();
 	
-	$field = $types[$x];
-	array_push($requirements->$field, $objectRequirements);
+	$field = $objects[$x]->type;
+	if($field !== "Degree Program") {
+		$objectRequirements->name = $objects[$x]->name;
+		array_push($requirements[$field], $objectRequirements);
+	} else {
+		$requirements[$field] = $objectRequirements;
+	}
 }
 
 $stmtCourses->close();
