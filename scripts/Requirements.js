@@ -1,13 +1,15 @@
 class Requirements {
 
 	constructor() {
+		this.courseActions = {};
 		this.courses = {};
 		this.subCourses = {};
 		this.fufilledOperation = function() { return false; }
 	}
 	
-	addRequiredCourse(courseId) {
+	addRequiredCourse(courseId, courseAction) {
 		this.courses[courseId] = false;
+		this.courseActions[courseId] = courseAction;
 	}
 	
 	setSubstitutableCourses(courseId, subId) {
@@ -32,8 +34,10 @@ class Requirements {
 	addCourse(course) {
 		if(this.courses[course] !== undefined) {
 			this.courses[course] = true;
+			if(this.courseActions[course] !== undefined) {
+				this.courseActions[course]();
+			}
 			if(this.fufillsRequirements()) {
-				console.log("calling operation");
 				this.fufilledOperation();
 			}
 		}
