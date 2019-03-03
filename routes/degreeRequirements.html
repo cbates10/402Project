@@ -140,6 +140,7 @@
 			
             function courseHandler(json) {
                 courseCatalog = json;
+				console.log(courseCatalog);
                 for(var i in courseCatalog) {
                     $("#courseList").append($("<option>", {
                         value: i,
@@ -220,26 +221,47 @@
 					console.log("certificates found");
 					$("#certificateContainer").show();
 				}
+				var $certificateEntry = $("#certificateList");
 				certificates.forEach(function(certificate) {
 					var requirement = new Requirements();
+					
+					console.log(certificate.name);
+					
+					$certificateEntry.append($("<li>", {
+						text: certificate.name
+					}));
+					
+					var $courseList = $("<ul>", {
+						class: "certificateCourseList"
+					});
+					
 					for(var i in certificate.requiredCourses) {
 						requirement.addRequiredCourse(i); // Add the courseId of the required course to the requirements object
-						
+
+						$courseList.append($("<li>", {
+							text: courseCatalog[i].prefix + " " + courseCatalog[i].number
+						}));
 						console.log(i);
 						console.log(courseCatalog[i]);
 						
 						/* Check to see if any of the courses have substitutions that may be taken in place of required course */
 						if(certificate.requiredCourses[i].length > 0) {
-
+							var $certificateSubEntry = $("<ul>", {
+								class: "certificateCourses"
+							});
 							for(var y = 0; y < certificate.requiredCourses[i].length; y++) {
 								var courseId = certificate.requiredCourses[i][y];
 								requirement.addRequiredCourse(courseId);
 								requirement.setSubstitutableCourses(i, courseId);
-								
+								$certificateSubEntry.append($("<li>", {
+									text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number
+								}));
 							}
-							
+							$courseList.append($certificateSubEntry);
 						}
 					}
+					$certificateEntry.append($courseList);
+					$("#certificateContainer").append($certificateEntry);
 					courseObserver.subscribe(requirement.addCourse.bind(requirement));
 				});
 			}
@@ -289,6 +311,9 @@
 		<button id="candidacyForm" type="button" disabled>Admission To Candidacy</button>
 		<div id="certificateContainer" hidden>
 			<h2>Certificates</h2>
+			<br>
+			<ul id="certificateList">
+			</ul>
 		</div>
     </body>
 </html>
