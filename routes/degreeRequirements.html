@@ -49,6 +49,8 @@
 						courseHandler(json);
 					}
 				});
+								
+
 				
 				$("#addCourse").click(function() {
 					$("#courseMenu").show();
@@ -145,29 +147,34 @@
                     })); 
                 }
 				
+				var xhr = new XMLHttpRequest();
+				xhr.addEventListener("load", requirementsHandler);
+				xhr.open("GET", "../scripts/requirements.php");
+				xhr.send();
+				
 				setCourseHours($("#courseList option:selected").val());
 
 				$("#courseList").change(function() {
 					setCourseHours($(this).val());
 				});
-				
-				var xhr = new XMLHttpRequest();
-				xhr.addEventListener("load", requirementsHandler);
-				xhr.open("GET", "../scripts/requirements.php");
-				xhr.send();
+
             };
 
 			function requirementsHandler() {
-				console.log(this.response);
+			console.log(this.response);
 				var requirements = JSON.parse(this.response);
+				console.log(requirements);
 				var requiredList = $("#requiredCourses");
-				
 				var requirement = new Requirements();
 				
-				for(var i in requirements.requiredCourses) {
-					requirement.addRequiredCourse(i);
+				/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
+				for(var i in requirements["Degree Program"].requiredCourses) {
+					requirement.addRequiredCourse(i); // Add the courseId of the required course to the requirements object
+					
 					console.log(i);
 					console.log(courseCatalog[i]);
+					
+					/* For display purposes, add a string detailing the hour range for any course that is variable hours and append the item to the list */
 					if(courseCatalog[i].lowHours != courseCatalog[i].highHours) {
 						var hourString = courseCatalog[i].lowHours + " - " + courseCatalog[i].highHours;
 					} else {
@@ -178,10 +185,12 @@
 						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + hourString
 					}));
 					
-					if(requirements.requiredCourses[i].length > 0) {
+					/* Check to see if any of the courses have substitutions that may be taken in place of required course */
+					if(requirements["Degree Program"].requiredCourses[i].length > 0) {
+						/* Create a sublist for the substitutable courses, create list items for sub courses and append sublist to required course list item */
 						var substitutableCourses = $("<ul id='sublist'>");
-						for(var y = 0; y < requirements.requiredCourses[i].length; y++) {
-							var courseId = requirements.requiredCourses[i][y];
+						for(var y = 0; y < requirements["Degree Program"].requiredCourses[i].length; y++) {
+							var courseId = requirements["Degree Program"].requiredCourses[i][y];
 							requirement.addRequiredCourse(courseId);
 							requirement.setSubstitutableCourses(i, courseId);
 							if(courseCatalog[i].lowHours != courseCatalog[i].highHours) {
@@ -201,6 +210,38 @@
 					$("#candidacyForm").removeAttr("disabled");
 				});
 				courseObserver.subscribe(requirement.addCourse.bind(requirement));
+				
+				certificateRequirementsHandler(requirements["Certificate"]);
+			}
+			
+			function certificateRequirementsHandler(certificates) {
+				console.log("Inside the certificate handler");
+				if(certificates.length > 0) {
+					console.log("certificates found");
+					$("#certificateContainer").show();
+				}
+				certificates.forEach(function(certificate) {
+					var requirement = new Requirements();
+					for(var i in certificate.requiredCourses) {
+						requirement.addRequiredCourse(i); // Add the courseId of the required course to the requirements object
+						
+						console.log(i);
+						console.log(courseCatalog[i]);
+						
+						/* Check to see if any of the courses have substitutions that may be taken in place of required course */
+						if(certificate.requiredCourses[i].length > 0) {
+
+							for(var y = 0; y < certificate.requiredCourses[i].length; y++) {
+								var courseId = certificate.requiredCourses[i][y];
+								requirement.addRequiredCourse(courseId);
+								requirement.setSubstitutableCourses(i, courseId);
+								
+							}
+							
+						}
+					}
+					courseObserver.subscribe(requirement.addCourse.bind(requirement));
+				});
 			}
         </script>
     </head>
@@ -246,5 +287,8 @@
 			</table>
 		</div>
 		<button id="candidacyForm" type="button" disabled>Admission To Candidacy</button>
+		<div id="certificateContainer" hidden>
+			<h2>Certificates</h2>
+		</div>
     </body>
 </html>
