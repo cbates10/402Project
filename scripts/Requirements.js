@@ -5,6 +5,15 @@ class Requirements {
 		this.courses = {};
 		this.subCourses = {};
 		this.fufilledOperation = function() { return false; }
+		this.gradeRestriction = null;
+		this.requiredHours = 0;
+		this.currentHours = 0;
+		this.hoursAction = null;
+	}
+	
+	setRequiredHours(hours, hoursAction) {
+		this.requiredHours = hours;
+		this.hoursAction = hoursAction;
 	}
 	
 	addRequiredCourse(courseId, courseAction) {
@@ -31,15 +40,18 @@ class Requirements {
 		this.validationExpressions = this.validationExpressions.filter((exp) => exp !== func);
 	}
 	
-	addCourse(course) {
+	addCourse(course, hours) {
 		if(this.courses[course] !== undefined) {
 			this.courses[course] = true;
 			if(this.courseActions[course] !== undefined) {
 				this.courseActions[course]();
 			}
-			if(this.fufillsRequirements()) {
-				this.fufilledOperation();
-			}
+		}
+		if(this.hoursAction) {
+			this.hoursAction(hours);
+		}
+		if(this.fufillsRequirements()) {
+			this.fufilledOperation();
 		}
 	}
 	
@@ -48,6 +60,9 @@ class Requirements {
 	}
 	
 	fufillsRequirements() {
+		if(this.currentHours < this.requiredHours) {
+			return false;
+		}
 		for(var key in this.courses) {
 			if(!this.courses[key]) {
 				if(this.subCourses[key] !== undefined) {
