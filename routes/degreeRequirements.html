@@ -76,7 +76,7 @@
 					});
 					if(!selectedCourses.includes(selectedCourse)){
 						selectedCourses.push(selectedCourse);
-						courseObserver.broadcast(selectedCourse);
+						courseObserver.broadcast(selectedCourse, parseInt($("#hours").val()));
 						
 						var $row = $("<tr>", {
 							class: "courseEntry",
@@ -162,16 +162,18 @@
             };
 
 			function requirementsHandler() {
-			console.log(this.response);
+				console.log(this.response);
 				var requirements = JSON.parse(this.response);
 				console.log(requirements);
 				var requiredList = $("#requiredCourses");
 				var requirement = new Requirements();
-				
+				if(requirements["Degree Program"].requiredHours !== undefined) {
+					var $progressBar = $("#requiredHoursProgress");
+					$progressBar.attr("max", requirements["Degree Program"].requiredHours.toString());
+					requirement.setRequiredHours(requirements["Degree Program"].requiredHours, degreeHoursEvent.bind($progressBar));
+				}
 				/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
 				for(var i in requirements["Degree Program"].requiredCourses) {
-					console.log("Adding required course");
-					requirement.addRequiredCourse(i); // Add the courseId of the required course to the requirements object
 					
 					console.log(i);
 					console.log(courseCatalog[i]);
@@ -182,10 +184,12 @@
 					} else {
 						var hourString = courseCatalog[i].highHours;
 					}
-					requiredList.append($("<li>", {
+					var $courseItem = $("<li>", {
 						value: i,
 						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + hourString
-					}));
+					});
+					requiredList.append($courseItem);
+					requirement.addRequiredCourse(i, degreeCourseEvent.bind($courseItem)); // Add the courseId of the required course to the requirements object
 					
 					/* Check to see if any of the courses have substitutions that may be taken in place of required course */
 					if(requirements["Degree Program"].requiredCourses[i].length > 0) {
@@ -193,17 +197,19 @@
 						var substitutableCourses = $("<ul id='sublist'>");
 						for(var y = 0; y < requirements["Degree Program"].requiredCourses[i].length; y++) {
 							var courseId = requirements["Degree Program"].requiredCourses[i][y];
-							requirement.addRequiredCourse(courseId);
-							requirement.setSubstitutableCourses(i, courseId);
+
 							if(courseCatalog[i].lowHours != courseCatalog[i].highHours) {
 								var hourString = courseCatalog[courseId].lowHours + " - " + courseCatalog[courseId].highHours;
 							} else {
 								var hourString = courseCatalog[courseId].highHours;
 							}
-							substitutableCourses.append($("<li>", {
+							var $courseItem = $("<li>", {
 								value: courseCatalog[courseId],
 								text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + hourString
-							}));
+							});
+							substitutableCourses.append($courseItem);
+							requirement.addRequiredCourse(courseId, degreeCourseEvent.bind($courseItem));
+							requirement.setSubstitutableCourses(i, courseId);
 						}
 						requiredList.append(substitutableCourses);
 					}
@@ -214,6 +220,15 @@
 				courseObserver.subscribe(requirement.addCourse.bind(requirement));
 				
 				certificateRequirementsHandler(requirements["Certificate"]);
+			}
+			
+			function degreeHoursEvent(addedHours) {
+				console.log("inside degree hours event");
+				$(this).val($(this).val() + addedHours);
+			}
+			
+			function degreeCourseEvent() {
+				$(this).attr("style", "color:green");
 			}
 			
 			function certificateCourseEvent() {
@@ -274,6 +289,8 @@
     <body>
 		<div>
 			<p>Program: <span id="program"></span> <span id="option"></span></p>
+			<h3>Required Hours</h3>
+			<progress id="requiredHoursProgress" value="0" max="0"></progress>
 			<h2>Required Courses</h2>
 			<ul id="requiredCourses">
 
