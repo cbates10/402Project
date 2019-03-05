@@ -11,7 +11,7 @@ class CourseObserver {
 		this.observers = this.observers.filter((subscriber) => subscriber !== func);
 	}
 	
-	broadcast(courseId, hours) {
-		this.observers.forEach((subscriber) => subscriber(courseId, hours));
+	broadcast(courseId, hours, number) {
+		this.observers.forEach((subscriber) => subscriber(courseId, hours, number));
 	}
 }
