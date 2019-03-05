@@ -12,7 +12,6 @@
 				xhr.addEventListener("load", degreeHandler);
 				xhr.open("GET", "../scripts/degreePrograms.php");
 				xhr.send();
-
             });
             
 			function degreeHandler() {
@@ -27,9 +26,17 @@
 						text: degreeName
 					}))); 
 
-
 					/* Create nested list under each degree program with the options offered, e.g., Thesis */
 					var degreeOptions = $("<ul id='sublist'>");
+					
+					degreeOptions.append($("<li>", {
+						name: "catalog"
+					}).append($("<a>", {
+						href: "addremove.html",
+						text: "Edit Course Catalog",
+						onclick: "document.cookie = 'program=" + degreeName + "'"
+					})));
+					
 					for(var degreeOption in degreePrograms[degreeName].option) {
 						degreeOptions.append($("<li>", {
 							value: degreeOption,
@@ -52,13 +59,7 @@
         <div>
             <h4>Masters</h4>
             <ul id="masters">
-                <li><a href="../scripts/courseTable.php">Catalog</a></li>         
-                <li><a href="addremove.html">Add/Remove Course</a></li>
-            </ul>
-            <h4>Ph.D</h4>
-            <ul id = "Ph.d">
-                <li><a href="../scripts/courseTable.php">Catalog</a></li>
-                <li><a href="addremove.html">Add/Remove Course</a></li>
+
             </ul>
         </div>
     </body>
