@@ -76,7 +76,7 @@
 					});
 					if(!selectedCourses.includes(selectedCourse)){
 						selectedCourses.push(selectedCourse);
-						courseObserver.broadcast(selectedCourse, parseInt($("#hours").val()));
+						courseObserver.broadcast(selectedCourse, parseInt($("#hours").val()), courseCatalog[selectedCourse].number);
 						
 						var $row = $("<tr>", {
 							class: "courseEntry",
@@ -172,6 +172,13 @@
 					$progressBar.attr("max", requirements["Degree Program"].requiredHours.toString());
 					requirement.setRequiredHours(requirements["Degree Program"].requiredHours, degreeHoursEvent.bind($progressBar));
 				}
+				if(requirements["Degree Program"].hours400) {
+					requirement.set400LevelHours(requirements["Degree Program"].hours400, function() { alert("Maximum 400 level hours exceeded"); });
+				}
+				if(requirements["Degree Program"].hours500) {
+					requirement.set500LevelHours(requirements["Degree Program"].hours500, function() { alert("Maximum 500 level hours exceeded"); });
+				}
+				// TODO Add database support for 600 level hours 
 				/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
 				for(var i in requirements["Degree Program"].requiredCourses) {
 					
