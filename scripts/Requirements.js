@@ -76,21 +76,21 @@ class Requirements {
 	addCourse(course, hours, number) {
 		if(number < 500)  {
 			this.currentHours400 += hours;
-			if(this.hours400Action !== undefined) {
+			if(this.hours400Action) {
 				if(this.currentHours400 > this.hours400) {
 					this.hours400Action();
 				}
 			}
 		} else if(number < 600) {
 			this.currentHours500 += hours;
-			if(this.hours500Action !== undefined) {
+			if(this.hours500Action) {
 				if(this.currentHours500 > this.hours500) {
 					this.hours500Action();
 				}
 			}
 		} else {
 			this.currentHours600 += hours;
-			if(this.hours600Action !== undefined) {
+			if(this.hours600Action) {
 				if(this.currentHours600 > this.hours600) {
 					this.hours600Action();
 				}

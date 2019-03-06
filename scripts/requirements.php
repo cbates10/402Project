@@ -55,10 +55,16 @@ if(!$stmtSubCourses) {
 	die("Could not prepare statement $mysqli->error");
 }
 
-$sqlHours = "SELECT requiredHours, 400Hours, 500Hours FROM objects NATURAL LEFT JOIN 400hours NATURAL LEFT JOIN 500hours WHERE idObjects = ?";
+$sqlHours = "SELECT requiredHours, minGrade, 400Hours, 500Hours FROM objects NATURAL LEFT JOIN 400hours NATURAL LEFT JOIN 500hours WHERE idObjects = ?";
 $stmtHours = $mysqli->prepare($sqlHours);
 if(!$stmtHours) {
 	die("Could not prepare statement $mysqli->error");
+}
+
+$sqlCourseOverride = "SELECT idCourses, maxCount, minGrade, minHours FROM coursemappingoverride WHERE idObjects = ?";
+$stmtCourseOverride = $mysqli->prepare($sqlCourseOverride);
+if(!$stmtCourseOverride) {
+	die("Could not prepare statement $myslqi->error");
 }
 
 /* Initialize requirements */
@@ -82,7 +88,6 @@ for($x = 0; $x < count($objects); $x++) {
 	
 	$rc = $stmtCourses->execute();
 	if(false === $rc) {
-		echo 2;
 		die("Could not execute statement $stmtCourses->error");
 	}
 	$stmtCourses->bind_result($requiredCourse);
@@ -118,14 +123,34 @@ for($x = 0; $x < count($objects); $x++) {
 	if(false === $rc) {
 		die("Could not execute statement $stmt->error");
 	}
-	$stmtHours->bind_result($requiredHours, $hours400, $hours500);
+	$stmtHours->bind_result($requiredHours, $minGrade, $hours400, $hours500);
 
 	if($stmtHours->fetch()) {
 		$objectRequirements->requiredHours = $requiredHours;
 		$objectRequirements->hours400 = $hours400;
 		$objectRequirements->hours500 = $hours500;
+		$objectRequirements->minGrade = $minGrade;
 	}
 	$stmtHours->free_result();
+	
+	if(!$stmtCourseOverride->bind_param("i", $objects[$x]->idObjects)) {
+		die("Could not bind parameters $stmtCourseOverride->error");
+	}
+	$rc = $stmtCourseOverride->execute();
+	if(false === $rc) {
+		die("Could not execute statement $stmtCourseOverride->error");
+	}
+	$stmtCourseOverride->bind_result($idCourse, $maxCount, $minGrade, $minHours);
+	
+	$objectRequirements->courseOverride = array();
+	while($stmtCourseOverride->fetch()) {
+		$courseOverride = new stdClass();
+		$courseOverride->maxCount = $maxCount;
+		$courseOverride->minGrade = $minGrade;
+		$courseOverride->minHours = $minHours;
+		$objectRequirements->courseOverride[$idCourse] = $courseOverride;
+	}
+	$stmtCourseOverride->free_result();
 	
 	$field = $objects[$x]->type;
 	if($field !== "Degree Program") {
@@ -139,6 +164,7 @@ for($x = 0; $x < count($objects); $x++) {
 $stmtCourses->close();
 $stmtHours->close();
 $stmtSubCourses->close();
+$stmtCourseOverride->close();
 $mysqli->close();
 
 $requirements = json_encode($requirements);
