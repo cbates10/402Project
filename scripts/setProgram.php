@@ -28,8 +28,7 @@ if(false === $rc) {
 $stmt->bind_result($idMajorOptions);
 
 if($stmt->fetch()) {
-	session_start();
-	$_SESSION["idObjects"] = $idMajorOptions; 
+	setcookie("programId", $idMajorOptions, 0, '/402Project/routes');
 	header("Location: ../routes/degreeRequirements.html");
 	die();	
 } else {
