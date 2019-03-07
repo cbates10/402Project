@@ -4,13 +4,13 @@ include 'DatabaseInfo.php';
 
 $mysqli = new mysqli($servername, $sqlusername, $sqlpassword, $database);
 
-session_start();
+//session_start();
 
 if($mysqli->connect_errno) {
 	die("Failed to connect to MYSQL: ($mysqli->connect_errno) $mysqli->connect_error");
 }
 
-$degreeOption = $_SESSION["idObjects"];
+$degreeOption = $_POST["idObjects"];
 
 /* Build the array for all objects to retrieve for the degree program */
 $sqlObjects = "SELECT idObjects, type, name FROM objectmapping NATURAL JOIN objects NATURAL JOIN types WHERE idObjectDegree = ?";
