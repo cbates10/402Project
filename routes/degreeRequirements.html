@@ -147,10 +147,17 @@
                     })); 
                 }
 				
-				var xhr = new XMLHttpRequest();
-				xhr.addEventListener("load", requirementsHandler);
-				xhr.open("GET", "../scripts/requirements.php");
-				xhr.send();
+				$.ajax({
+					type: "POST",
+					url: "../scripts/requirements.php",
+					data: { idObjects: getCookie("programId") },
+					dataType: "json",
+					success: function(json) {
+						console.log("success");
+						console.log(json);
+						requirementsHandler(json);
+					}
+				});
 				
 				setCourseHours($("#courseList option:selected").val());
 
@@ -160,9 +167,8 @@
 
             };
 
-			function requirementsHandler() {
-				console.log(this.response);
-				var requirements = JSON.parse(this.response);
+			function requirementsHandler(json) {
+				var requirements = json;
 				console.log(requirements);
 				var requiredList = $("#requiredCourses");
 				var requirement = new Requirements();
@@ -180,19 +186,16 @@
 				// TODO Add database support for 600 level hours 
 				
 				for(var i in courseCatalog) {
-					courseCatalog[i].minGrade = requirements["Degree Program"].minGrade;
-				}
-				for(var i in requirements["Degree Program"].courseOverride) {
-					if(requirements["Degree Program"].courseOverride[i].minGrade) {
+					if(requirements["Degree Program"].courseOverride[i]) {
 						courseCatalog[i].minGrade = requirements["Degree Program"].courseOverride[i].minGrade;
-					}
-					if(requirements["Degree Program"].courseOverride[i].maxCount) {
 						courseCatalog[i].maxCount = requirements["Degree Program"].courseOverride[i].maxCount;
-					}
-					if(requirements["Degree Program"].courseOverride[i].minHours) {
 						courseCatalog[i].lowHours = requirements["Degree Program"].courseOverride[i].minHours;
+					} else {
+						courseCatalog[i].minGrade = requirements["Degree Program"].minGrade;
+						courseCatalog[i].maxCount = 1;
 					}
 				}
+
 				console.log(courseCatalog);
 				/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
 				for(var i in requirements["Degree Program"].requiredCourses) {
