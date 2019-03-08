@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
+	<link rel="stylesheet" type="text/css" href="../styles/popup.css">
     <head>
         <meta charset="utf8">
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
         <script>
-			$(document).ready(function(){
-				
+			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", degreeHandler);
 				xhr.open("GET", "../scripts/degreePrograms.php");
-				xhr.send();
+				xhr.send();		
             });
             
 			function degreeHandler() {
@@ -43,11 +43,34 @@
 						}).append($("<label>", {
 							text: degreeOption
 						})).append($("<button>", {
+							value: degreePrograms[degreeName].option[degreeOption],
+							name: "modifyButton",
 							text: "Modify"	
 						})));
 					} 
 					$("#masters").append(degreeOptions);
+					$("button[name='modifyButton']").click(function(){
+							$.ajax({
+								type: "POST",
+								url: "../scripts/requirements.php",
+								data: {idObjects: $(this).val()},
+								dataType: "json",
+								success: function(json) {
+									popup(json);
+								}
+							});
+						});
 				}
+			}
+
+			function popup(json){
+				var modal = document.getElementById('myModal');
+				modal.style.display = "block";
+			}
+
+			function closepopup(){	
+				var modal = document.getElementById('myModal');
+				modal.style.display = "none";	
 			}
 
         </script>
@@ -61,6 +84,12 @@
             <ul id="masters">
 
             </ul>
-        </div>
+		</div>
+		<div id="myModal" class="modal">
+			<div class="modal-content">
+			  <span onclick="closepopup()" class="close">&times;</span>
+			  <p>Some text in the Modal..</p>
+			</div>
+		</div>
     </body>
 </html>
