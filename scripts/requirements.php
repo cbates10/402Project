@@ -65,6 +65,12 @@ if(!$stmtCourseOverride) {
 	die("Could not prepare statement $myslqi->error");
 }
 
+$sqlCatalogs = "SELECT catalogName FROM objectcatalogs NATURAL JOIN catalognames WHERE idObjects = ?";
+$stmtCatalogs = $mysqli->prepare($sqlCatalogs);
+if(!$stmtCatalogs) {
+	die("Could not prepare statement $mysqli->error");
+}
+
 /* Initialize requirements */
 $requirements = array();
 $sqlTypes = "SELECT type FROM types";
@@ -78,6 +84,18 @@ if($result->num_rows > 0) {
 	}
 }
 
+if(!$stmtCatalogs->bind_param("i", $degreeOption)) {
+	die("Could not bind parameters $stmtCourse->error");
+}
+$rc = $stmtCatalogs->execute();
+if(false === $rc) {
+	die("Could not execute statement $stmtCatalogs->error");
+}
+$stmtCatalogs->bind_result($catalogName);
+$requirements["Catalogs"] = array();
+while($stmtCatalogs->fetch()) {
+	array_push($requirements["Catalogs"], $catalogName);
+}
 
 for($x = 0; $x < count($objects); $x++) {
 	if(!$stmtCourses->bind_param("i", $objects[$x]->idObjects)) {
