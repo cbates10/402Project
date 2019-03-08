@@ -10,6 +10,9 @@
 		<script type="text/javascript" src="../scripts/Requirements.js"></script>
         <script>
 			var courseCatalog;
+			var catalogsLoaded = 0;
+			var $catalogs = [];
+			var requirements;
 			var selectedCourses = [];
 			var courseObserver = new CourseObserver();
 			
@@ -42,15 +45,21 @@
 				
 				$.ajax({
 					type: "POST",
-					url: "../scripts/courseCatalog.php",
-					data: {catalogName: getCookie("program") },
+					url: "../scripts/requirements.php",
+					data: { idObjects: getCookie("programId") },
 					dataType: "json",
 					success: function(json) {
-						courseHandler(json);
+						console.log("success");
+						console.log(json);
+						requirementsHandler(json);
 					}
 				});
-								
 
+				$("#catalogList").change(function() {
+					$("#courseList").detach();
+					$catalogs[$(this).val()].insertAfter("#catalogList");
+					console.log($(this).val());
+				});
 				
 				$("#addCourse").click(function() {
 					$("#courseMenu").show();
@@ -128,6 +137,8 @@
 			};
 			
 			function setCourseHours(courseId) {
+				console.log(courseCatalog);
+				console.log(courseId);
 				if(courseCatalog[courseId].lowHours != courseCatalog[courseId].highHours) {
 					$("#hours").val("");
 					$("#hours").attr("placeholder", courseCatalog[courseId].lowHours + "-" + courseCatalog[courseId].highHours); 
@@ -137,39 +148,75 @@
 				
 			}
 			
-            function courseHandler(json) {
-                courseCatalog = json;
-				console.log(courseCatalog);
-                for(var i in courseCatalog) {
-                    $("#courseList").append($("<option>", {
+            function courseHandler(courseArray, name) {
+                if(courseCatalog !== undefined) {
+					console.log("Pushing together");
+					for(var i in courseArray) {
+						courseCatalog[i] = courseArray[i];
+					}
+					console.log(courseCatalog);
+				} else {
+					courseCatalog = courseArray;
+				}
+				var $courseList = $("<select>", {
+					id: "courseList"
+				});
+                for(var i in courseArray) {
+                    $courseList.append($("<option>", {
                         value: i,
-                        text: courseCatalog[i].prefix + " " + courseCatalog[i].number
+                        text: courseArray[i].prefix + " " + courseArray[i].number
                     })); 
                 }
-				
-				$.ajax({
-					type: "POST",
-					url: "../scripts/requirements.php",
-					data: { idObjects: getCookie("programId") },
-					dataType: "json",
-					success: function(json) {
-						console.log("success");
-						console.log(json);
-						requirementsHandler(json);
-					}
-				});
-				
-				setCourseHours($("#courseList option:selected").val());
+				$catalogs[name] = $courseList;
 
-				$("#courseList").change(function() {
+				$courseList.change(function() {
+					console.log($(this).val());
 					setCourseHours($(this).val());
 				});
-
+				catalogsLoaded++;
+				if(catalogsLoaded == requirements["Catalogs"].length) {
+					setCourseList();
+					setCourseHours($("#courseList option:selected").val());
+					processRequirements();
+				}
             };
 
+			function setCourseList() {
+				var listName = $("#catalogList option:selected").val();
+				$catalogs[listName].insertAfter("#catalogList");
+			}
+				
+			function loadCatalog(name) {
+				$("#catalogList").append($("<option>", {
+					value: name,
+					text: name
+				}));
+				var $catalogList = $("<select>", {
+					id: "courseList"
+				})
+				$.ajax({
+					type: "POST",
+					url: "../scripts/courseCatalog.php",
+					data: {catalogName: name },
+					dataType: "json",
+					success: function(json) {
+						courseHandler(json, name);
+					}
+				});
+			}
+			
+			
 			function requirementsHandler(json) {
-				var requirements = json;
+				requirements = json;
 				console.log(requirements);
+				
+				for(var i in requirements["Catalogs"]) {
+					loadCatalog(requirements["Catalogs"][i]);
+				}
+			}
+			
+			
+			function processRequirements() {
 				var requiredList = $("#requiredCourses");
 				var requirement = new Requirements();
 				if(requirements["Degree Program"].requiredHours !== undefined) {
@@ -326,9 +373,11 @@
 		<br>
 		<div>
 			<form id="courseMenu" hidden>
-				<select id="courseList">
-            
+				<select id="catalogList">
+				
 				</select>
+
+				
 				<label for="grade">Grade</label><input type="text" id="grade" name="grade" size="1" maxlength="1" pattern="[ABCDF]{1}" required></input>
 				<label for="year">Year</label><input type="number" id="year" style="width:50px" required></input>
 				<label for="term">Term</label>
