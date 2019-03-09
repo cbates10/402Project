@@ -58,7 +58,6 @@
 				$("#catalogList").change(function() {
 					$("#courseList").detach();
 					$catalogs[$(this).val()].insertAfter("#catalogList");
-					console.log($(this).val());
 				});
 				
 				$("#addCourse").click(function() {
@@ -105,8 +104,14 @@
 							id: "hours",
 							text: $("#hours").val()
 						}));
+						var $closeButton = $("<button>", {
+							class: "removeButton",
+							text: "X"
+						});
+						$closeButton.click(removeCourseEventHandler);
+						$row.append($closeButton);
 						$("#courseTableBody").append($row);
-						courseObserver.broadcast(selectedCourse, parseInt($("#hours").val()), courseCatalog[selectedCourse].number, $row);
+						courseObserver.broadcastAddEvent(selectedCourse, courseCatalog[selectedCourse], parseInt($("#hours").val()), $row);
 					}
 					$("#grade").val("");
 					$("#year").val("");
@@ -114,7 +119,31 @@
 				});
 				
             });
-            
+			
+			function removeCourseEventHandler() {
+				console.log("Inside the remove course event handler");
+				var $row = $(this).parent();
+				var courseId = $row.attr("id");
+				selectedCourses = selectedCourses.filter(function(id) {
+					return id != courseId;
+				});
+				courseObserver.broadcastRemoveEvent(courseId, $row.find("#hours").text());
+				$row.remove();
+			}
+			
+			function degreeHoursEvent(hours) {
+				console.log("inside degree hours event");
+				$(this).val($(this).val() + hours);
+			}
+			
+			function degreeCourseEvent() {
+				$(this).attr("style", "color:green");
+			}
+			
+			function certificateCourseEvent() {
+				$(this).attr("style", "color:green");
+			}
+			
 			function displayUserInfo() {
 				console.log("Cookie is " + getCookie("option"));
 				$("#option").text(getCookie("option"));
@@ -150,11 +179,9 @@
 			
             function courseHandler(courseArray, name) {
                 if(courseCatalog !== undefined) {
-					console.log("Pushing together");
 					for(var i in courseArray) {
 						courseCatalog[i] = courseArray[i];
 					}
-					console.log(courseCatalog);
 				} else {
 					courseCatalog = courseArray;
 				}
@@ -289,23 +316,13 @@
 				requirement.setFufilledOperation(function() {
 					$("#candidacyForm").removeAttr("disabled");
 				});
-				courseObserver.subscribe(requirement.addCourse.bind(requirement));
+				courseObserver.subscribeAddCourse(requirement.addCourse.bind(requirement));
+				courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
 				
 				certificateRequirementsHandler(requirements["Certificate"]);
 			}
 			
-			function degreeHoursEvent(addedHours) {
-				console.log("inside degree hours event");
-				$(this).val($(this).val() + addedHours);
-			}
-			
-			function degreeCourseEvent() {
-				$(this).attr("style", "color:green");
-			}
-			
-			function certificateCourseEvent() {
-				$(this).attr("style", "color:green");
-			}
+
 			
 			function certificateRequirementsHandler(certificates) {
 				if(certificates.length > 0) {
