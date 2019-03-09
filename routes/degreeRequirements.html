@@ -49,8 +49,6 @@
 					data: { idObjects: getCookie("programId") },
 					dataType: "json",
 					success: function(json) {
-						console.log("success");
-						console.log(json);
 						requirementsHandler(json);
 					}
 				});
@@ -132,12 +130,15 @@
 			}
 			
 			function degreeHoursEvent(hours) {
-				console.log("inside degree hours event");
-				$(this).val($(this).val() + hours);
+				$("#requiredHoursProgress").val(hours);
 			}
 			
-			function degreeCourseEvent() {
-				$(this).attr("style", "color:green");
+			function degreeCourseEvent(isSet) {
+				if(isSet) {
+					$(this).attr("style", "color:green");
+				} else {
+					$(this).attr("style", "color:black");
+				}
 			}
 			
 			function certificateCourseEvent() {
@@ -166,8 +167,6 @@
 			};
 			
 			function setCourseHours(courseId) {
-				console.log(courseCatalog);
-				console.log(courseId);
 				if(courseCatalog[courseId].lowHours != courseCatalog[courseId].highHours) {
 					$("#hours").val("");
 					$("#hours").attr("placeholder", courseCatalog[courseId].lowHours + "-" + courseCatalog[courseId].highHours); 
@@ -235,7 +234,6 @@
 			
 			function requirementsHandler(json) {
 				requirements = json;
-				console.log(requirements);
 				
 				for(var i in requirements["Catalogs"]) {
 					loadCatalog(requirements["Catalogs"][i]);
@@ -249,7 +247,7 @@
 				if(requirements["Degree Program"].requiredHours !== undefined) {
 					var $progressBar = $("#requiredHoursProgress");
 					$progressBar.attr("max", requirements["Degree Program"].requiredHours.toString());
-					requirement.setRequiredHours(requirements["Degree Program"].requiredHours, degreeHoursEvent.bind($progressBar));
+					requirement.setRequiredHours(requirements["Degree Program"].requiredHours, degreeHoursEvent);
 				}
 				if(requirements["Degree Program"].hours400) {
 					requirement.set400LevelHours(requirements["Degree Program"].hours400, function() { alert("Maximum 400 level hours exceeded"); });
@@ -270,7 +268,6 @@
 					}
 				}
 
-				console.log(courseCatalog);
 				/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
 				for(var i in requirements["Degree Program"].requiredCourses) {
 					
@@ -313,8 +310,12 @@
 						requiredList.append(substitutableCourses);
 					}
 				}
-				requirement.setFufilledOperation(function() {
-					$("#candidacyForm").removeAttr("disabled");
+				requirement.setFufilledOperation(function(isSet) {
+					if(isSet) {
+						$("#candidacyForm").removeAttr("disabled");
+					} else {
+						$("#candidacyForm").attr("disabled", true);
+					}
 				});
 				courseObserver.subscribeAddCourse(requirement.addCourse.bind(requirement));
 				courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
