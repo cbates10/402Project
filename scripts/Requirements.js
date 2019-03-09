@@ -2,9 +2,11 @@ class Requirements {
 
 	constructor() {
 		this.courseActions = {};
-		this.courses = {};
+		this.coursesTaken = {};
+		this.requiredCourses = {};
 		this.subCourses = {};
 		this.fufilledOperation = function() { return false; }
+		this.fufilledNotification = false;
 		this.gradeRestriction = null;
 		this.requiredHours = 0;
 		this.currentHours = 0;
@@ -18,11 +20,10 @@ class Requirements {
 		this.hours600 = null;
 		this.hours600Action = null;
 		this.currentHours600 = 0;
-
 	}
 	
 	set400LevelHours(hours, hoursAction) {
-		this.hours400 = hours;
+		this.hours400 = parseFloat(hours);
 		if(hoursAction) {
 			this.hours400Action = hoursAction;
 		}
@@ -50,7 +51,7 @@ class Requirements {
 	}
 	
 	addRequiredCourse(courseId, courseAction) {
-		this.courses[courseId] = false;
+		this.requiredCourses[courseId] = false;
 		this.courseActions[courseId] = courseAction;
 	}
 	
@@ -73,42 +74,53 @@ class Requirements {
 		this.validationExpressions = this.validationExpressions.filter((exp) => exp !== func);
 	}
 	
-	addCourse(course, hours, number) {
-		if(number < 500)  {
+	addCourse(course, catalogEntry, hours) {
+		this.coursesTaken[course] = catalogEntry;
+		this.currentHours += hours;
+		if(catalogEntry.number < 500)  {
 			this.currentHours400 += hours;
 			if(this.hours400Action) {
-				if(this.currentHours400 > this.hours400) {
+				var hourCap = (this.requiredHours > this.currentHours) ? (this.requiredHours * this.hours400) : (this.currentHours * this.hours400); 
+				if(this.currentHours400 > hourCap) {
 					this.hours400Action();
 				}
 			}
-		} else if(number < 600) {
+		} else if(catalogEntry.number < 600) {
 			this.currentHours500 += hours;
 			if(this.hours500Action) {
-				if(this.currentHours500 > this.hours500) {
+				var hourCap = (this.requiredHours > this.currentHours) ? (this.requiredHours * this.hours500) : (this.currentHours * this.hours500); 
+				if(this.currentHours500 >  hourCap) {
 					this.hours500Action();
 				}
 			}
 		} else {
 			this.currentHours600 += hours;
 			if(this.hours600Action) {
-				if(this.currentHours600 > this.hours600) {
+				var hourCap = (this.requiredHours > this.currentHours) ? (this.requiredHours * this.hours600) : (this.currentHours * this.hours600); 
+				if(this.currentHours600 > hourCap) {
 					this.hours600Action();
 				}
 			}
 		}
-		if(this.courses[course] !== undefined) {
-			this.courses[course] = true;
+		if(this.requiredCourses[course] !== undefined) {
+			this.requiredCourses[course] = true;
 			if(this.courseActions[course] !== undefined) {
 				this.courseActions[course]();
 			}
 		}
-		this.currentHours += hours;
+		
 		if(this.hoursAction) {
 			this.hoursAction(hours);
 		}
-		if(this.fufillsRequirements()) {
+		if(!this.fufilledNotification && this.fufillsRequirements()) {
+			this.fufilledNotification = true;
 			this.fufilledOperation();
 		}
+	}
+	
+	removeCourse(course, hours) {
+		console.log("remove course event, course is " + course + " with hours " + hours);
+		this.hoursAction(-hours);
 	}
 	
 	setFufilledOperation(func) {
@@ -119,8 +131,8 @@ class Requirements {
 		if(this.currentHours < this.requiredHours) {
 			return false;
 		}
-		for(var key in this.courses) {
-			if(!this.courses[key]) {
+		for(var key in this.requiredCourses) {
+			if(!this.requiredCourses[key]) {
 				if(this.subCourses[key] !== undefined) {
 					var fufillsArray = this.subCourses[key].filter(function(courseId) {
 						return this.courses[courseId];
