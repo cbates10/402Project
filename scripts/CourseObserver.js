@@ -1,17 +1,30 @@
 class CourseObserver {
 	constructor() {
-		this.observers = [];
+		this.addObservers = [];
+		this.removeObservers = [];
 	}
 	
-	subscribe(func) {
-		this.observers.push(func);
+	subscribeRemoveCourse(func) {
+		this.removeObservers.push(func);
 	}
 	
-	unsubscribe(func) {
-		this.observers = this.observers.filter((subscriber) => subscriber !== func);
+	unsubscribeRemoveCourse(func) {
+		this.removeObservers = this.removeObservers.filter((subscriber) => subscriber !== func);
 	}
 	
-	broadcast(courseId, hours, number) {
-		this.observers.forEach((subscriber) => subscriber(courseId, hours, number));
+	broadcastRemoveEvent(courseId, hours) {
+		this.removeObservers.forEach((subscriber) => subscriber(courseId, hours));
+	}
+	
+	subscribeAddCourse(func) {
+		this.addObservers.push(func);
+	}
+	
+	unsubscribeAddCourse(func) {
+		this.addObservers = this.addObservers.filter((subscriber) => subscriber !== func);
+	}
+	
+	broadcastAddEvent(courseId, catalogEntry, hours) {
+		this.addObservers.forEach((subscriber) => subscriber(courseId, catalogEntry, hours));
 	}
 }
