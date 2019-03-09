@@ -20,7 +20,7 @@ if($result->num_rows > 0) {
 			$degrees[$row["subject"]] = new stdClass();
 			$degrees[$row["subject"]]->option = array();
 		} 
-		$degrees[$row["subject"]]->option[$row["name"]] = $row["requiredHours"];
+		$degrees[$row["subject"]]->option[$row["name"]] = $row["idObjects"];
 	}
 }
 
