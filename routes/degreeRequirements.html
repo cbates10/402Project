@@ -109,7 +109,15 @@
 						$closeButton.click(removeCourseEventHandler);
 						$row.append($closeButton);
 						$("#courseTableBody").append($row);
-						courseObserver.broadcastAddEvent(selectedCourse, courseCatalog[selectedCourse], parseInt($("#hours").val()), $row);
+						courseObserver.broadcastAddEvent(selectedCourse, courseCatalog[selectedCourse], parseInt($("#hours").val()), function(isValid) {
+							if(isValid) {
+								$row.removeAttr("invalid");
+								$row.attr("style", "color:black");
+							} else {
+								$row.attr("invalid", true);
+								$row.attr("style", "color:red");
+							}
+						});
 					}
 					$("#grade").val("");
 					$("#year").val("");
@@ -234,7 +242,7 @@
 			
 			function requirementsHandler(json) {
 				requirements = json;
-				
+				console.log(json);
 				for(var i in requirements["Catalogs"]) {
 					loadCatalog(requirements["Catalogs"][i]);
 				}
