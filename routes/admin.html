@@ -66,6 +66,14 @@
 			function popup(json){
 				var modal = document.getElementById('myModal');
 				modal.style.display = "block";
+				$("#requiredHrs").attr('value',json["Degree Program"].requiredHours);
+				$("#400hrs").attr('value',json["Degree Program"].hours400);
+				$("#500hrs").attr('value',json["Degree Program"].hours500);
+				$("#600hrs").attr('value',json["Degree Program"].hours600);
+				$("#trhrs").attr('value',json["Degree Program"].transferCredit);
+				$("#ohrs").attr('value',json["Degree Program"].outsideCredit);
+				$("#grade").attr('value',json["Degree Program"].minGrade);
+				console.log(json)
 			}
 
 			function closepopup(){	
@@ -88,7 +96,16 @@
 		<div id="myModal" class="modal">
 			<div class="modal-content">
 			  <span onclick="closepopup()" class="close">&times;</span>
-			  <p>Some text in the Modal..</p>
+			  <div id="popupform">
+					Required Hours: <input type="number" id="requiredHrs">
+					400Hrs: <input type="number" id="400hrs">
+					500Hrs: <input type="number" id="500hrs">
+					600Hrs: <input type="number" ud="600hrs">
+					TransferCreditHrs: <input type="number" id="trhrs">
+					OutsideCreditHrs: <input type="number" id="ohrs">
+					GradeNeeded: <input type="text" id="grade">
+
+			  </div>
 			</div>
 		</div>
     </body>
