@@ -9,6 +9,8 @@ class Requirements {
 		this.fufilledOperation = function() { return false; }
 		this.fufilledNotification = false;
 		this.gradeRestriction = null;
+		this.gradeAction = null;
+		this.gradeOverrides = {};
 		this.requiredHours = 0;
 		this.currentHours = 0;
 		this.hoursAction = null;
@@ -24,6 +26,16 @@ class Requirements {
 		this.hours600Action = null;
 		this.hours600Notification = false;
 		this.currentHours600 = 0;
+	}
+	
+	setGradeRestriction(grade, gradeAction) {
+		this.gradeRestriction = grade;
+		this.gradeAction = gradeAction;
+	}
+	
+	setGradeOverride(courseId, grade) {
+		console.log("Setting course override " + courseId + " " + grade);
+		this.gradeOverrides[courseId] = grade;
 	}
 	
 	set400LevelHours(hours, hoursAction) {
@@ -78,12 +90,32 @@ class Requirements {
 		this.validationExpressions = this.validationExpressions.filter((exp) => exp !== func);
 	}
 	
-	addCourse(course, catalogEntry, hours, validationOperation) {
+	violatesGradeRestriction(courseId, grade) {
+		var requiredGrade = (this.gradeOverrides[courseId]) ? this.gradeOverrides[courseId] : this.gradeRestriction;
+		if(requiredGrade.length === 1 && grade.length === 1) {
+			return grade > requiredGrade;
+		} else if(requiredGrade.length === 2 && grade.length === 1) {
+			return ((grade >= requiredGrade) && (requiredGrade.charAt(1) === "-"));
+		} else if(requiredGrade.length === 1 && grade.length === 2) {
+			return ((grade >= requiredGrade) && (grade.charAt(1) === "-"));
+		} else {
+			return ((grade >= requiredGrade) && (grade.charAt(1) >= requiredGrade.charAt(1)));
+		}
+	}
+	
+	addCourse(course, catalogEntry, grade, hours, validationOperation) {
 		this.courseValidationOperations[course] = validationOperation;
 		this.coursesTaken[course] = catalogEntry;
 		this.coursesTaken[course].valid = true;
 		this.coursesTaken[course].hours = hours;
 		this.currentHours += hours;
+		
+		if(this.violatesGradeRestriction(course, grade)) {
+			var requiredGrade = (this.gradeOverrides[course]) ? this.gradeOverrides[course] : this.gradeRestriction;
+			this.gradeAction(requiredGrade);
+			validationOperation();
+		}
+		
 		if(catalogEntry.number < 500)  {
 			this.currentHours400 += hours;
 			if(this.hours400Action) {
