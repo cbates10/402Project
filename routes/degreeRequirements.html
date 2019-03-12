@@ -137,6 +137,10 @@
 				$row.remove();
 			}
 			
+			function hourOverrideEvent(minimumHours) {
+				alert("The minimum hours of " + minimumHours + " for this course has not been met. This course will be flagged for approval on forms");
+			}
+			
 			function gradeEvent(requiredGrade) {
 				alert("The entered grade is below the minimum grade of " + requiredGrade + " this course will be flagged for approval on forms"); 
 			}
@@ -179,11 +183,14 @@
 			};
 			
 			function setCourseHours(courseId) {
+				$("#hours").attr("min", courseCatalog[courseId].lowHours);
 				if(courseCatalog[courseId].lowHours != courseCatalog[courseId].highHours) {
 					$("#hours").val("");
-					$("#hours").attr("placeholder", courseCatalog[courseId].lowHours + "-" + courseCatalog[courseId].highHours); 
+					$("#hours").attr("placeholder", courseCatalog[courseId].lowHours + "-" + courseCatalog[courseId].highHours);
+					$("#hours").attr("max", courseCatalog[courseId].highHours);
 				} else {
 					$("#hours").val(courseCatalog[courseId].lowHours);
+					$("#hours").attr("max", courseCatalog[courseId].lowHours);
 				}
 				
 			}
@@ -219,6 +226,19 @@
 				}
             };
 
+			function getHoursDisplayString(courseId, courseOverride) {
+				if(courseCatalog[courseId].lowHours != courseCatalog[courseId].highHours) {
+					if(courseOverride) {
+						var hourString = courseOverride + " - " + courseCatalog[courseId].highHours;
+					} else {
+						var hourString = courseCatalog[courseId].lowHours + " - " + courseCatalog[courseId].highHours;
+					}
+				} else {
+					var hourString = courseCatalog[courseId].highHours;
+				}
+				return hourString;
+			}
+			
 			function setCourseList() {
 				var listName = $("#catalogList option:selected").val();
 				$catalogs[listName].insertAfter("#catalogList");
@@ -273,7 +293,12 @@
 				
 				for(var i in courseCatalog) {
 					if(requirements["Degree Program"].courseOverride[i]) {
-						requirement.setGradeOverride(i, requirements["Degree Program"].courseOverride[i].minGrade);
+						if(requirements["Degree Program"].courseOverride[i].minHours) {
+							requirement.setHourOverride(i, requirements["Degree Program"].courseOverride[i].minHours, hourOverrideEvent); 
+						}
+						if(requirements["Degree Program"].courseOverride[i].minGrade) {
+							requirement.setGradeOverride(i, requirements["Degree Program"].courseOverride[i].minGrade);
+						}
 						//courseCatalog[i].minGrade = requirements["Degree Program"].courseOverride[i].minGrade;
 						//courseCatalog[i].maxCount = requirements["Degree Program"].courseOverride[i].maxCount;
 						//courseCatalog[i].lowHours = requirements["Degree Program"].courseOverride[i].minHours;
@@ -287,11 +312,15 @@
 					console.log(courseCatalog[i]);
 					
 					/* For display purposes, add a string detailing the hour range for any course that is variable hours and append the item to the list */
-					if(courseCatalog[i].lowHours != courseCatalog[i].highHours) {
-						var hourString = courseCatalog[i].lowHours + " - " + courseCatalog[i].highHours;
+					var hourString;
+					if(requirements["Degree Program"].courseOverride[i]) {
+						if(requirements["Degree Program"].courseOverride[i].minHours) {
+							hourString = getHoursDisplayString(i, requirements["Degree Program"].courseOverride[i].minHours);
+						}
 					} else {
-						var hourString = courseCatalog[i].highHours;
+						hourString = getHoursDisplayString(i);
 					}
+					
 					var $courseItem = $("<li>", {
 						value: i,
 						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + hourString
@@ -306,11 +335,14 @@
 						for(var y = 0; y < requirements["Degree Program"].requiredCourses[i].length; y++) {
 							var courseId = requirements["Degree Program"].requiredCourses[i][y];
 
-							if(courseCatalog[i].lowHours != courseCatalog[i].highHours) {
-								var hourString = courseCatalog[courseId].lowHours + " - " + courseCatalog[courseId].highHours;
+							if(requirements["Degree Program"].courseOverride[courseId]) {
+								if(requirements["Degree Program"].courseOverride[courseId].minHours) {
+									hourString = getHoursDisplayString(courseId, requirements["Degree Program"].courseOverride[courseId].minHours);
+								}
 							} else {
-								var hourString = courseCatalog[courseId].highHours;
+								hourString = getHoursDisplayString(courseId);
 							}
+	
 							var $courseItem = $("<li>", {
 								value: courseCatalog[courseId],
 								text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + hourString
