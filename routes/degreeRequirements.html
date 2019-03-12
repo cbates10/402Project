@@ -49,6 +49,7 @@
 					data: { idObjects: getCookie("programId") },
 					dataType: "json",
 					success: function(json) {
+						console.log(json);
 						requirementsHandler(json);
 					}
 				});
@@ -222,7 +223,7 @@
 				if(catalogsLoaded == requirements["Catalogs"].length) {
 					setCourseList();
 					setCourseHours($("#courseList option:selected").val());
-					processRequirements();
+					processDegree();
 				}
             };
 
@@ -263,7 +264,6 @@
 				});
 			}
 			
-			
 			function requirementsHandler(json) {
 				requirements = json;
 				console.log(json);
@@ -272,88 +272,13 @@
 				}
 			}
 			
-			
-			function processRequirements() {
+			function processDegree() {
 				var requiredList = $("#requiredCourses");
 				var requirement = new Requirements();
-				if(requirements["Degree Program"].requiredHours !== undefined) {
-					var $progressBar = $("#requiredHoursProgress");
-					$progressBar.attr("max", requirements["Degree Program"].requiredHours.toString());
-					requirement.setRequiredHours(requirements["Degree Program"].requiredHours, degreeHoursEvent);
-				}
-				if(requirements["Degree Program"].hours400) {
-					requirement.set400LevelHours(requirements["Degree Program"].hours400, function() { alert("Maximum 400 level hours exceeded"); });
-				}
-				if(requirements["Degree Program"].hours500) {
-					requirement.set500LevelHours(requirements["Degree Program"].hours500, function() { alert("Maximum 500 level hours exceeded"); });
-				}
-				// TODO Add database support for 600 level hours 
+				var $progressBar = $("#requiredHoursProgress");
 				
-				requirement.setGradeRestriction(requirements["Degree Program"].minGrade, gradeEvent);
+				processRequirements(requirements["Degree Program"], requiredList, $progressBar, requirement);
 				
-				for(var i in courseCatalog) {
-					if(requirements["Degree Program"].courseOverride[i]) {
-						if(requirements["Degree Program"].courseOverride[i].minHours) {
-							requirement.setHourOverride(i, requirements["Degree Program"].courseOverride[i].minHours, hourOverrideEvent); 
-						}
-						if(requirements["Degree Program"].courseOverride[i].minGrade) {
-							requirement.setGradeOverride(i, requirements["Degree Program"].courseOverride[i].minGrade);
-						}
-						//courseCatalog[i].minGrade = requirements["Degree Program"].courseOverride[i].minGrade;
-						//courseCatalog[i].maxCount = requirements["Degree Program"].courseOverride[i].maxCount;
-						//courseCatalog[i].lowHours = requirements["Degree Program"].courseOverride[i].minHours;
-					} 
-				}
-
-				/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
-				for(var i in requirements["Degree Program"].requiredCourses) {
-					
-					console.log(i);
-					console.log(courseCatalog[i]);
-					
-					/* For display purposes, add a string detailing the hour range for any course that is variable hours and append the item to the list */
-					var hourString;
-					if(requirements["Degree Program"].courseOverride[i]) {
-						if(requirements["Degree Program"].courseOverride[i].minHours) {
-							hourString = getHoursDisplayString(i, requirements["Degree Program"].courseOverride[i].minHours);
-						}
-					} else {
-						hourString = getHoursDisplayString(i);
-					}
-					
-					var $courseItem = $("<li>", {
-						value: i,
-						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + hourString
-					});
-					requiredList.append($courseItem);
-					requirement.addRequiredCourse(i, degreeCourseEvent); // Add the courseId of the required course to the requirements object
-					
-					/* Check to see if any of the courses have substitutions that may be taken in place of required course */
-					if(requirements["Degree Program"].requiredCourses[i].length > 0) {
-						/* Create a sublist for the substitutable courses, create list items for sub courses and append sublist to required course list item */
-						var substitutableCourses = $("<ul id='sublist'>");
-						for(var y = 0; y < requirements["Degree Program"].requiredCourses[i].length; y++) {
-							var courseId = requirements["Degree Program"].requiredCourses[i][y];
-
-							if(requirements["Degree Program"].courseOverride[courseId]) {
-								if(requirements["Degree Program"].courseOverride[courseId].minHours) {
-									hourString = getHoursDisplayString(courseId, requirements["Degree Program"].courseOverride[courseId].minHours);
-								}
-							} else {
-								hourString = getHoursDisplayString(courseId);
-							}
-	
-							var $courseItem = $("<li>", {
-								value: courseCatalog[courseId],
-								text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + hourString
-							});
-							substitutableCourses.append($courseItem);
-							requirement.addRequiredCourse(courseId, degreeCourseEvent.bind($courseItem));
-							requirement.setSubstitutableCourses(i, courseId);
-						}
-						requiredList.append(substitutableCourses);
-					}
-				}
 				requirement.setFufilledOperation(function(isSet) {
 					if(isSet) {
 						$("#candidacyForm").removeAttr("disabled");
@@ -365,9 +290,14 @@
 				courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
 				
 				certificateRequirementsHandler(requirements["Certificate"]);
+				minorRequirementsHandler(requirements["Minor"]);
 			}
 			
-
+			function minorRequirementsHandler(minors) {
+				if(minors.length > 0) {
+					$("#minorContainer").show();
+				}
+			}
 			
 			function certificateRequirementsHandler(certificates) {
 				if(certificates.length > 0) {
@@ -415,8 +345,88 @@
 					requirement.setFufilledOperation(function() {
 						alert(certificate.name + " earned");
 					});
-					courseObserver.subscribe(requirement.addCourse.bind(requirement));
+					
+					courseObserver.subscribeAddCourse(requirement.addCourse.bind(requirement));
+					courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
 				});
+			}
+			
+			function processRequirements(degreeObject, requiredList, $progressBar, requirement) {
+				if(degreeObject.requiredHours !== undefined) {
+					$progressBar.attr("max", degreeObject.requiredHours.toString());
+					requirement.setRequiredHours(degreeObject.requiredHours, degreeHoursEvent);
+				}
+				if(degreeObject.hours400) {
+					requirement.set400LevelHours(degreeObject.hours400, function() { alert("Maximum 400 level hours exceeded"); });
+				}
+				if(degreeObject.hours500) {
+					requirement.set500LevelHours(degreeObject.hours500, function() { alert("Maximum 500 level hours exceeded"); });
+				}
+				// TODO Add database support for 600 level hours 
+				
+				requirement.setGradeRestriction(degreeObject.minGrade, gradeEvent);
+				
+				for(var i in courseCatalog) {
+					if(degreeObject.courseOverride[i]) {
+						if(degreeObject.courseOverride[i].minHours) {
+							requirement.setHourOverride(i, degreeObject.courseOverride[i].minHours, hourOverrideEvent); 
+						}
+						if(degreeObject.courseOverride[i].minGrade) {
+							requirement.setGradeOverride(i, degreeObject.courseOverride[i].minGrade);
+						}
+						//courseCatalog[i].maxCount = requirements["Degree Program"].courseOverride[i].maxCount;
+					} 
+				}
+
+				/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
+				for(var i in degreeObject.requiredCourses) {
+					
+					console.log(i);
+					console.log(courseCatalog[i]);
+					
+					/* For display purposes, add a string detailing the hour range for any course that is variable hours and append the item to the list */
+					var hourString;
+					if(degreeObject.courseOverride[i]) {
+						if(degreeObject.courseOverride[i].minHours) {
+							hourString = getHoursDisplayString(i, degreeObject.courseOverride[i].minHours);
+						}
+					} else {
+						hourString = getHoursDisplayString(i);
+					}
+					
+					var $courseItem = $("<li>", {
+						value: i,
+						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + hourString
+					});
+					requiredList.append($courseItem);
+					requirement.addRequiredCourse(i, degreeCourseEvent); // Add the courseId of the required course to the requirements object
+					
+					/* Check to see if any of the courses have substitutions that may be taken in place of required course */
+					if(degreeObject.requiredCourses[i].length > 0) {
+						/* Create a sublist for the substitutable courses, create list items for sub courses and append sublist to required course list item */
+						var substitutableCourses = $("<ul id='sublist'>");
+						for(var y = 0; y < degreeObject.requiredCourses[i].length; y++) {
+							var courseId = degreeObject.requiredCourses[i][y];
+
+							if(degreeObject.courseOverride[courseId]) {
+								if(degreeObject.courseOverride[courseId].minHours) {
+									hourString = getHoursDisplayString(courseId, degreeObject.courseOverride[courseId].minHours);
+								}
+							} else {
+								hourString = getHoursDisplayString(courseId);
+							}
+	
+							var $courseItem = $("<li>", {
+								value: courseCatalog[courseId],
+								text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + hourString
+							});
+							substitutableCourses.append($courseItem);
+							requirement.addRequiredCourse(courseId, degreeCourseEvent.bind($courseItem));
+							requirement.setSubstitutableCourses(i, courseId);
+						}
+						requiredList.append(substitutableCourses);
+					}
+				}
 			}
         </script>
     </head>
@@ -469,6 +479,13 @@
 		<div id="certificateContainer" hidden>
 			<h2>Certificates</h2>
 			<ul id="certificateList">
+			
+			</ul>
+		</div>
+		<div id="minorContainer" hidden>
+			<h2>Minors</h2>
+			<ul id="minorList">
+			
 			</ul>
 		</div>
     </body>
