@@ -109,7 +109,7 @@
 						$closeButton.click(removeCourseEventHandler);
 						$row.append($closeButton);
 						$("#courseTableBody").append($row);
-						courseObserver.broadcastAddEvent(selectedCourse, courseCatalog[selectedCourse], parseInt($("#hours").val()), function(isValid) {
+						courseObserver.broadcastAddEvent(selectedCourse, courseCatalog[selectedCourse], $("#grade").val(), parseInt($("#hours").val()), function(isValid) {
 							if(isValid) {
 								$row.removeAttr("invalid");
 								$row.attr("style", "color:black");
@@ -135,6 +135,10 @@
 				});
 				courseObserver.broadcastRemoveEvent(courseId, $row.find("#hours").text());
 				$row.remove();
+			}
+			
+			function gradeEvent(requiredGrade) {
+				alert("The entered grade is below the minimum grade of " + requiredGrade + " this course will be flagged for approval on forms"); 
 			}
 			
 			function degreeHoursEvent(hours) {
@@ -265,15 +269,15 @@
 				}
 				// TODO Add database support for 600 level hours 
 				
+				requirement.setGradeRestriction(requirements["Degree Program"].minGrade, gradeEvent);
+				
 				for(var i in courseCatalog) {
 					if(requirements["Degree Program"].courseOverride[i]) {
-						courseCatalog[i].minGrade = requirements["Degree Program"].courseOverride[i].minGrade;
-						courseCatalog[i].maxCount = requirements["Degree Program"].courseOverride[i].maxCount;
-						courseCatalog[i].lowHours = requirements["Degree Program"].courseOverride[i].minHours;
-					} else {
-						courseCatalog[i].minGrade = requirements["Degree Program"].minGrade;
-						courseCatalog[i].maxCount = 1;
-					}
+						requirement.setGradeOverride(i, requirements["Degree Program"].courseOverride[i].minGrade);
+						//courseCatalog[i].minGrade = requirements["Degree Program"].courseOverride[i].minGrade;
+						//courseCatalog[i].maxCount = requirements["Degree Program"].courseOverride[i].maxCount;
+						//courseCatalog[i].lowHours = requirements["Degree Program"].courseOverride[i].minHours;
+					} 
 				}
 
 				/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
@@ -293,7 +297,7 @@
 						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + hourString
 					});
 					requiredList.append($courseItem);
-					requirement.addRequiredCourse(i, degreeCourseEvent.bind($courseItem)); // Add the courseId of the required course to the requirements object
+					requirement.addRequiredCourse(i, degreeCourseEvent); // Add the courseId of the required course to the requirements object
 					
 					/* Check to see if any of the courses have substitutions that may be taken in place of required course */
 					if(requirements["Degree Program"].requiredCourses[i].length > 0) {
@@ -404,7 +408,7 @@
 				</select>
 
 				
-				<label for="grade">Grade</label><input type="text" id="grade" name="grade" size="1" maxlength="1" pattern="[ABCDF]{1}" required></input>
+				<label for="grade">Grade</label><input type="text" id="grade" name="grade" size="2" maxlength="2" pattern="[ABCDF]{1}[-+]{0,1}" required></input>
 				<label for="year">Year</label><input type="number" id="year" style="width:50px" required></input>
 				<label for="term">Term</label>
 				<select id="term">
