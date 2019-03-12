@@ -11,6 +11,7 @@ class Requirements {
 		this.gradeRestriction = null;
 		this.gradeAction = null;
 		this.gradeOverrides = {};
+		this.hourOverrides = {};
 		this.requiredHours = 0;
 		this.currentHours = 0;
 		this.hoursAction = null;
@@ -34,8 +35,12 @@ class Requirements {
 	}
 	
 	setGradeOverride(courseId, grade) {
-		console.log("Setting course override " + courseId + " " + grade);
 		this.gradeOverrides[courseId] = grade;
+	}
+	
+	setHourOverride(courseId, hours, hourOverrideAction) {
+		this.hourOverrides[courseId] = hours;
+		this.hourOverrideAction = hourOverrideAction;
 	}
 	
 	set400LevelHours(hours, hoursAction) {
@@ -114,6 +119,12 @@ class Requirements {
 			var requiredGrade = (this.gradeOverrides[course]) ? this.gradeOverrides[course] : this.gradeRestriction;
 			this.gradeAction(requiredGrade);
 			validationOperation();
+		}
+		if(this.hourOverrides[course]) {
+			if(hours < this.hourOverrides[course]) {
+				this.hourOverrideAction(this.hourOverrides[course]);
+				validationOperation();
+			}
 		}
 		
 		if(catalogEntry.number < 500)  {
