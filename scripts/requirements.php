@@ -65,6 +65,12 @@ if(!$stmtCourseOverride) {
 	die("Could not prepare statement $myslqi->error");
 }
 
+$sqlApplicableCourses = "SELECT idCourses FROM restrictedobjectcourses WHERE idObjects = ?";
+$stmtApplicableCourses = $mysqli->prepare($sqlApplicableCourses);
+if(!$stmtApplicableCourses) {
+	die("Could not prepare statement $myslqi->error");
+}
+
 $sqlCatalogs = "SELECT catalogName FROM objectcatalogs NATURAL JOIN catalognames WHERE idObjects = ?";
 $stmtCatalogs = $mysqli->prepare($sqlCatalogs);
 if(!$stmtCatalogs) {
@@ -167,6 +173,21 @@ for($x = 0; $x < count($objects); $x++) {
 		$objectRequirements->courseOverride[$idCourse] = $courseOverride;
 	}
 	$stmtCourseOverride->free_result();
+	
+	if(!$stmtApplicableCourses->bind_param("i", $objects[$x]->idObjects)) {
+		die("Could not execture statement $stmtApplicableCourses->error");
+	}
+	$rc = $stmtApplicableCourses->execute();
+	if(false === $rc) {
+		die("Could not execute statement $stmtApplicableCourses->error");
+	}
+	$stmtApplicableCourses->bind_result($idCourse);
+	
+	$objectRequirements->applicableCourses = array();
+	while($stmtApplicableCourses->fetch()) {
+		array_push($objectRequirements->applicableCourses, $idCourse);
+	}
+	$stmtApplicableCourses->free_result();
 	
 	$field = $objects[$x]->type;
 	if($field !== "Degree Program") {
