@@ -86,7 +86,8 @@
 						}
 					});
 				}
-				addClassHandler(catalogRule);	
+
+				addClassHandler(json);
 			}
 
 			function courseHandler(json,catalogRule){
@@ -115,41 +116,32 @@
 				modal.style.display = "none";	
 			}
 
-			function addClassHandler(catalogRule){	
-				$("#addClassButton").unbind("click").click(function(){
-					$("#classsublist").last().append($("<li>",{
-						id: "addedClass"		
-					}).append('Catalog').append($("<select>",{
-						id: "catalogList"	
-					}))
-					.append('Class').append($("<select>",{
-						id: "classList"
-					})));
-				
-					for(var i in catalogRule["Catalogs"]){
-						$("#catalogList").append($("<option>",{
-							value: catalogRule["Catalogs"][i],
-							text: catalogRule["Catalogs"][i]
-						}));
-					}
+			function addClassHandler(catalogRule){
+				for(var i in catalogRule["Catalogs"]){
+					$("#catalogList").append($("<option>",{
+						value: catalogRule["Catalogs"][i],
+						text: catalogRule["Catalogs"][i]
+					}));
+				}
 
-					$.ajax({
-						type: "POST",
-						url: "../scripts/courseCatalog.php",
-						data: {catalogName: $("#catalogList option:selected").val()},
-						dataType: "json",
-						success: function(json) {
-							for(var i in json){
-								$("#classList").append($("<option>",{
-									value: json[i].name,
-									text: json[i].name
-								}));
-							}
+				$.ajax({
+					type: "POST",
+					url: "../scripts/courseCatalog.php",
+					data: {catalogName: $("#catalogList option:selected").val()},
+					dataType: "json",
+					success: function(json) {
+						for(var i in json){
+							$("#classList").append($("<option>",{
+								value: json[i].name,
+								text: json[i].prefix + " " + json[i].number + " : " +  json[i].name
+							}));
 						}
-					});
-				
-					$("#catalogList").change(function(){
-						$("#classList").empty();
+					}
+				});
+
+
+				$("#catalogList").change(function(){
+					$("#classList").empty();
 						$.ajax({
 							type: "POST",
 							url: "../scripts/courseCatalog.php",
@@ -159,16 +151,26 @@
 								for(var i in json){
 									$("#classList").append($("<option>",{
 										value: json[i].name,
-										text: json[i].name
+										text: json[i].prefix + " " + json[i].number + " : " + json[i].name
 									}));
 								}
 							}
 						});
 
-					});
+				});
+
+
+				$("#addClassButton").click(function(){
+					$("#classsublist").last().append($("<li>",{
+						text: $("#classList option:selected").val()
+					}).append($("<input>",{
+						type: "submit",
+						name: "removeClassButton",
+						id: i,
+						value: "Remove"
+					})));
 				});
 			}
-
         </script>
         <style>
 
@@ -178,7 +180,7 @@
         <div>
             <h4>Masters</h4>
             <ul id="masters">
-
+		
             </ul>
 		</div>
 		<div id="myModal" class="modal">
@@ -200,7 +202,7 @@
 
 				</ul>
 			  </div>
-			  <input type="submit" id="addClassButton" value="Add Class"/>
+			  Catalog: <select id="catalogList"></select>Class:<select id="classList"></select><input type="submit" id="addClassButton" value="Add Class"/>
 			</div>
 		</div>
     </body>
