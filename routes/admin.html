@@ -7,18 +7,37 @@
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
         <script>
+			var catalogRule;
+			var catalogs;
+			var $catalogs = {};
+			var catalogsLoaded = 0;
 			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", degreeHandler);
 				xhr.open("GET", "../scripts/degreePrograms.php");
-				xhr.send();		
+				xhr.send();
+				
+				$("#catalogList").change(function(){
+					$("#courseList").detach();
+					$catalogs[$(this).val()].insertAfter($("#classListLabel"));
+				});
+				
+				$("#addClassButton").click(function(){
+					$("#classsublist").append($("<li>",{
+						text: $("#courseList option:selected").val()
+					}).append($("<input>",{
+						type: "submit",
+						name: "removeClassButton",
+						value: "Remove"
+					})));
+				});
             });
             
 			function degreeHandler() {
 				console.log(this.response);
 				var degreePrograms = JSON.parse(this.response);
 
-				/* Iterate through all degree programs and add to DOM as list item */
+				// Iterate through all degree programs and add to DOM as list item 
 				for(var degreeName in degreePrograms) {
 					$("#masters").append($("<li>", {
 						value: degreeName
@@ -26,7 +45,7 @@
 						text: degreeName
 					}))); 
 
-					/* Create nested list under each degree program with the options offered, e.g., Thesis */
+					// Create nested list under each degree program with the options offered, e.g., Thesis 
 					var degreeOptions = $("<ul id='sublist'>");
 					
 					degreeOptions.append($("<li>", {
@@ -50,21 +69,24 @@
 					} 
 					$("#masters").append(degreeOptions);
 				}
-					$("button[name='modifyButton']").click(function(){
-						$.ajax({
-							type: "POST",
-							url: "../scripts/requirements.php",
-							data: {idObjects: $(this).val()},
-							dataType: "json",
-							success: function(json) {
-								popupHandler(json);
-							}
-						});
+				$("button[name='modifyButton']").click(function(){
+					$.ajax({
+						type: "POST",
+						url: "../scripts/requirements.php",
+						data: {idObjects: $(this).val()},
+						dataType: "json",
+						success: function(json) {
+							popupHandler(json);
+						}
 					});
+				});
 			}
 
 			function popupHandler(json){
 				catalogRule = json;
+				catalogsLoaded = 0;
+				catalogs = null;
+				console.log(catalogRule);
 				$("#classsublist").empty();
 				var modal = document.getElementById('myModal');
 				modal.style.display = "block";
@@ -76,36 +98,55 @@
 				$("#ohrs").attr('value',catalogRule["Degree Program"].outsideCredit);
 				$("#grade").attr('value',catalogRule["Degree Program"].minGrade);
 				for(var i in catalogRule["Catalogs"]){
+					let catalogName = catalogRule["Catalogs"][i];
 					$.ajax({
 						type: "POST",
 						url: "../scripts/courseCatalog.php",
-						data: {catalogName: catalogRule["Catalogs"][i] },
+						data: {catalogName: catalogName},
 						dataType: "json",
 						success: function(json) {
-							courseHandler(json,catalogRule);
+							courseHandler(json, catalogName);
 						}
 					});
 				}
-
-				addClassHandler(json);
 			}
 
-			function courseHandler(json,catalogRule){
-				catalog = json;
-				console.log(json);
-				console.log(catalogRule);
-				//Iterate through catalog index with degreeID
-				for(var i in catalogRule["Degree Program"].requiredCourses){
-					if(catalog[i] == null)
-						continue;
-					$("#classsublist").append($("<li>",{
-						text: catalog[i].name
-					}).append($("<input>",{
-						type: "submit",
-						name: "removeClassButton",
-						id: i,
-						value: "Remove"
-					})));
+			function courseHandler(catalogArray, catalogName){
+				if(!catalogs) {
+					catalogs = catalogArray;
+				} else {
+				 	for(var i in catalogArray) {
+						catalogs[i] = catalogArray[i];
+					}
+				}
+				catalogsLoaded++;
+			
+				var $courseList = $("<select>", {
+					id: "courseList"
+				});
+				for(var i in catalogArray) {
+					$courseList.append($("<option>",{
+						value: catalogArray[i].name,
+						text: catalogArray[i].prefix + " " + catalogArray[i].number + " : " +  catalogArray[i].name
+					}));
+				}
+				$catalogs[catalogName] = $courseList;
+			
+				if(catalogsLoaded === catalogRule["Catalogs"].length) {
+					
+					//Iterate through catalog index with degreeID
+					for(var i in catalogRule["Degree Program"].requiredCourses){
+						$("#classsublist").append($("<li>",{
+							text: catalogs[i].name
+						}).append($("<input>",{
+							type: "submit",
+							name: "removeClassButton",
+							id: i,
+							value: "Remove"
+						})));
+					}
+					console.log($catalogs);
+					addClassHandler();
 				}
 			}
 
@@ -116,7 +157,7 @@
 				modal.style.display = "none";	
 			}
 
-			function addClassHandler(catalogRule){
+			function addClassHandler(){
 				$("#catalogList").empty();
 				$("#classList").empty();
 				for(var i in catalogRule["Catalogs"]){
@@ -125,53 +166,8 @@
 						text: catalogRule["Catalogs"][i]
 					}));
 				}
-
-				$.ajax({
-					type: "POST",
-					url: "../scripts/courseCatalog.php",
-					data: {catalogName: $("#catalogList option:selected").val()},
-					dataType: "json",
-					success: function(json) {
-						for(var i in json){
-							$("#classList").append($("<option>",{
-								value: json[i].name,
-								text: json[i].prefix + " " + json[i].number + " : " +  json[i].name
-							}));
-						}
-					}
-				});
-
-
-				$("#catalogList").change(function(){
-					$("#classList").empty();
-						$.ajax({
-							type: "POST",
-							url: "../scripts/courseCatalog.php",
-							data: {catalogName: $("#catalogList").val()},
-							dataType: "json",
-							success: function(json) {
-								for(var i in json){
-									$("#classList").append($("<option>",{
-										value: json[i].name,
-										text: json[i].prefix + " " + json[i].number + " : " + json[i].name
-									}));
-								}
-							}
-						});
-
-				});
-
-
-				$("#addClassButton").unbind("click").click(function(){
-					$("#classsublist").last().append($("<li>",{
-						text: $("#classList option:selected").val()
-					}).append($("<input>",{
-						type: "submit",
-						name: "removeClassButton",
-						id: i,
-						value: "Remove"
-					})));
-				});
+				
+				$catalogs[catalogRule["Catalogs"][0]].insertAfter($("#classListLabel"));
 			}
         </script>
         <style>
@@ -190,12 +186,12 @@
 			  <span onclick="closepopup()" class="close">&times;</span>
 			  <div id="popupform">
 					Required Hours: <input type="number" id="requiredHrs">
-					400Hrs: <input type="number" id="400hrs">
-					500Hrs: <input type="number" id="500hrs">
-					600Hrs: <input type="number" ud="600hrs">
-					TransferCreditHrs: <input type="number" id="trhrs">
-					OutsideCreditHrs: <input type="number" id="ohrs">
-					GradeNeeded: <input type="text" id="grade">
+					400 Hours: <input type="number" id="400hrs">
+					500 Hours: <input type="number" id="500hrs">
+					600 Hours: <input type="number" ud="600hrs">
+					Transfer Credit Hours: <input type="number" id="trhrs">
+					Outside Credit Hours: <input type="number" id="ohrs">
+					Minimum Grade:: <input type="text" id="grade">
 			  </div>
 			  <input type="submit" id="submitChange" value="Submit Change" />
 			  <div id="requiredClasses">
@@ -204,7 +200,7 @@
 
 				</ul>
 			  </div>
-			  Catalog: <select id="catalogList"></select>Class:<select id="classList"></select><input type="submit" id="addClassButton" value="Add Class"/>
+			  Catalog: <select id="catalogList"></select><label for="classList" id="classListLabel">Class:</label><input type="button" id="addClassButton" value="Add Class"/>
 			</div>
 		</div>
     </body>
