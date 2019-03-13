@@ -117,6 +117,8 @@
 			}
 
 			function addClassHandler(catalogRule){
+				$("#catalogList").empty();
+				$("#classList").empty();
 				for(var i in catalogRule["Catalogs"]){
 					$("#catalogList").append($("<option>",{
 						value: catalogRule["Catalogs"][i],
@@ -160,7 +162,7 @@
 				});
 
 
-				$("#addClassButton").click(function(){
+				$("#addClassButton").unbind("click").click(function(){
 					$("#classsublist").last().append($("<li>",{
 						text: $("#classList option:selected").val()
 					}).append($("<input>",{
