@@ -57,18 +57,18 @@
 							data: {idObjects: $(this).val()},
 							dataType: "json",
 							success: function(json) {
-								popup(json);
+								popupHandler(json);
 							}
 						});
 					});
 			}
 
-			function popup(json){
+			function popupHandler(json){
 				catalogRule = json;
 				$("#classsublist").empty();
 				var modal = document.getElementById('myModal');
 				modal.style.display = "block";
-				$("#requiredHrs").attr('value',catalogRule["Degree Program"].requiredHours);
+				$("#requiredHr").attr('value',catalogRule["Degree Program"].requiredHours);
 				$("#400hrs").attr('value',catalogRule["Degree Program"].hours400);
 				$("#500hrs").attr('value',catalogRule["Degree Program"].hours500);
 				$("#600hrs").attr('value',catalogRule["Degree Program"].hours600);
@@ -86,11 +86,14 @@
 						}
 					});
 				}
+				addClassHandler(catalogRule);	
 			}
 
 			function courseHandler(json,catalogRule){
 				catalog = json;
-
+				console.log(json);
+				console.log(catalogRule);
+				//Iterate through catalog index with degreeID
 				for(var i in catalogRule["Degree Program"].requiredCourses){
 					if(catalog[i] == null)
 						continue;
@@ -100,15 +103,70 @@
 						type: "submit",
 						name: "removeClassButton",
 						id: i,
-						value: "x"
+						value: "Remove"
 					})));
 				}
 			}
 
 			function closepopup(){	
 				$("#classsublist").empty();
+				$("#addedClass").remove();
 				var modal = document.getElementById('myModal');
 				modal.style.display = "none";	
+			}
+
+			function addClassHandler(catalogRule){	
+				$("#addClassButton").unbind("click").click(function(){
+					$("#classsublist").last().append($("<li>",{
+						id: "addedClass"		
+					}).append('Catalog').append($("<select>",{
+						id: "catalogList"	
+					}))
+					.append('Class').append($("<select>",{
+						id: "classList"
+					})));
+				
+					for(var i in catalogRule["Catalogs"]){
+						$("#catalogList").append($("<option>",{
+							value: catalogRule["Catalogs"][i],
+							text: catalogRule["Catalogs"][i]
+						}));
+					}
+
+					$.ajax({
+						type: "POST",
+						url: "../scripts/courseCatalog.php",
+						data: {catalogName: $("#catalogList option:selected").val()},
+						dataType: "json",
+						success: function(json) {
+							for(var i in json){
+								$("#classList").append($("<option>",{
+									value: json[i].name,
+									text: json[i].name
+								}));
+							}
+						}
+					});
+				
+					$("#catalogList").change(function(){
+						$("#classList").empty();
+						$.ajax({
+							type: "POST",
+							url: "../scripts/courseCatalog.php",
+							data: {catalogName: $("#catalogList").val()},
+							dataType: "json",
+							success: function(json) {
+								for(var i in json){
+									$("#classList").append($("<option>",{
+										value: json[i].name,
+										text: json[i].name
+									}));
+								}
+							}
+						});
+
+					});
+				});
 			}
 
         </script>
@@ -135,13 +193,14 @@
 					OutsideCreditHrs: <input type="number" id="ohrs">
 					GradeNeeded: <input type="text" id="grade">
 			  </div>
+			  <input type="submit" id="submitChange" value="Submit Change" />
 			  <div id="requiredClasses">
 				<h2>Required Courses</h2>
 				<ul id="classsublist">
 
 				</ul>
-				<input type="submit" id="addClassButton" value="Add Class"/>
 			  </div>
+			  <input type="submit" id="addClassButton" value="Add Class"/>
 			</div>
 		</div>
     </body>
