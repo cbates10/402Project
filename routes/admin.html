@@ -65,6 +65,7 @@
 
 			function popup(json){
 				catalogRule = json;
+				$("#classsublist").empty();
 				var modal = document.getElementById('myModal');
 				modal.style.display = "block";
 				$("#requiredHrs").attr('value',catalogRule["Degree Program"].requiredHours);
@@ -95,11 +96,17 @@
 						continue;
 					$("#classsublist").append($("<li>",{
 						text: catalog[i].name
-					}));
+					}).append($("<input>",{
+						type: "submit",
+						name: "removeClassButton",
+						id: i,
+						value: "x"
+					})));
 				}
 			}
 
 			function closepopup(){	
+				$("#classsublist").empty();
 				var modal = document.getElementById('myModal');
 				modal.style.display = "none";	
 			}
@@ -133,6 +140,7 @@
 				<ul id="classsublist">
 
 				</ul>
+				<input type="submit" id="addClassButton" value="Add Class"/>
 			  </div>
 			</div>
 		</div>
