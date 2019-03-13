@@ -49,31 +49,54 @@
 						})));
 					} 
 					$("#masters").append(degreeOptions);
-					$("button[name='modifyButton']").click(function(){
-							$.ajax({
-								type: "POST",
-								url: "../scripts/requirements.php",
-								data: {idObjects: $(this).val()},
-								dataType: "json",
-								success: function(json) {
-									popup(json);
-								}
-							});
-						});
 				}
+					$("button[name='modifyButton']").click(function(){
+						$.ajax({
+							type: "POST",
+							url: "../scripts/requirements.php",
+							data: {idObjects: $(this).val()},
+							dataType: "json",
+							success: function(json) {
+								popup(json);
+							}
+						});
+					});
 			}
 
 			function popup(json){
+				catalogRule = json;
 				var modal = document.getElementById('myModal');
 				modal.style.display = "block";
-				$("#requiredHrs").attr('value',json["Degree Program"].requiredHours);
-				$("#400hrs").attr('value',json["Degree Program"].hours400);
-				$("#500hrs").attr('value',json["Degree Program"].hours500);
-				$("#600hrs").attr('value',json["Degree Program"].hours600);
-				$("#trhrs").attr('value',json["Degree Program"].transferCredit);
-				$("#ohrs").attr('value',json["Degree Program"].outsideCredit);
-				$("#grade").attr('value',json["Degree Program"].minGrade);
-				console.log(json)
+				$("#requiredHrs").attr('value',catalogRule["Degree Program"].requiredHours);
+				$("#400hrs").attr('value',catalogRule["Degree Program"].hours400);
+				$("#500hrs").attr('value',catalogRule["Degree Program"].hours500);
+				$("#600hrs").attr('value',catalogRule["Degree Program"].hours600);
+				$("#trhrs").attr('value',catalogRule["Degree Program"].transferCredit);
+				$("#ohrs").attr('value',catalogRule["Degree Program"].outsideCredit);
+				$("#grade").attr('value',catalogRule["Degree Program"].minGrade);
+				for(var i in catalogRule["Catalogs"]){
+					$.ajax({
+						type: "POST",
+						url: "../scripts/courseCatalog.php",
+						data: {catalogName: catalogRule["Catalogs"][i] },
+						dataType: "json",
+						success: function(json) {
+							courseHandler(json,catalogRule);
+						}
+					});
+				}
+			}
+
+			function courseHandler(json,catalogRule){
+				catalog = json;
+
+				for(var i in catalogRule["Degree Program"].requiredCourses){
+					if(catalog[i] == null)
+						continue;
+					$("#classsublist").append($("<li>",{
+						text: catalog[i].name
+					}));
+				}
 			}
 
 			function closepopup(){	
@@ -104,7 +127,12 @@
 					TransferCreditHrs: <input type="number" id="trhrs">
 					OutsideCreditHrs: <input type="number" id="ohrs">
 					GradeNeeded: <input type="text" id="grade">
+			  </div>
+			  <div id="requiredClasses">
+				<h2>Required Courses</h2>
+				<ul id="classsublist">
 
+				</ul>
 			  </div>
 			</div>
 		</div>
