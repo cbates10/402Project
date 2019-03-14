@@ -150,24 +150,23 @@
 				}
 			}
 
-			function closepopup(){	
-				$("#classsublist").empty();
-				$("#addedClass").remove();
-				var modal = document.getElementById('myModal');
-				modal.style.display = "none";	
-			}
-
 			function addClassHandler(){
-				$("#catalogList").empty();
-				$("#classList").empty();
 				for(var i in catalogRule["Catalogs"]){
 					$("#catalogList").append($("<option>",{
 						value: catalogRule["Catalogs"][i],
 						text: catalogRule["Catalogs"][i]
 					}));
 				}
-				
 				$catalogs[catalogRule["Catalogs"][0]].insertAfter($("#classListLabel"));
+			}
+			
+			function closepopup(){
+				console.log("Inside close popup");
+				$("#courseList").detach();
+				$("#catalogList").empty();
+				$("#classsublist").empty();
+				var modal = document.getElementById('myModal');
+				modal.style.display = "none";	
 			}
         </script>
         <style>
