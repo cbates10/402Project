@@ -59,7 +59,7 @@ if(!$stmtHours) {
 	die("Could not prepare statement $mysqli->error");
 }
 
-$sqlCourseOverride = "SELECT idCourses, maxCount, minGrade, minHours FROM coursemappingoverride WHERE idObjects = ?";
+$sqlCourseOverride = "SELECT idCourses, maxCount, minGrade, minHours, maxHours FROM coursemappingoverride WHERE idObjects = ?";
 $stmtCourseOverride = $mysqli->prepare($sqlCourseOverride);
 if(!$stmtCourseOverride) {
 	die("Could not prepare statement $myslqi->error");
@@ -162,7 +162,7 @@ for($x = 0; $x < count($objects); $x++) {
 	if(false === $rc) {
 		die("Could not execute statement $stmtCourseOverride->error");
 	}
-	$stmtCourseOverride->bind_result($idCourse, $maxCount, $minGrade, $minHours);
+	$stmtCourseOverride->bind_result($idCourse, $maxCount, $minGrade, $minHours, $maxHours);
 	
 	$objectRequirements->courseOverride = array();
 	while($stmtCourseOverride->fetch()) {
@@ -170,6 +170,7 @@ for($x = 0; $x < count($objects); $x++) {
 		$courseOverride->maxCount = $maxCount;
 		$courseOverride->minGrade = $minGrade;
 		$courseOverride->minHours = $minHours;
+		$courseOverride->maxHours = $maxHours;
 		$objectRequirements->courseOverride[$idCourse] = $courseOverride;
 	}
 	$stmtCourseOverride->free_result();
