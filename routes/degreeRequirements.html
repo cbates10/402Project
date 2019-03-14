@@ -110,7 +110,7 @@
 						$closeButton.click(removeCourseEventHandler);
 						$row.append($closeButton);
 						$("#courseTableBody").append($row);
-						courseObserver.broadcastAddEvent(selectedCourse, courseCatalog[selectedCourse], $("#grade").val(), parseInt($("#hours").val()), function(isValid) {
+						courseObserver.broadcastAddEvent(parseInt(selectedCourse), courseCatalog[selectedCourse], $("#grade").val(), parseInt($("#hours").val()), function(isValid) {
 							if(isValid) {
 								$row.removeAttr("invalid");
 								$row.attr("style", "color:black");
@@ -134,11 +134,23 @@
 				selectedCourses = selectedCourses.filter(function(id) {
 					return id != courseId;
 				});
-				courseObserver.broadcastRemoveEvent(courseId, $row.find("#hours").text());
+				courseObserver.broadcastRemoveEvent(parseInt(courseId), $row.find("#hours").text());
 				$row.remove();
 			}
 			
-			function hourOverrideEvent(minimumHours) {
+			function applicableCourseEvent(isSet) {
+				if(isSet) {
+					$(this).attr("style", "color:green");
+				} else {
+					$(this).attr("style", "color:black");
+				}
+			}
+			
+			function highHourOverrideEvent(maximumHours) {
+				alert("The minimum hours of " + maximumHours + " for this course has not been met. This course will be flagged for approval on forms");
+			}
+			
+			function lowHourOverrideEvent(minimumHours) {
 				alert("The minimum hours of " + minimumHours + " for this course has not been met. This course will be flagged for approval on forms");
 			}
 			
@@ -147,7 +159,7 @@
 			}
 			
 			function degreeHoursEvent(hours) {
-				$("#requiredHoursProgress").val(hours);
+				$(this).val(hours);
 			}
 			
 			function degreeCourseEvent(isSet) {
@@ -273,11 +285,19 @@
 			}
 			
 			function processDegree() {
+			
+				// Applicable courses to degree will be all courses within the catalog
+				
+				for(var i in courseCatalog) {
+					requirements["Degree Program"].applicableCourses.push(parseInt(i));
+				}
+				console.log(requirements);
+				
 				var requiredList = $("#requiredCourses");
 				var requirement = new Requirements();
 				var $progressBar = $("#requiredHoursProgress");
 				
-				processRequirements(requirements["Degree Program"], requiredList, $progressBar, requirement);
+				processRequirements(requirements["Degree Program"], requiredList, $progressBar, requirement, false);
 				
 				requirement.setFufilledOperation(function(isSet) {
 					if(isSet) {
@@ -295,7 +315,38 @@
 			
 			function minorRequirementsHandler(minors) {
 				if(minors.length > 0) {
-					$("#minorContainer").show();
+					$("#minorsContainer").show();
+				}
+				for(var i = 0; i < minors.length; i++) {
+					var $minorContainer = $("<div>", {
+						class: "minorContainer"
+					});
+					var $minorHeader = $("<h3>", {
+						text: minors[i].name
+					});
+					var $progressBar = $("<progress>", {
+						value: 0,
+						max: minors[i].requiredHours
+					});
+					var $minorsListHeader = $("<h3>", {
+						text: "Required Courses"
+					});
+					var $minorsList = $("<ul>", {
+						id: "minorsList" + i
+					});
+					var $applicableListHeader = $("<h3>", {
+						text: "Applicable Courses"
+					});
+					var $applicableCourseList = $("<ul>", {
+						id: "applicableCourseList" + i
+					});
+					var requirement = new Requirements();
+					$minorContainer.append($minorHeader).append($progressBar).append($minorsListHeader).append($minorsList).append($applicableListHeader).append($applicableCourseList);
+					$("#minorsContainer").append($minorContainer);
+					processRequirements(minors[i], $minorsList, $progressBar, requirement, true, $applicableCourseList);
+					
+					courseObserver.subscribeAddCourse(requirement.addCourse.bind(requirement));
+					courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
 				}
 			}
 			
@@ -351,10 +402,11 @@
 				});
 			}
 			
-			function processRequirements(degreeObject, requiredList, $progressBar, requirement) {
+			function processRequirements(degreeObject, requiredList, $progressBar, requirement, displayApplicableCourses, applicableCourseList) {
+				var hourString;
 				if(degreeObject.requiredHours !== undefined) {
 					$progressBar.attr("max", degreeObject.requiredHours.toString());
-					requirement.setRequiredHours(degreeObject.requiredHours, degreeHoursEvent);
+					requirement.setRequiredHours(degreeObject.requiredHours, degreeHoursEvent.bind($progressBar));
 				}
 				if(degreeObject.hours400) {
 					requirement.set400LevelHours(degreeObject.hours400, function() { alert("Maximum 400 level hours exceeded"); });
@@ -362,6 +414,8 @@
 				if(degreeObject.hours500) {
 					requirement.set500LevelHours(degreeObject.hours500, function() { alert("Maximum 500 level hours exceeded"); });
 				}
+				requirement.setLowHourOverrideEvent(lowHourOverrideEvent);
+				requirement.setHighHourOverrideEvent(highHourOverrideEvent);
 				// TODO Add database support for 600 level hours 
 				
 				requirement.setGradeRestriction(degreeObject.minGrade, gradeEvent);
@@ -369,7 +423,10 @@
 				for(var i in courseCatalog) {
 					if(degreeObject.courseOverride[i]) {
 						if(degreeObject.courseOverride[i].minHours) {
-							requirement.setHourOverride(i, degreeObject.courseOverride[i].minHours, hourOverrideEvent); 
+							requirement.setLowHourOverride(i, degreeObject.courseOverride[i].minHours); 
+						}
+						if(degreeObject.courseOverride[i].maxHours) {
+							requirement.setHighHourOverride(i, degreeObject.courseOverride[i].maxHours); 
 						}
 						if(degreeObject.courseOverride[i].minGrade) {
 							requirement.setGradeOverride(i, degreeObject.courseOverride[i].minGrade);
@@ -385,7 +442,6 @@
 					console.log(courseCatalog[i]);
 					
 					/* For display purposes, add a string detailing the hour range for any course that is variable hours and append the item to the list */
-					var hourString;
 					if(degreeObject.courseOverride[i]) {
 						if(degreeObject.courseOverride[i].minHours) {
 							hourString = getHoursDisplayString(i, degreeObject.courseOverride[i].minHours);
@@ -427,12 +483,34 @@
 						requiredList.append(substitutableCourses);
 					}
 				}
+				
+				for(var courseId of degreeObject.applicableCourses) {
+					requirement.setApplicableCourse(courseId);
+				}
+				if(displayApplicableCourses) {
+					for(var i = 0; i < degreeObject.applicableCourses.length; i++) {
+						let courseId = degreeObject.applicableCourses[i];
+						if(degreeObject.courseOverride[courseId]) {
+							if(degreeObject.courseOverride[courseId].minHours) {
+								hourString = getHoursDisplayString(courseId, degreeObject.courseOverride[courseId].minHours);
+							}
+						} else {
+							hourString = getHoursDisplayString(courseId);
+						}
+						var $courseItem = $("<li>", {
+							value: courseCatalog[courseId],
+							text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + hourString
+						});
+						requirement.setApplicableCourseEvent(courseId, applicableCourseEvent.bind($courseItem));
+						applicableCourseList.append($courseItem);
+					}
+				}
 			}
         </script>
     </head>
     <body>
-		<div>
-			<p>Program: <span id="program"></span> <span id="option"></span></p>
+		<p>Program: <span id="program"></span> <span id="option"></span></p>
+		<div id="requirementsContainer">	
 			<h3>Required Hours</h3>
 			<progress id="requiredHoursProgress" value="0" max="0"></progress>
 			<h2>Required Courses</h2>
@@ -482,11 +560,9 @@
 			
 			</ul>
 		</div>
-		<div id="minorContainer" hidden>
+		<div id="minorsContainer" hidden>
 			<h2>Minors</h2>
-			<ul id="minorList">
 			
-			</ul>
 		</div>
     </body>
 </html>
