@@ -86,11 +86,13 @@
 				catalogRule = json;
 				catalogsLoaded = 0;
 				catalogs = null;
+				$catalogs = {};
 				console.log(catalogRule);
 				$("#classsublist").empty();
 				var modal = document.getElementById('myModal');
 				modal.style.display = "block";
-				$("#requiredHr").attr('value',catalogRule["Degree Program"].requiredHours);
+				console.log(catalogRule["Degree Program"].requiredHours);
+				$("#requiredHrs").attr('value',catalogRule["Degree Program"].requiredHours);
 				$("#400hrs").attr('value',catalogRule["Degree Program"].hours400);
 				$("#500hrs").attr('value',catalogRule["Degree Program"].hours500);
 				$("#600hrs").attr('value',catalogRule["Degree Program"].hours600);
@@ -145,7 +147,39 @@
 							value: "Remove"
 						})));
 					}
-					console.log($catalogs);
+					//Iterate through any course overrides and display information
+					for(var courseId in catalogRule["Degree Program"].courseOverride) {
+						var courseOverrideInfo = catalogRule["Degree Program"].courseOverride[courseId];
+						console.log(courseOverrideInfo);
+						$("#courseOverrideList").append($("<li>", {
+							text: catalogs[courseId].name + " "
+						}).append($("<label>", {
+							for: "overrideCount" + courseId,
+							text: "Maximum Times Countable"
+						})).append($("<input>", {
+							id: "overrideCount" + courseId,
+							type: "number",
+							value: courseOverrideInfo.maxCount,
+							style: "width:50px"
+						})).append($("<label>", {
+							for: "overrideGrade" + courseId,
+							text: "Minimum Grade"
+						})).append($("<input>", {
+							id: "overrideGrade" + courseId,
+							type: "text",
+							value: courseOverrideInfo.minGrade,
+							maxlength: "2",
+							pattern: "[ABCDF]{1}[-+]{0,1}"
+						})).append($("<label>", {
+							for: "overrideLowHours" + courseId,
+							text: "Minium Hours"
+						})).append($("<input>", {
+							id: "overrideLowHours" + courseId,
+							type: "number",
+							value: courseOverrideInfo.minHours,
+							style: "width:50px"
+						})));
+					}
 					addClassHandler();
 				}
 			}
@@ -161,7 +195,6 @@
 			}
 			
 			function closepopup(){
-				console.log("Inside close popup");
 				$("#courseList").detach();
 				$("#catalogList").empty();
 				$("#classsublist").empty();
@@ -190,7 +223,7 @@
 					600 Hours: <input type="number" ud="600hrs">
 					Transfer Credit Hours: <input type="number" id="trhrs">
 					Outside Credit Hours: <input type="number" id="ohrs">
-					Minimum Grade:: <input type="text" id="grade">
+					Minimum Grade: <input type="text" id="grade">
 			  </div>
 			  <input type="submit" id="submitChange" value="Submit Change" />
 			  <div id="requiredClasses">
@@ -200,6 +233,12 @@
 				</ul>
 			  </div>
 			  Catalog: <select id="catalogList"></select><label for="classList" id="classListLabel">Class:</label><input type="button" id="addClassButton" value="Add Class"/>
+			  <div>
+				<h2>Course Overrides</h2>
+				<ul id="courseOverrideList">
+			  
+				</ul>
+			  </div>
 			</div>
 		</div>
     </body>
