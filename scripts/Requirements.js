@@ -1,6 +1,8 @@
 class Requirements {
 
 	constructor() {
+		this.applicableCourseIds = []; // An array of all courseIds that should count towards to requirement
+		this.applicableCourseEvents = {};
 		this.courseActions = {};
 		this.coursesTaken = {};
 		this.courseValidationOperations = {};
@@ -11,7 +13,10 @@ class Requirements {
 		this.gradeRestriction = null;
 		this.gradeAction = null;
 		this.gradeOverrides = {};
-		this.hourOverrides = {};
+		this.lowHourOverrides = {};
+		this.lowHourOverrideAction = null;
+		this.highHourOverrides = {};
+		this.highHourOverrideAction = null;
 		this.requiredHours = 0;
 		this.currentHours = 0;
 		this.hoursAction = null;
@@ -29,6 +34,16 @@ class Requirements {
 		this.currentHours600 = 0;
 	}
 	
+	setApplicableCourseEvent(courseId, courseEvent) {
+		this.applicableCourseEvents[courseId] = courseEvent;
+	}
+	
+	setApplicableCourse(courseId) {
+		if(!this.applicableCourseIds.includes(courseId)) {
+			this.applicableCourseIds.push(courseId);
+		}
+	}
+	
 	setGradeRestriction(grade, gradeAction) {
 		this.gradeRestriction = grade;
 		this.gradeAction = gradeAction;
@@ -38,9 +53,20 @@ class Requirements {
 		this.gradeOverrides[courseId] = grade;
 	}
 	
-	setHourOverride(courseId, hours, hourOverrideAction) {
-		this.hourOverrides[courseId] = hours;
-		this.hourOverrideAction = hourOverrideAction;
+	setHighHourOverrideEvent(hourOverrideAction) {
+		this.highHourOverrideAction = hourOverrideAction;
+	}
+	
+	setLowHourOverrideEvent(hourOverrideAction) {
+		this.lowHourOverrideAction = hourOverrideAction;
+	}
+	
+	setLowHourOverride(courseId, hours) {
+		this.lowHourOverrides[courseId] = hours;
+	}
+	
+	setHighHourOverride(courseId, hours) {
+		this.highHourOverrides[courseId] = hours;
 	}
 	
 	set400LevelHours(hours, hoursAction) {
@@ -72,6 +98,9 @@ class Requirements {
 	}
 	
 	addRequiredCourse(courseId, courseAction) {
+		if(!this.applicableCourseIds.includes(courseId)) {
+			this.applicableCourseIds.push(courseId);
+		}
 		this.requiredCourses[courseId] = false;
 		this.courseActions[courseId] = courseAction;
 	}
@@ -109,20 +138,34 @@ class Requirements {
 	}
 	
 	addCourse(course, catalogEntry, grade, hours, validationOperation) {
+		if(!this.applicableCourseIds.includes(course)) {
+			return;
+		}
+		if(this.applicableCourseEvents[course]) {
+			this.applicableCourseEvents[course](true);
+		}
 		this.courseValidationOperations[course] = validationOperation;
 		this.coursesTaken[course] = catalogEntry;
 		this.coursesTaken[course].valid = true;
 		this.coursesTaken[course].hours = hours;
 		this.currentHours += hours;
 		
-		if(this.violatesGradeRestriction(course, grade)) {
-			var requiredGrade = (this.gradeOverrides[course]) ? this.gradeOverrides[course] : this.gradeRestriction;
-			this.gradeAction(requiredGrade);
-			validationOperation();
+		if(this.gradeRestriction) {
+			if(this.violatesGradeRestriction(course, grade)) {
+				var requiredGrade = (this.gradeOverrides[course]) ? this.gradeOverrides[course] : this.gradeRestriction;
+				this.gradeAction(requiredGrade);
+				validationOperation();
+			}
 		}
-		if(this.hourOverrides[course]) {
-			if(hours < this.hourOverrides[course]) {
-				this.hourOverrideAction(this.hourOverrides[course]);
+		if(this.lowHourOverrides[course]) {
+			if(hours < this.lowHourOverrides[course]) {
+				this.lowHourOverrideAction(this.lowHourOverrides[course]);
+				validationOperation();
+			}
+		}
+		if(this.highHourOverrides[course]) {
+			if(hours > this.highHourOverrides[course]) {
+				this.highHourOverrideAction(this.highHourOverrides[course]);
 				validationOperation();
 			}
 		}
@@ -226,6 +269,12 @@ class Requirements {
 	
 	
 	removeCourse(course, hours) {
+		if(!this.applicableCourseIds.includes(course)) {
+			return;
+		}
+		if(this.applicableCourseEvents[course]) {
+			this.applicableCourseEvents[course](false);
+		}
 		var catalogEntry = this.coursesTaken[course];
 		delete this.coursesTaken[course];
 		var beforeRemovalHours = this.currentHours;
