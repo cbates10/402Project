@@ -214,13 +214,14 @@ class Requirements {
 			}
 			
 			if(this.currentHours > this.requiredHours) {
+				console.log("required hours is greater " + this.hours400 + " " + this.hours400Notification);
 				if(this.hours400 && this.hours400Notification) {
 					var hourCap400 = Math.floor(this.currentHours * this.hours400 + 0.001);
-					this.hours400Notification = this.setValidCourses(400, hourCap400); 
+					this.hours400Notification = !this.setValidCourses(400, hourCap400); 
 				}
 				if(this.hours600 && this.hours600Notification) {
 					var hourCap600 = Math.floor(this.currentHours * this.hours600 + 0.001);
-					this.hours600Notification = this.setValidCourses(600, hourCap600); 
+					this.hours600Notification = !this.setValidCourses(600, hourCap600); 
 				}
 			}
 			
@@ -242,11 +243,11 @@ class Requirements {
 			if(this.currentHours > this.requiredHours) {
 				if(this.hours400 && this.hours400Notification) {
 					var hourCap400 = Math.floor(this.currentHours * this.hours400 + 0.001);
-					this.hours400Notification = this.setValidCourses(400, hourCap400); 
+					this.hours400Notification = !this.setValidCourses(400, hourCap400); 
 				}
 				if(this.hours500 && this.hours500Notification) {
 					var hourCap500 = Math.floor(this.currentHours * this.hours500 + 0.001);
-					this.hours500Notification = this.setValidCourses(500, hourCap500); 
+					this.hours500Notification = !this.setValidCourses(500, hourCap500); 
 				}
 			}
 			
@@ -384,6 +385,7 @@ class Requirements {
 	setValidCourses(courseLevel, hourCap) {
 		var hourCount = 0;
 		var containsAllValid = true;
+		console.log("Inside set valid courses at level " + courseLevel + " hour cap is " + hourCap);
 		/* Removing a course may cause another course to need to be marked as valid (such as if a valid course is removed making an invalid course valid). Determine
 		if any invalid courses need to be marked valid. Order user inputted courses is important so use forEach instead of for in */
 		Object.keys(this.coursesTaken).forEach(function(courseId) {
