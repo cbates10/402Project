@@ -178,6 +178,14 @@
 							type: "number",
 							value: courseOverrideInfo.minHours,
 							style: "width:50px"
+						})).append($("<label>", {
+							for: "overrideHighHours" + courseId,
+							text: "Maximum Hours"
+						})).append($("<input>", {
+							id: "overrideHighHours" + courseId,
+							type: "number",
+							value: courseOverrideInfo.maxHours,
+							style: "width:50px"
 						})));
 					}
 					addClassHandler();
@@ -238,6 +246,20 @@
 				<ul id="courseOverrideList">
 			  
 				</ul>
+			  </div>
+			  <div id="minorContainer">
+				<h2>Applicable Minors</h2>
+				<ul id="minorList">
+				
+				</ul>
+				<button type="button" id="addMinorButton">Add</button>
+			  </div>
+			  <div id="certificateContainer">
+				<h2>Certificates</h2>
+				<ul id="certificateList">
+				
+				</ul>
+				<button type="button" id="addCertificateButton">Add</button>
 			  </div>
 			</div>
 		</div>
