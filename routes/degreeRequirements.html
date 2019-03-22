@@ -9,6 +9,7 @@
 		<script type="text/javascript" src="../scripts/CourseObserver.js"></script>
 		<script type="text/javascript" src="../scripts/Requirements.js"></script>
         <script>
+			var programLevel = getCookie("programlevel");
 			var courseCatalog;
 			var catalogsLoaded = 0;
 			var $catalogs = [];
@@ -19,6 +20,9 @@
             $(document).ready(function(){
 				
 				displayUserInfo();
+				if(programLevel === "PhD") {
+					$("#appliedToMastersContainer").show();
+				}
 				
 				$("#candidacyForm").click(function(event) {
 					
@@ -31,6 +35,7 @@
 					data["StudentID"] = getCookie("studentID");
 					data["Major"] = getCookie("program");
 					data["ThesisType"] = getCookie("option");
+					data["FormName"] = requirements["Form"][0].name;
 					$("#courseTableBody tr.courseEntry").each(function() {
 						var courseId = $(this).attr("id");
 						data["MajorGrade" + courseCounter] = $(this).find("#grade").text();
@@ -107,10 +112,17 @@
 							class: "removeButton",
 							text: "X"
 						});
+						
+						if($("#appliedToMasters").is(":checked")) {
+							$row.attr("type", "masters");
+						} else {
+							$row.attr("type", "PhD");
+						}
+	
 						$closeButton.click(removeCourseEventHandler);
 						$row.append($closeButton);
 						$("#courseTableBody").append($row);
-						courseObserver.broadcastAddEvent(parseInt(selectedCourse), courseCatalog[selectedCourse], $("#grade").val(), parseInt($("#hours").val()), function(isValid) {
+						courseObserver.broadcastAddEvent(parseInt(selectedCourse), courseCatalog[selectedCourse], $("#grade").val(), parseInt($("#hours").val()), !$("#appliedToMasters").is(":checked"), function(isValid) {
 							if(isValid) {
 								$row.removeAttr("invalid");
 								$row.attr("style", "color:black");
@@ -127,6 +139,15 @@
 				
             });
 			
+			function getHourType(type) {
+				switch(type) {
+					case "variable":
+						return hourType.VARIABLE;
+					case "fixed":
+						return hourType.FIXED;
+				}
+			}
+			
 			function removeCourseEventHandler() {
 				console.log("Inside the remove course event handler");
 				var $row = $(this).parent();
@@ -134,7 +155,9 @@
 				selectedCourses = selectedCourses.filter(function(id) {
 					return id != courseId;
 				});
-				courseObserver.broadcastRemoveEvent(parseInt(courseId), $row.find("#hours").text());
+				var isPhD = $row.attr("type") === "PhD";
+				console.log("This is the hours on the page " + $row.find("#hours").text());
+				courseObserver.broadcastRemoveEvent(parseInt(courseId), isPhD, $row.find("#hours").text());
 				$row.remove();
 			}
 			
@@ -158,8 +181,12 @@
 				alert("The entered grade is below the minimum grade of " + requiredGrade + " this course will be flagged for approval on forms"); 
 			}
 			
-			function degreeHoursEvent(hours) {
+			// This is used to update progress bar values. Progress bar is set to the new value and if a new max value is indicated it will adjust the max value of the progress bar. Assumes max is never 0
+			function degreeHoursEvent(hours, max) {
 				$(this).val(hours);
+				if(max) {
+					$(this).attr("max", max);
+				}
 			}
 			
 			function degreeCourseEvent(isSet) {
@@ -297,7 +324,7 @@
 				var requirement = new Requirements();
 				var $progressBar = $("#requiredHoursProgress");
 				
-				processRequirements(requirements["Degree Program"], requiredList, $progressBar, requirement, false);
+				processRequirements(requirements["Degree Program"], requiredList, $progressBar, $("#progressBarContainer"), requirement, false);
 				
 				requirement.setFufilledOperation(function(isSet) {
 					if(isSet) {
@@ -308,9 +335,12 @@
 				});
 				courseObserver.subscribeAddCourse(requirement.addCourse.bind(requirement));
 				courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
-				
-				certificateRequirementsHandler(requirements["Certificate"]);
-				minorRequirementsHandler(requirements["Minor"]);
+				if(requirements["Certificate"]) {
+					certificateRequirementsHandler(requirements["Certificate"]);
+				}
+				if(requirements["Minor"]) {
+					minorRequirementsHandler(requirements["Minor"]);
+				}
 			}
 			
 			function minorRequirementsHandler(minors) {
@@ -343,7 +373,7 @@
 					var requirement = new Requirements();
 					$minorContainer.append($minorHeader).append($progressBar).append($minorsListHeader).append($minorsList).append($applicableListHeader).append($applicableCourseList);
 					$("#minorsContainer").append($minorContainer);
-					processRequirements(minors[i], $minorsList, $progressBar, requirement, true, $applicableCourseList);
+					processRequirements(minors[i], $minorsList, $progressBar, null, requirement, true, $applicableCourseList);
 					
 					courseObserver.subscribeAddCourse(requirement.addCourse.bind(requirement));
 					courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
@@ -402,21 +432,99 @@
 				});
 			}
 			
-			function processRequirements(degreeObject, requiredList, $progressBar, requirement, displayApplicableCourses, applicableCourseList) {
+			function processRequirements(degreeObject, requiredList, $progressBarTotal, $progressBarContainer, requirement, displayApplicableCourses, applicableCourseList) {
 				var hourString;
+				var maxProgressHours;
 				if(degreeObject.requiredHours !== undefined) {
-					$progressBar.attr("max", degreeObject.requiredHours.toString());
-					requirement.setRequiredHours(degreeObject.requiredHours, degreeHoursEvent.bind($progressBar));
+					$progressBarTotal.attr("max", degreeObject.requiredHours.toString());
+					requirement.setRequiredHours(degreeObject.requiredHours, degreeHoursEvent.bind($progressBarTotal));
 				}
 				if(degreeObject.hours400) {
-					requirement.set400LevelHours(degreeObject.hours400, function() { alert("Maximum 400 level hours exceeded"); });
+					if(degreeObject.hours400.maximum) {
+						requirement.set400MaxLevelHours(degreeObject.hours400.maximum.hours, getHourType(degreeObject.hours400.maximum.type), function() { alert("Maximum 400 level hours exceeded"); });
+					}
+					if(degreeObject.hours400.minimum) {
+						if(getHourType(degreeObject.hours400.minimum.type) === hourType.VARIABLE) {
+							maxProgressHours = Math.floor(degreeObject.requiredHours * degreeObject.hours400.minimum.hours + 0.001)
+						} else {
+							maxProgressHours = degreeObject.hours400.minimum.hours;
+						}
+						var $label = $("<label>", {
+							text: "400 Hours"
+						});
+						var $hours400Bar = $("<progress>", {
+							value: 0,
+							max: maxProgressHours
+						});
+						$progressBarContainer.append($label).append($hours400Bar);
+						requirement.set400MinLevelHours(degreeObject.hours400.minimum.hours, getHourType(degreeObject.hours400.minimum.type), degreeHoursEvent.bind($hours400Bar));
+					}
 				}
 				if(degreeObject.hours500) {
-					requirement.set500LevelHours(degreeObject.hours500, function() { alert("Maximum 500 level hours exceeded"); });
+					if(degreeObject.hours500.maximum) {
+						requirement.set500MaxLevelHours(degreeObject.hours500.maximum.hours, getHourType(degreeObject.hours500.maximum.type), function() { alert("Maximum 500 level hours exceeded"); });
+					}
+					if(degreeObject.hours500.minimum) {
+						if(getHourType(degreeObject.hours500.minimum.type) === hourType.VARIABLE) {
+							maxProgressHours = Math.floor(degreeObject.requiredHours * degreeObject.hours500.minimum.hours + 0.001)
+						} else {
+							maxProgressHours = degreeObject.hours500.minimum.hours;
+						}
+						var $label = $("<label>", {
+							text: "500 Hours"
+						});
+						var $hours500Bar = $("<progress>", {
+							value: 0,
+							max: maxProgressHours
+						});
+						$progressBarContainer.append($label).append($hours500Bar);
+						requirement.set500MinLevelHours(degreeObject.hours500.minimum.hours, getHourType(degreeObject.hours500.minimum.type), degreeHoursEvent.bind($hours500Bar));
+					}
 				}
+				if(degreeObject.hours600) {
+					if(degreeObject.hours600.maximum) {
+						requirement.set600MaxLevelHours(degreeObject.hours600.maximum.hours. getHourType(degreeObject.hours600.maximum.type), function() { alert("Maximum 600 level hours exceeded"); });
+					}
+					if(degreeObject.hours600.minimum) {
+						if(getHourType(degreeObject.hours600.minimum.type) === hourType.VARIABLE) {
+							maxProgressHours = Math.floor(degreeObject.requiredHours * degreeObject.hours600.minimum.hours + 0.001)
+						} else {
+							maxProgressHours = degreeObject.hours600.minimum.hours;
+						}
+						var $label = $("<label>", {
+							text: "600 Hours"
+						});
+						var $hours600Bar = $("<progress>", {
+							value: 0,
+							max: maxProgressHours
+						});
+						$progressBarContainer.append($label).append($hours600Bar);
+						requirement.set600MinLevelHours(degreeObject.hours600.minimum.hours, getHourType(degreeObject.hours600.minimum.type), degreeHoursEvent.bind($hours600Bar));
+					}
+				}
+				if(programLevel === "PhD") {
+					if(degreeObject.hoursPhDOnly) {
+						if(degreeObject.hoursPhDOnly.minimum) {
+							if(getHourType(degreeObject.hoursPhDOnly.minimum.type) === hourType.VARIABLE) {
+								maxProgressHours = Math.floor(degreeObject.requiredHours * degreeObject.hoursPhD.minimum.hours + 0.001)
+							} else {
+								maxProgressHours = degreeObject.hoursPhDOnly.minimum.hours;
+							}
+							var $label = $("<label>", {
+								text: "PhD Exclusive Hours"
+							});
+							var $hoursPhDOnlyBar = $("<progress>", {
+								value: 0,
+								max: maxProgressHours
+							});
+							$progressBarContainer.append($label).append($hoursPhDOnlyBar);
+							requirement.setPhDMinHours(degreeObject.hoursPhDOnly.minimum.hours, getHourType(degreeObject.hoursPhDOnly.minimum.type), degreeHoursEvent.bind($hoursPhDOnlyBar));
+						}
+					}	
+				}
+				
 				requirement.setLowHourOverrideEvent(lowHourOverrideEvent);
 				requirement.setHighHourOverrideEvent(highHourOverrideEvent);
-				// TODO Add database support for 600 level hours 
 				
 				requirement.setGradeRestriction(degreeObject.minGrade, gradeEvent);
 				
@@ -455,7 +563,7 @@
 						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + hourString
 					});
 					requiredList.append($courseItem);
-					requirement.addRequiredCourse(i, degreeCourseEvent); // Add the courseId of the required course to the requirements object
+					requirement.addRequiredCourse(i, degreeCourseEvent.bind($courseItem)); // Add the courseId of the required course to the requirements object
 					
 					/* Check to see if any of the courses have substitutions that may be taken in place of required course */
 					if(degreeObject.requiredCourses[i].length > 0) {
@@ -483,7 +591,9 @@
 						requiredList.append(substitutableCourses);
 					}
 				}
-				
+				if(degreeObject.countRequiredCourses) {
+					requirement.setCountRequiredCourses(degreeObject.countRequiredCourses);
+				}
 				for(var courseId of degreeObject.applicableCourses) {
 					requirement.setApplicableCourse(courseId);
 				}
@@ -512,7 +622,10 @@
 		<p>Program: <span id="program"></span> <span id="option"></span></p>
 		<div id="requirementsContainer">	
 			<h3>Required Hours</h3>
-			<progress id="requiredHoursProgress" value="0" max="0"></progress>
+			<label for="requiredHoursProgress">Total Hours</label><progress id="requiredHoursProgress" value="0" max="0"></progress>
+			<div id="progressBarContainer">
+			
+			</div>
 			<h2>Required Courses</h2>
 			<ul id="requiredCourses">
 
@@ -537,6 +650,9 @@
 					<option id="summer" value="Summer">Summer</option>
 				</select>
 				<label for="hours">Hours</label><input type="number" id="hours" name="hours" style="width:50px" required></input>
+				<span id="appliedToMastersContainer" hidden>
+					<input id="appliedToMasters" type="checkbox" checked>Applied To Masters</input>
+				</span>
 				<input id="submitCourse" type="submit"></input>
 			</form>
 		</div>
