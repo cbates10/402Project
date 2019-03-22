@@ -53,9 +53,15 @@ if(!$stmtSubCourses) {
 	die("Could not prepare statement $mysqli->error");
 }
 
-$sqlHours = "SELECT requiredHours, minGrade, 400Hours, 500Hours FROM objects NATURAL LEFT JOIN 400hours NATURAL LEFT JOIN 500hours WHERE idObjects = ?";
+$sqlHours = "SELECT requiredHours, minGrade FROM objects WHERE idObjects = ?";
 $stmtHours = $mysqli->prepare($sqlHours);
 if(!$stmtHours) {
+	die("Could not prepare statement $mysqli->error");
+}
+
+$sqlHoursByLevel = "SELECT hours, type, cap, hourLevel FROM hoursbylevel WHERE idObjects = ?";
+$stmtHoursByLevel = $mysqli->prepare($sqlHoursByLevel);
+if(!$stmtHoursByLevel) {
 	die("Could not prepare statement $mysqli->error");
 }
 
@@ -77,18 +83,33 @@ if(!$stmtCatalogs) {
 	die("Could not prepare statement $mysqli->error");
 }
 
+$sqlNumberRequired = "SELECT numCourses FROM numberofrequiredcourses WHERE idObjects = ?";
+$stmtNumberRequired = $mysqli->prepare($sqlNumberRequired);
+if(!$stmtNumberRequired) {
+	die("Could not prepare statement $mysqli->error");
+}
+
 /* Initialize requirements */
 $requirements = array();
-$sqlTypes = "SELECT type FROM types";
-$result = $mysqli->query($sqlTypes);
-if($result->num_rows > 0) {
-	while($row = $result->fetch_assoc()) {
-		$field = $row["type"];
-		if($field !== "Degree Program") {
-			$requirements[$field] = array();
-		}
-	}
+$sqlTypes = "SELECT type FROM objectmapping NATURAL JOIN objects NATURAL JOIN types WHERE idObjectDegree = ?";
+$stmtTypes = $mysqli->prepare($sqlTypes);
+if(!$stmtTypes) {
+	die("Could not prepare statement $mysqli->error");
 }
+if(!$stmtTypes->bind_param("i", $degreeOption)) {
+	die("Could not execute statement $stmtTypes->error");
+}
+$rc = $stmtTypes->execute();
+if(false === $rc) {
+	die("Could not execute statement $stmtTypes->error");
+}
+$stmtTypes->bind_result($field);
+
+while($stmtTypes->fetch()) {
+	$requirements[$field] = array();
+}
+$stmtTypes->close();
+
 
 if(!$stmtCatalogs->bind_param("i", $degreeOption)) {
 	die("Could not bind parameters $stmtCourse->error");
@@ -143,17 +164,40 @@ for($x = 0; $x < count($objects); $x++) {
 
 	$rc = $stmtHours->execute();
 	if(false === $rc) {
-		die("Could not execute statement $stmt->error");
+		die("Could not execute statement $stmtHours->error");
 	}
-	$stmtHours->bind_result($requiredHours, $minGrade, $hours400, $hours500);
+	$stmtHours->bind_result($requiredHours, $minGrade);
 
 	if($stmtHours->fetch()) {
 		$objectRequirements->requiredHours = $requiredHours;
-		$objectRequirements->hours400 = $hours400;
-		$objectRequirements->hours500 = $hours500;
 		$objectRequirements->minGrade = $minGrade;
 	}
 	$stmtHours->free_result();
+	
+	
+	if(!$stmtHoursByLevel->bind_param("i", $objects[$x]->idObjects)) {
+		die("Could not bind parameters $stmtSubCourses->error");
+	}
+
+	$rc = $stmtHoursByLevel->execute();
+	if(false === $rc) {
+		die("Could not execute statement $stmtHoursByLevel->error");
+	}
+	$stmtHoursByLevel->bind_result($requiredHours, $hoursType, $hoursCap, $hourLevel);
+
+	while($stmtHoursByLevel->fetch()) {
+		$hourLevel = "hours" . $hourLevel;
+		if(!property_exists($objectRequirements, $hourLevel)) {
+			$objectRequirements->$hourLevel = new stdClass();
+		}
+		if(!property_exists($objectRequirements->$hourLevel, $hoursCap)) {
+			$objectRequirements->$hourLevel->$hoursCap = new stdClass();
+		}
+		$objectRequirements->$hourLevel->$hoursCap->type = $hoursType;
+		$objectRequirements->$hourLevel->$hoursCap->hours = $requiredHours;
+	}
+	$stmtHoursByLevel->free_result();
+	
 	
 	if(!$stmtCourseOverride->bind_param("i", $objects[$x]->idObjects)) {
 		die("Could not bind parameters $stmtCourseOverride->error");
@@ -190,6 +234,21 @@ for($x = 0; $x < count($objects); $x++) {
 	}
 	$stmtApplicableCourses->free_result();
 	
+	if(!$stmtNumberRequired->bind_param("i", $objects[$x]->idObjects)) {
+		die("Could not execture statement $stmtNumberRequired->error");
+	}
+	$rc = $stmtNumberRequired->execute();
+	if(false === $rc) {
+		die("Could not execute statement $stmtNumberRequired->error");
+	}
+	$stmtNumberRequired->bind_result($countRequired);
+	
+	if($stmtNumberRequired->fetch()) {
+		$objectRequirements->countRequiredCourses = $countRequired;
+	}
+	$stmtNumberRequired->free_result();
+	
+	$objectRequirements->id = $objects[$x]->idObjects;
 	$field = $objects[$x]->type;
 	if($field !== "Degree Program") {
 		$objectRequirements->name = $objects[$x]->name;
