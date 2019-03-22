@@ -11,6 +11,13 @@
 			var catalogs;
 			var $catalogs = {};
 			var catalogsLoaded = 0;
+			var requiredCourseIds; // This is an array initialized at the start of every modify popup
+			var minors;
+			var $minorsSubjectSelect = {};
+			var selectedMinors;
+			var certificates;
+			var $certificatesSubjectSelect = {};
+			var selectedCertificates;
 			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", degreeHandler);
@@ -22,52 +29,136 @@
 					$catalogs[$(this).val()].insertAfter($("#classListLabel"));
 				});
 				
+				$("#minorSubjectList").change(function(){
+					$("#minorSelect").detach();
+					$minorsSubjectSelect[$(this).val()].insertAfter($("#minorSelectLabel"));
+				});
+				
+				//TODO modularize these click events into one
 				$("#addClassButton").click(function(){
-					$("#classsublist").append($("<li>",{
-						text: $("#courseList option:selected").val()
-					}).append($("<input>",{
-						type: "submit",
-						name: "removeClassButton",
-						value: "Remove"
-					})));
+					var courseId = $("#courseList option:selected").val();
+					if(!requiredCourseIds.includes(courseId)) {
+						requiredCourseIds.push(courseId);
+						var $removeButton = $("<input>", {
+							id: courseId,
+							type: "submit",
+							name: "removeClassButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeRequiredHandler);
+						$("#classsublist").append($("<li>",{
+							text: catalogs[courseId].name
+						}).append($removeButton));
+					}
+				});
+				
+				$("#addMinorButton").click(function(){
+					var minorId = parseInt($("#minorSelect option:selected").val());
+					if(!selectedMinors.includes(minorId)) {
+						selectedMinors.push(minorId);
+						var $removeButton = $("<input>", {
+							id: minorId,
+							type: "submit",
+							name: "removeClassButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeMinorHandler);
+						$("#minorList").append($("<li>",{
+							text: minors[minorId].name
+						}).append($removeButton));
+					}
+				});
+				
+				$("#addCertificateButton").click(function(){
+					var certificateId = parseInt($("#certificateSelect option:selected").val());
+					if(!selectedCertificates.includes(certificateId)) {
+						selectedCertificates.push(certificateId);
+						var $removeButton = $("<input>", {
+							id: certificateId,
+							type: "submit",
+							name: "removeClassButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeCertificateHandler);
+						$("#certificateList").append($("<li>",{
+							text: certificates[certificateId].name
+						}).append($removeButton));
+					}
 				});
             });
             
+			// TODO modularize these event handlers into one
+			function removeRequiredHandler() {
+				var courseId = $(this).attr("id");
+				requiredCourseIds = requiredCourseIds.filter(function(id) {
+					return id != courseId;
+				});
+				$(this).parent().remove();
+			}
+			
+			function removeMinorHandler() {
+				var minorId = $(this).attr("id");
+				selectedMinors = selectedMinors.filter(function(id) {
+					return id != minorId;
+				});
+				$(this).parent().remove();
+			}
+			
+			function removeCertificateHandler() {
+				var certificateId = $(this).attr("id");
+				selectedCertificates = selectedCertificates.filter(function(id) {
+					return id != certificateId;
+				});
+				$(this).parent().remove();
+			}
+			
 			function degreeHandler() {
-				console.log(this.response);
 				var degreePrograms = JSON.parse(this.response);
+				console.log(degreePrograms);
+				var $degreeSubjects;
+				var $degreeOptions;
 
-				// Iterate through all degree programs and add to DOM as list item 
+				// Iterate through all degree programs (Masters/PhD) and add to DOM
 				for(var degreeName in degreePrograms) {
-					$("#masters").append($("<li>", {
+					$("#listContainer").append($("<li>", {
 						value: degreeName
 					}).append($("<label>", {
 						text: degreeName
 					}))); 
 
-					// Create nested list under each degree program with the options offered, e.g., Thesis 
-					var degreeOptions = $("<ul id='sublist'>");
+					// Create nested list under each degree program with the subject, e.g., Computer Science 
+					$degreeSubjects = $("<ul id='subjectList'>");
+					console.log(degreePrograms[degreeName]);
+					for(var degreeSubject in degreePrograms[degreeName]) {
 					
-					degreeOptions.append($("<li>", {
-						name: "catalog"
-					}).append($("<a>", {
-						href: "addremove.html",
-						text: "Edit Course Catalog",
-						onclick: "document.cookie = 'program=" + degreeName + "'"
-					})));
-					
-					for(var degreeOption in degreePrograms[degreeName].option) {
-						degreeOptions.append($("<li>", {
-							value: degreeOption,
-						}).append($("<label>", {
-							text: degreeOption
-						})).append($("<button>", {
-							value: degreePrograms[degreeName].option[degreeOption],
-							name: "modifyButton",
-							text: "Modify"	
+						$degreeSubjects.append($("<li>", {
+							text: degreeSubject
+						}));
+						
+						$degreeOptions = $("<ul id='optionList'>");
+						
+						$degreeOptions.append($("<li>", {
+							name: "catalog"
+						}).append($("<a>", {
+							href: "addremove.html",
+							text: "Edit Course Catalog",
+							onclick: "document.cookie = 'program=" + degreeSubject + "'"
 						})));
-					} 
-					$("#masters").append(degreeOptions);
+						
+						for(var degreeOption in degreePrograms[degreeName][degreeSubject]) {
+							$degreeOptions.append($("<li>", {
+								value: degreeOption,
+							}).append($("<label>", {
+								text: degreeOption
+							})).append($("<button>", {
+								value: degreePrograms[degreeName][degreeSubject][degreeOption],
+								name: "modifyButton",
+								text: "Modify"	
+							})));
+						} 
+						$degreeSubjects.append($degreeOptions);
+					}
+					$("#listContainer").append($degreeSubjects);
 				}
 				$("button[name='modifyButton']").click(function(){
 					$.ajax({
@@ -87,15 +178,45 @@
 				catalogsLoaded = 0;
 				catalogs = null;
 				$catalogs = {};
+				$minorsSubjectSelect = {};
+				$certificatesSubjectSelect = {};
+				requiredCourseIds = [];
+				selectedMinors = [];
+				selectedCertificates = [];
 				console.log(catalogRule);
-				$("#classsublist").empty();
+
 				var modal = document.getElementById('myModal');
 				modal.style.display = "block";
-				console.log(catalogRule["Degree Program"].requiredHours);
-				$("#requiredHrs").attr('value',catalogRule["Degree Program"].requiredHours);
-				$("#400hrs").attr('value',catalogRule["Degree Program"].hours400);
-				$("#500hrs").attr('value',catalogRule["Degree Program"].hours500);
-				$("#600hrs").attr('value',catalogRule["Degree Program"].hours600);
+				$("#requiredHrs").val(catalogRule["Degree Program"].requiredHours);
+				if(catalogRule["Degree Program"].hours400) {
+					if(catalogRule["Degree Program"].hours400.minimum) {
+						$("#400HrsMin").val(catalogRule["Degree Program"].hours400.minimum.hours);
+						$("input[name='400HrsMinOption']").val([catalogRule["Degree Program"].hours400.minimum.type]);
+					}
+					if(catalogRule["Degree Program"].hours400.maximum) {
+						$("#400HrsMax").val(catalogRule["Degree Program"].hours400.maximum.hours);
+						$("input[name='400HrsMaxOption']").val([catalogRule["Degree Program"].hours400.maximum.type]);
+					}
+				}
+				if(catalogRule["Degree Program"].hours500) {
+					if(catalogRule["Degree Program"].hours500.minimum) {
+						$("#500HrsMin").val(catalogRule["Degree Program"].hours500.minimum.hours);
+						$("input[name='500HrsMinOption']").val([catalogRule["Degree Program"].hours500.minimum.type]);
+					}if(catalogRule["Degree Program"].hours500.maximum) {
+						$("#500HrsMax").val(catalogRule["Degree Program"].hours500.maximum.hours);
+						$("input[name='500HrsMaxOption']").val([catalogRule["Degree Program"].hours500.maximum.type]);
+					}
+				}
+				if(catalogRule["Degree Program"].hours600) {
+					if(catalogRule["Degree Program"].hours600.minimum) {
+						$("#600HrsMin").val(catalogRule["Degree Program"].hours600.minimum.hours);
+						$("input[name='600HrsMinOption']").val([catalogRule["Degree Program"].hours600.minimum.type]);
+					}
+					if(catalogRule["Degree Program"].hours600.maximum) {
+						$("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours);
+						$("input[name='600HrsMaxOption']").val([catalogRule["Degree Program"].hours600.maximum.type]);
+					}
+				}
 				$("#trhrs").attr('value',catalogRule["Degree Program"].transferCredit);
 				$("#ohrs").attr('value',catalogRule["Degree Program"].outsideCredit);
 				$("#grade").attr('value',catalogRule["Degree Program"].minGrade);
@@ -114,6 +235,7 @@
 			}
 
 			function courseHandler(catalogArray, catalogName){
+				console.log(catalogArray);
 				if(!catalogs) {
 					catalogs = catalogArray;
 				} else {
@@ -126,26 +248,30 @@
 				var $courseList = $("<select>", {
 					id: "courseList"
 				});
-				for(var i in catalogArray) {
+				for(var courseId in catalogArray) {
 					$courseList.append($("<option>",{
-						value: catalogArray[i].name,
-						text: catalogArray[i].prefix + " " + catalogArray[i].number + " : " +  catalogArray[i].name
+						value: courseId,
+						text: catalogArray[courseId].prefix + " " + catalogArray[courseId].number + " : " +  catalogArray[courseId].name
 					}));
 				}
 				$catalogs[catalogName] = $courseList;
 			
+				// Load in options once all catalogs have been retrieved
 				if(catalogsLoaded === catalogRule["Catalogs"].length) {
 					
 					//Iterate through catalog index with degreeID
 					for(var i in catalogRule["Degree Program"].requiredCourses){
-						$("#classsublist").append($("<li>",{
-							text: catalogs[i].name
-						}).append($("<input>",{
+						requiredCourseIds.push(i);
+						var $removeButton = $("<input>",{
+							id: i,
 							type: "submit",
 							name: "removeClassButton",
-							id: i,
 							value: "Remove"
-						})));
+						});
+						$removeButton.click(removeRequiredHandler);
+						$("#classsublist").append($("<li>",{
+							text: catalogs[i].name
+						}).append($removeButton));
 					}
 					//Iterate through any course overrides and display information
 					for(var courseId in catalogRule["Degree Program"].courseOverride) {
@@ -169,7 +295,8 @@
 							type: "text",
 							value: courseOverrideInfo.minGrade,
 							maxlength: "2",
-							pattern: "[ABCDF]{1}[-+]{0,1}"
+							pattern: "[ABCDF]{1}[-+]{0,1}",
+							style: "width:50px"
 						})).append($("<label>", {
 							for: "overrideLowHours" + courseId,
 							text: "Minium Hours"
@@ -187,8 +314,50 @@
 							value: courseOverrideInfo.maxHours,
 							style: "width:50px"
 						})));
-					}
+					}					
+
+					// Set the contents of the required course select
 					addClassHandler();
+					// Load in the minors
+					var xhr = new XMLHttpRequest();
+					xhr.addEventListener("load", minorsHandler);
+					xhr.open("GET", "../scripts/minors.php");
+					xhr.send();
+				
+					for(var minorIndex in catalogRule["Minor"]) {
+						selectedMinors.push(catalogRule["Minor"][minorIndex].id);
+						var $removeButton = $("<input>", {
+							id: catalogRule["Minor"][minorIndex].id,
+							type: "submit",
+							name: "removeClassButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeMinorHandler);
+						$("#minorList").append($("<li>",{
+							text: catalogRule["Minor"][minorIndex].name
+						}).append($removeButton));
+					}
+					
+					// Now load in the certificates
+					
+					var xhr = new XMLHttpRequest();
+					xhr.addEventListener("load", certificateHandler);
+					xhr.open("GET", "../scripts/certificates.php");
+					xhr.send();
+					
+					for(var certificateIndex in catalogRule["Certificate"]) {
+						selectedCertificates.push(catalogRule["Certificate"][certificateIndex].id);
+						var $removeButton = $("<input>", {
+							id: catalogRule["Certificate"][certificateIndex].id,
+							type: "submit",
+							name: "removeClassButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeCertificateHandler);
+						$("#certificateList").append($("<li>",{
+							text: catalogRule["Certificate"][certificateIndex].name
+						}).append($removeButton));
+					}
 				}
 			}
 
@@ -202,36 +371,108 @@
 				$catalogs[catalogRule["Catalogs"][0]].insertAfter($("#classListLabel"));
 			}
 			
+			function processList($globalList, $subjectList, idName, requirementList) {
+				var $selectList;
+				for(var objectId in requirementList) {
+					// If there is no select list for the given subject then add a new option to the subject select list and create a new select list for that subject
+					if(!$globalList[requirementList[objectId].subject]) {
+						$subjectList.append($("<option>", {
+							value: requirementList[objectId].subject,
+							text: requirementList[objectId].subject
+						}));
+						$selectList = $("<select>", {
+							id: idName
+						});
+						$globalList[requirementList[objectId].subject] = $selectList; // Add select list to array, key off subject
+					}
+					// Add the minor name to the select list belonging to that subject
+					$globalList[requirementList[objectId].subject].append($("<option>", {
+						value: objectId,
+						text: requirementList[objectId].name
+					}));
+				}
+			}
+			
+			// This will populate the select lists with minor information. There are two select lists: the list for the minor subjects and the list for the minors within that subject. 
+			// The desired outcome of this code is to create select lists for each subject and add minors to those select lists when they belong to those subjects.
+			function minorsHandler() {
+				minors = JSON.parse(this.response);
+				console.log(minors);
+				var $minorSubjectList = $("#minorSubjectList");
+				// Iterate through the minor list by minor id
+				processList($minorsSubjectSelect, $minorSubjectList, "minorSelect", minors);
+				// Initialize the minor select list shown to be the list for the selected option
+				$minorsSubjectSelect[$("#minorSubjectList option:selected").val()].insertAfter($("#minorSelectLabel"));
+			}
+			
+			
+			function certificateHandler() {
+				certificates = JSON.parse(this.response);
+				console.log(certificates);
+				var $certificateSubjectList = $("#certificateSubjectList");
+				processList($certificatesSubjectSelect, $certificateSubjectList, "certificateSelect", certificates);
+				// Initialize the minor select list shown to be the list for the selected option
+				$certificatesSubjectSelect[$("#certificateSubjectList option:selected").val()].insertAfter($("#certificateSelectLabel")); 
+			}
+			
 			function closepopup(){
+				$("#minorList").empty();
+				$("#classsublist").empty();
+				$("#popupform").children("input[type='number']").val("");
+				$("#popupform").children("input[type='radio']:checked").prop("checked", false);
+				$("#minorSelect").detach();
+				$("#minorSubjectList").empty();
 				$("#courseList").detach();
 				$("#catalogList").empty();
 				$("#classsublist").empty();
 				var modal = document.getElementById('myModal');
 				modal.style.display = "none";	
 			}
+			
         </script>
         <style>
 
         </style>
     </head>
     <body>
-        <div>
-            <h4>Masters</h4>
-            <ul id="masters">
-		
-            </ul>
+        <div id="listContainer">
+
 		</div>
 		<div id="myModal" class="modal">
 			<div class="modal-content">
 			  <span onclick="closepopup()" class="close">&times;</span>
 			  <div id="popupform">
-					Required Hours: <input type="number" id="requiredHrs">
-					400 Hours: <input type="number" id="400hrs">
-					500 Hours: <input type="number" id="500hrs">
-					600 Hours: <input type="number" ud="600hrs">
-					Transfer Credit Hours: <input type="number" id="trhrs">
-					Outside Credit Hours: <input type="number" id="ohrs">
-					Minimum Grade: <input type="text" id="grade">
+					Required Hours: <input type="number" id="requiredHrs" style="width:50px">
+					<br>
+					400 Hours Minimum: <input type="number" id="400HrsMin" style="width:50px">
+					<label for="400HrsMinOptionFixed">Fixed</label><input type="radio" id="400HrsMinOptionFixed" name="400HrsMinOption" value="fixed">
+					<label for="400HrsMinOptionVariable">Variable</label><input type="radio" id="400HrsMinOptionVariable" name="400HrsMinOption" value="variable">
+					<br>
+					400 Hours Maximum: <input type="number" id="400HrsMax" style="width:50px">
+					<label for="400HrsMaxOptionFixed">Fixed</label><input type="radio" id="400HrsMaxOptionFixed" name="400HrsMaxOption" value="fixed">
+					<label for="400HrsMaxOptionVariable">Variable</label><input type="radio" id="400HrsMaxOptionVariable" name="400HrsMaxOption" value="variable">
+					<br>
+					500 Hours Minimum: <input type="number" id="500HrsMin" style="width:50px">
+					<label for="500HrsMinOptionFixed">Fixed</label><input type="radio" id="500HrsMinOptionFixed" name="500HrsMinOption" value="fixed">
+					<label for="500HrsMinOptionVariable">Variable</label><input type="radio" id="500HrsMinOptionVariable" name="500HrsMinOption" value="variable">
+					<br>
+					500 Hours Maximum: <input type="number" id="500HrsMax" style="width:50px">
+					<label for="500HrsMaxOptionFixed">Fixed</label><input type="radio" id="500HrsMaxOptionFixed" name="500HrsMaxOption" value="fixed">
+					<label for="500HrsMaxOptionVariable">Variable</label><input type="radio" id="500HrsMaxOptionVariable" name="500HrsMaxOption" value="variable">
+					<br>
+					600 Hours Minimum: <input type="number" id="600HrsMin" style="width:50px">
+					<label for="600HrsMinOptionFixed">Fixed</label><input type="radio" id="600HrsMinOptionFixed" name="600HrsMinOption" value="fixed">
+					<label for="600HrsMinOptionVariable">Variable</label><input type="radio" id="600HrsMinOptionVariable" name="600HrsMinOption" value="variable">
+					<br>
+					600 Hours Maximum: <input type="number" id="600HrsMax" style="width:50px">
+					<label for="600HrsMaxOptionFixed">Fixed</label><input type="radio" id="600HrsMaxOptionFixed" name="600HrsMaxOption" value="fixed">
+					<label for="600HrsMaxOptionVariable">Variable</label><input type="radio" id="600HrsMaxOptionVariable" name="600HrsMaxOption" value="variable">
+					<br>
+					Transfer Credit Hours: <input type="number" id="trhrs" style="width:50px">
+					<br>
+					Outside Credit Hours: <input type="number" id="ohrs" style="width:50px">
+					<br>
+					Minimum Grade: <input type="text" id="grade" style="width:50px">
 			  </div>
 			  <input type="submit" id="submitChange" value="Submit Change" />
 			  <div id="requiredClasses">
@@ -252,14 +493,14 @@
 				<ul id="minorList">
 				
 				</ul>
-				<button type="button" id="addMinorButton">Add</button>
+				Subject: <select id="minorSubjectList"></select><label for="minorSelect" id="minorSelectLabel">Minor:</label><input type="button" id="addMinorButton" value="Add Minor"/>
 			  </div>
 			  <div id="certificateContainer">
 				<h2>Certificates</h2>
 				<ul id="certificateList">
 				
 				</ul>
-				<button type="button" id="addCertificateButton">Add</button>
+				Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Minor:</label><input type="button" id="addCertificateButton" value="Add Minor"/>
 			  </div>
 			</div>
 		</div>
