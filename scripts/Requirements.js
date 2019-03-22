@@ -15,6 +15,7 @@ class Requirements {
 		this.coursesTaken = {};
 		this.courseValidationOperations = {};
 		this.requiredCourses = {};
+		this.countRequiredCourses = 0;
 		this.subCourses = {};
 		this.fufilledOperation = function() { return false; }
 		this.fufilledNotification = false;
@@ -55,6 +56,15 @@ class Requirements {
 		this.hours600MaxNotification = false;
 		this.hours600MaxType = hourType.FIXED;
 		this.currentHours600 = 0;
+		this.hoursPhDMin = null;
+		this.hoursPhDMinAction = null;
+		this.hoursPhDMinNotification = false;
+		this.hoursPhDMinType = hourType.FIXED;
+		this.currentHoursPhD = 0;
+	}
+	
+	setCountRequiredCourses(count) {
+		this.countRequiredCourses = count;
 	}
 	
 	setApplicableCourseEvent(courseId, courseEvent) {
@@ -116,6 +126,14 @@ class Requirements {
 		}
 	}
 	
+	setPhDMinHours(hours, hourType, hoursAction) {
+		this.hoursPhDMinType = hourType;
+		this.hoursPhDMin = hours;
+		if(hoursAction) {
+			this.hoursPhDMinAction = hoursAction;
+		}
+	}
+	
 	set400MaxLevelHours(hours, hourType, hoursAction) {
 		this.hours400MaxType = hourType;
 		this.hours400Max = parseFloat(hours);
@@ -148,6 +166,7 @@ class Requirements {
 	}
 	
 	addRequiredCourse(courseId, courseAction) {
+		this.countRequiredCourses++;
 		if(!this.applicableCourseIds.includes(courseId)) {
 			this.applicableCourseIds.push(courseId);
 		}
@@ -187,7 +206,8 @@ class Requirements {
 		}
 	}
 	
-	addCourse(course, catalogEntry, grade, hours, validationOperation) {
+	addCourse(course, catalogEntry, grade, hours, isPhDExclusive, validationOperation) {
+		console.log(isPhDExclusive);
 		var hourCap;
 		if(!this.applicableCourseIds.includes(course)) {
 			return;
@@ -249,15 +269,6 @@ class Requirements {
 					hourCap = this.hours400Min;
 					this.hours400MinAction(this.currentHours400);
 				}
-				if(this.currentHours400 > hourCap && !this.hours400MinNotification) {
-					this.hours400MinNotification = true;
-					this.hours400MinAction();
-					this.coursesTaken[course].valid = false;
-					validationOperation(false);
-				} else if(this.hours400MinNotification) {
-					this.coursesTaken[course].valid = false;
-					validationOperation(false);
-				}
 			}
 			
 			// If adding a course exceeds the required hour count then the fraction of hours that can be 500 or 600 hours may have changed. Check to see if any previously invalid 500 and 600 hour
@@ -267,16 +278,18 @@ class Requirements {
 					hourCap500 = Math.floor(this.currentHours * this.hours500Max + 0.001);
 					this.hours500MaxNotification = this.setValidCourses(500, hourCap500); 
 				}
-				if(this.hours500Min && this.hours500MinNotification && this.hours500MinType === hourType.VARIABLE) {
+				if(this.hours500Min && this.hours500MinType === hourType.VARIABLE) {
 					hourCap500 = Math.floor(this.currentHours * this.hours500Min + 0.001);
+					this.hours500MinAction(this.currentHours500, hourCap500);
 					this.hours500MinNotification = this.setValidCourses(500, hourCap500); 
 				}
 				if(this.hours600Max && this.hours600MaxNotification && this.hours600MaxType === hourType.VARIABLE) {
 					var hourCap600 = Math.floor(this.currentHours * this.hours600Max + 0.001);
 					this.hours600MaxNotification = this.setValidCourses(600, hourCap600); 
 				}
-				if(this.hours600Min && this.hours600MinNotification && this.hours600MinType === hourType.VARIABLE) {
+				if(this.hours600Min && this.hours600MinType === hourType.VARIABLE) {
 					var hourCap600 = Math.floor(this.currentHours * this.hours600Min + 0.001);
+					this.hours600MinAction(this.currentHours600, hourCap600);
 					this.hours600MinNotification = this.setValidCourses(600, hourCap600); 
 				}
 			}
@@ -307,15 +320,6 @@ class Requirements {
 					hourCap = this.hours500Min;
 					this.hours500MinAction(this.currentHours500);
 				}
-				if(this.currentHours500 > hourCap && !this.hours500MinNotification) {
-					this.hours500MinNotification = true;
-					this.hours500MinAction();
-					this.coursesTaken[course].valid = false;
-					validationOperation(false);
-				} else if(this.hours500MinNotification) {
-					this.coursesTaken[course].valid = false;
-					validationOperation(false);
-				}
 			}
 			
 			if(this.currentHours > this.requiredHours) {
@@ -323,16 +327,18 @@ class Requirements {
 					var hourCap400 = Math.floor(this.currentHours * this.hours400Max + 0.001);
 					this.hours400MaxNotification = !this.setValidCourses(400, hourCap400); 
 				}
-				if(this.hours400Min && this.hours400MinNotification && this.hours400MinType === hourType.VARIABLE) {
+				if(this.hours400Min && this.hours400MinType === hourType.VARIABLE) {
 					var hourCap400 = Math.floor(this.currentHours * this.hours400Min + 0.001);
+					this.hours400MinAction(this.currentHours400, hourCap400);
 					this.hours400MinNotification = !this.setValidCourses(400, hourCap400); 
 				}
 				if(this.hours600Max && this.hours600MaxNotification && this.hours600MaxType === hourType.VARIABLE) {
 					var hourCap600 = Math.floor(this.currentHours * this.hours600Max + 0.001);
 					this.hours600MaxNotification = !this.setValidCourses(600, hourCap600); 
 				}
-				if(this.hours600Min && this.hours600MinNotification && this.hours600MinType === hourType.VARIABLE) {
+				if(this.hours600Min && this.hours600MinType === hourType.VARIABLE) {
 					var hourCap600 = Math.floor(this.currentHours * this.hours600Min + 0.001);
+					this.hours600MinAction(this.currentHours600, hourCap600);
 					this.hours600MinNotification = !this.setValidCourses(600, hourCap600); 
 				}
 			}
@@ -363,15 +369,6 @@ class Requirements {
 					hourCap = this.hours600Min;
 					this.hours600MinAction(this.currentHours600);
 				}				
-				if(this.currentHours600 > hourCap && !this.hours600MinNotification) {
-					this.hours600MinNotification = true;
-					this.hours600MinAction();
-					this.coursesTaken[course].valid = false;
-					validationOperation(false);
-				} else if(this.hours600MinNotification) {
-					this.coursesTaken[course].valid == false;
-					validationOperation(false);
-				}
 			}
 			
 			if(this.currentHours > this.requiredHours) {
@@ -379,21 +376,36 @@ class Requirements {
 					var hourCap400 = Math.floor(this.currentHours * this.hours400Max + 0.001);
 					this.hours400MaxNotification = !this.setValidCourses(400, hourCap400); 
 				}
-				if(this.hours400Min && this.hours400MinNotification && this.hours400MinType === hourType.VARIABLE) {
+				if(this.hours400Min && this.hours400MinType === hourType.VARIABLE) {
 					var hourCap400 = Math.floor(this.currentHours * this.hours400Min + 0.001);
+					this.hours400MinAction(this.currentHours400, hourCap400);
 					this.hours400MinNotification = !this.setValidCourses(400, hourCap400); 
 				}
 				if(this.hours500Max && this.hours500MaxNotification && this.hours500MaxType === hourType.VARIABLE) {
 					var hourCap500 = Math.floor(this.currentHours * this.hours500Max + 0.001);
 					this.hours500MaxNotification = !this.setValidCourses(500, hourCap500); 
 				}
-				if(this.hours500Min && this.hours500MinNotification && this.hours500MinType === hourType.VARIABLE) {
+				if(this.hours500Min && this.hours500MinType === hourType.VARIABLE) {
 					var hourCap500 = Math.floor(this.currentHours * this.hours500Min + 0.001);
+					this.hours500MinAction(this.currentHours500, hourCap500);
 					this.hours500MinNotification = !this.setValidCourses(500, hourCap500); 
 				}
 			}
-			
 		}
+		// Process if PhD hours are set
+		if(isPhDExclusive) {
+			this.currentHoursPhD += hours;
+			if(this.hoursPhDMinAction) {
+				if(this.hoursPhDMinType === hourType.VARIABLE) {
+					hourCap = (this.requiredHours > this.currentHours) ? (Math.floor(this.requiredHours * this.hoursPhDMin + 0.001)) : (Math.floor(this.currentHours * this.hoursPhDMin + 0.001));
+					this.hoursPhDMinAction(this.currentHoursPhD, hourCap);
+				} else {
+					hourCap = this.hoursPhDMin;
+					this.hoursPhDMinAction(this.currentHoursPhD);
+				}				
+			}
+		}
+		
 		if(this.requiredCourses[course] !== undefined) {
 			this.requiredCourses[course] = true;
 			console.log("Is a required course");
@@ -413,7 +425,7 @@ class Requirements {
 	}
 	
 	
-	removeCourse(course, hours) {
+	removeCourse(course, isPhDExclusive, hours) {
 		var hourCap;
 		if(!this.applicableCourseIds.includes(course)) {
 			return;
@@ -469,6 +481,17 @@ class Requirements {
 					}
 				}
 			}
+			// The minimum hour cap may change as well, in which case the progress bar will need to be updated.
+			if(this.hours500Min && this.hours500MinType === hourType.VARIABLE) {
+				var hourCap500 = Math.floor(this.currentHours * this.hours500Min + 0.001);
+				this.hours500MinAction(this.currentHours500, hourCap500);
+				this.hours500MinNotification = !this.setValidCourses(500, hourCap500); 
+			}
+			if(this.hours600Min && this.hours600MinType === hourType.VARIABLE) {
+				var hourCap600 = Math.floor(this.currentHours * this.hours600Min + 0.001);
+				this.hours600MinAction(this.currentHours600, hourCap600);
+				this.hours600MinNotification = !this.setValidCourses(600, hourCap600); 
+			}
 		} else if(catalogEntry.number < 600) {
 			this.currentHours500 -= hours;
 			if(this.hours500MaxNotification) {
@@ -508,7 +531,16 @@ class Requirements {
 					}
 				}
 			}
-			
+			if(this.hours400Min && this.hours400MinType === hourType.VARIABLE) {
+				var hourCap400 = Math.floor(this.currentHours * this.hours400Min + 0.001);
+				this.hours400MinAction(this.currentHours400, hourCap400);
+				this.hours400MinNotification = !this.setValidCourses(400, hourCap400); 
+			}
+			if(this.hours600Min && this.hours600MinType === hourType.VARIABLE) {
+				var hourCap600 = Math.floor(this.currentHours * this.hours600Min + 0.001);
+				this.hours600MinAction(this.currentHours600, hourCap600);
+				this.hours600MinNotification = !this.setValidCourses(600, hourCap600); 
+			}
 		} else {
 			this.currentHours600 -= hours;
 			if(this.hours600MaxNotification) {
@@ -545,6 +577,23 @@ class Requirements {
 						this.hours400MaxAction();
 					}
 				}
+			}
+			if(this.hours400Min && this.hours400MinType === hourType.VARIABLE) {
+				var hourCap400 = Math.floor(this.currentHours * this.hours400Min + 0.001);
+				this.hours400MinAction(this.currentHours400, hourCap400);
+				this.hours400MinNotification = !this.setValidCourses(400, hourCap400); 
+			}
+			if(this.hours500Min && this.hours500MinType === hourType.VARIABLE) {
+				var hourCap500 = Math.floor(this.currentHours * this.hours500Min + 0.001);
+				this.hours500MinAction(this.currentHours500, hourCap500);
+				this.hours500MinNotification = !this.setValidCourses(500, hourCap500); 
+			}
+		}
+		// Check to see if PhD hours now become
+		if(isPhDExclusive){
+			this.currentHoursPhD -= hours;
+			if(this.hoursPhDMinAction) {
+				this.hoursPhDMinAction(this.currentHoursPhD);
 			}
 		}
 		
@@ -604,6 +653,8 @@ class Requirements {
 	}
 	
 	fufillsRequirements() {
+		var hourCap;
+		var countRequiredCourses = 0;
 		if(this.currentHours < this.requiredHours) {
 			return false;
 		}
@@ -613,15 +664,59 @@ class Requirements {
 					var fufillsArray = this.subCourses[key].filter(function(courseId) {
 						return this.requiredCourses[courseId];
 					}, this);
-					if(fufillsArray.length == 0) {
-						return false;
+					if(fufillsArray.length !== 0) {
+						countRequiredCourses++;
 					}
-				} else {
+				} 
+			} else {
+				countRequiredCourses++;
+			}			
+		};
+		if(this.countRequiredCourses === countRequiredCourses) {
+			if(this.hours400Min) {
+				if(this.hours400MinType === hourType.VARIABLE) {
+					hourCap = (this.requiredHours > this.currentHours) ? (Math.floor(this.requiredHours * this.hours400Min + 0.001)) : (Math.floor(this.currentHours * this.hours400Min + 0.001));
+				} else { 
+					hourCap = this.hours400Min;
+				}
+				if(this.currentHours400 < hourCap) {
 					return false;
 				}
-			} 
-		};
-		return true;
+			}
+			if(this.hours500Min) {
+				if(this.hours500MinType === hourType.VARIABLE) {
+					hourCap = (this.requiredHours > this.currentHours) ? (Math.floor(this.requiredHours * this.hours500Min + 0.001)) : (Math.floor(this.currentHours * this.hours500Min + 0.001));
+				} else { 
+					hourCap = this.hours500Min;
+				}
+				if(this.currentHours500 < hourCap) {
+					return false;
+				}
+			}
+			if(this.hours600Min) {
+				if(this.hours600MinType === hourType.VARIABLE) {
+					hourCap = (this.requiredHours > this.currentHours) ? (Math.floor(this.requiredHours * this.hours600Min + 0.001)) : (Math.floor(this.currentHours * this.hours600Min + 0.001));
+				} else { 
+					hourCap = this.hours600Min;
+				}
+				if(this.currentHours600 < hourCap) {
+					return false;
+				}
+			}
+			if(this.hoursPhDMin) {
+				if(this.hoursPhDMinType === hourType.VARIABLE) {
+					hourCap = (this.requiredHours > this.currentHours) ? (Math.floor(this.requiredHours * this.hoursPhDMin + 0.001)) : (Math.floor(this.currentHours * this.hoursPhDMin + 0.001));
+				} else { 
+					hourCap = this.hoursPhDMin;
+				}
+				if(this.currentHoursPhD < hourCap) {
+					return false;
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 }
