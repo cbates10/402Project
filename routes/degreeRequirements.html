@@ -8,6 +8,7 @@
 		<script type="text/javascript" src="../scripts/CookieParser.js"></script>
 		<script type="text/javascript" src="../scripts/CourseObserver.js"></script>
 		<script type="text/javascript" src="../scripts/Requirements.js"></script>
+		<script type="text/javascript" src="../scripts/DataFormatFactory.js"></script>
         <script>
 			var programLevel = getCookie("programlevel");
 			var courseCatalog;
@@ -25,26 +26,7 @@
 				}
 				
 				$("#candidacyForm").click(function(event) {
-					
-					var data = [];
-					var courseCounter = 1;
-					data["FirstName"] = getCookie("firstName");
-					data["LastName"] = getCookie("lastName");
-					data["MiddleName"] = getCookie("middleName");
-					data["Email"] = getCookie("email");
-					data["StudentID"] = getCookie("studentID");
-					data["Major"] = getCookie("program");
-					data["ThesisType"] = getCookie("option");
-					data["FormName"] = requirements["Form"][0].name;
-					$("#courseTableBody tr.courseEntry").each(function() {
-						var courseId = $(this).attr("id");
-						data["MajorGrade" + courseCounter] = $(this).find("#grade").text();
-						data["MajorCourseHours" + courseCounter] = $(this).find("#hours").text();
-						data["MajorCourseYear" + courseCounter] = $(this).find("#year").text() + "/" + $(this).find("#term").text();
-						data["MajorCourseNamePrefix" + courseCounter] = courseCatalog[courseId].prefix;
-						data["MajorCourseNumber" + courseCounter] = courseCatalog[courseId].number;
-						data["MajorCourseTitle" + (courseCounter++)] = courseCatalog[courseId].name;
-					});
+					var data = DataFormatFactory.formatData(programLevel);
 					createForm(data).submit();
 				}); 			
 				
