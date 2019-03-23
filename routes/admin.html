@@ -18,6 +18,7 @@
 			var certificates;
 			var $certificatesSubjectSelect = {};
 			var selectedCertificates;
+			
 			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", degreeHandler);
@@ -191,29 +192,35 @@
 				if(catalogRule["Degree Program"].hours400) {
 					if(catalogRule["Degree Program"].hours400.minimum) {
 						$("#400HrsMin").val(catalogRule["Degree Program"].hours400.minimum.hours);
+						$("#400HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours400.minimum.hours);
 						$("input[name='400HrsMinOption']").val([catalogRule["Degree Program"].hours400.minimum.type]);
 					}
 					if(catalogRule["Degree Program"].hours400.maximum) {
 						$("#400HrsMax").val(catalogRule["Degree Program"].hours400.maximum.hours);
+						$("#400HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours400.maximum.hours);
 						$("input[name='400HrsMaxOption']").val([catalogRule["Degree Program"].hours400.maximum.type]);
 					}
 				}
 				if(catalogRule["Degree Program"].hours500) {
 					if(catalogRule["Degree Program"].hours500.minimum) {
 						$("#500HrsMin").val(catalogRule["Degree Program"].hours500.minimum.hours);
+						$("#500HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours500.minimum.hours);
 						$("input[name='500HrsMinOption']").val([catalogRule["Degree Program"].hours500.minimum.type]);
 					}if(catalogRule["Degree Program"].hours500.maximum) {
 						$("#500HrsMax").val(catalogRule["Degree Program"].hours500.maximum.hours);
+						$("#500HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours500.maximum.hours);
 						$("input[name='500HrsMaxOption']").val([catalogRule["Degree Program"].hours500.maximum.type]);
 					}
 				}
 				if(catalogRule["Degree Program"].hours600) {
 					if(catalogRule["Degree Program"].hours600.minimum) {
 						$("#600HrsMin").val(catalogRule["Degree Program"].hours600.minimum.hours);
+						$("#600HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours600.minimum.hours);
 						$("input[name='600HrsMinOption']").val([catalogRule["Degree Program"].hours600.minimum.type]);
 					}
 					if(catalogRule["Degree Program"].hours600.maximum) {
 						$("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours);
+						$("#600HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours600.maximum.hours);
 						$("input[name='600HrsMaxOption']").val([catalogRule["Degree Program"].hours600.maximum.type]);
 					}
 				}
@@ -419,6 +426,7 @@
 				$("#minorList").empty();
 				$("#classsublist").empty();
 				$("#popupform").children("input[type='number']").val("");
+				$("#popupform").children("input[type='number']").attr("oldvalue", "");
 				$("#popupform").children("input[type='radio']:checked").prop("checked", false);
 				$("#minorSelect").detach();
 				$("#minorSubjectList").empty();
@@ -502,6 +510,8 @@
 				</ul>
 				Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Minor:</label><input type="button" id="addCertificateButton" value="Add Minor"/>
 			  </div>
+			  <br>
+			  <input type="submit" value="Save"></input>
 			</div>
 		</div>
     </body>
