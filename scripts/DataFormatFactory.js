@@ -31,7 +31,11 @@ class DataFormatFactory {
 			data["MajorCourseYear" + courseCounter] = $(this).find("#year").text() + "/" + $(this).find("#term").text();
 			data["MajorCourseNamePrefix" + courseCounter] = courseCatalog[courseId].prefix;
 			data["MajorCourseNumber" + courseCounter] = courseCatalog[courseId].number;
-			data["MajorCourseTitle" + (courseCounter++)] = courseCatalog[courseId].name;
+			data["MajorCourseTitle" + courseCounter] = courseCatalog[courseId].name;
+			if($(this).attr("flagged") != "false") {
+				data["MajorFlag" + courseCounter] = "*";
+			}
+			courseCounter++;
 		});
 		return data;
 	}
