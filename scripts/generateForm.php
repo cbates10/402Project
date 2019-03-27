@@ -4,10 +4,12 @@
 	$data = array();
 	
 	foreach($_POST as $key => $value) {
-		$data[$key] = $value;
+		if($key != "FormName") {
+			$data[$key] = $value;
+		}
 	} 
 	
-	$pdf = new pdfForm("../admission_to_candidacy.pdf", $data);
+	$pdf = new pdfForm('../"' . $_POST["FormName"] . '.pdf"', $data);
 	
 	$pdf->download();
 ?>
