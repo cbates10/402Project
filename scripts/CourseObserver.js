@@ -12,8 +12,8 @@ class CourseObserver {
 		this.removeObservers = this.removeObservers.filter((subscriber) => subscriber !== func);
 	}
 	
-	broadcastRemoveEvent(courseId, isPhD, hours) {
-		this.removeObservers.forEach((subscriber) => subscriber(courseId, isPhD, hours));
+	broadcastRemoveEvent(courseId, hours) {
+		this.removeObservers.forEach((subscriber) => subscriber(courseId, hours));
 	}
 	
 	subscribeAddCourse(func) {
@@ -24,7 +24,7 @@ class CourseObserver {
 		this.addObservers = this.addObservers.filter((subscriber) => subscriber !== func);
 	}
 	
-	broadcastAddEvent(courseId, catalogEntry, grade, hours, isPhD, validationOperation) {
-		this.addObservers.forEach((subscriber) => subscriber(courseId, catalogEntry, grade, hours, isPhD, validationOperation));
+	broadcastAddEvent(courseId, catalogEntry, grade, hours, type, validationOperation) {
+		this.addObservers.forEach((subscriber) => subscriber(courseId, catalogEntry, grade, hours, type, validationOperation));
 	}
 }
