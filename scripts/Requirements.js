@@ -34,7 +34,6 @@ const ruleFlags = {
 class Requirements {
 
 	constructor() {
-		
 		this.requirementType = null;
 		this.applicableCourseIds = []; // An array of all courseIds that should count towards to requirement
 		this.applicableCourseEvents = {};
@@ -98,6 +97,10 @@ class Requirements {
 		this.hoursOutsideMaxNotification = false;
 		this.hoursOutsideMaxType = hourType.FIXED;
 		this.currentHoursOutside = 0;
+	}
+	
+	getRequirementType() {
+		return this.requirementType;
 	}
 	
 	getAppliedCourses() {
@@ -312,7 +315,7 @@ class Requirements {
 		}
 	}
 	
-	addCourse(course, catalogEntry, grade, hours, types, validationOperation) {
+	addCourse(course, catalogEntry, grade, hours, year, term, types, validationOperation) {
 		console.log(types);
 		console.log("Adding course " + course);
 		var hourCap;
@@ -327,6 +330,9 @@ class Requirements {
 		}
 		this.courseValidationOperations[course] = validationOperation;
 		this.coursesTaken[course] = catalogEntry;
+		this.coursesTaken[course].grade = grade;
+		this.coursesTaken[course].year = year;
+		this.coursesTaken[course].term = term;
 		this.coursesTaken[course].valid = true;
 		this.coursesTaken[course].hours = hours;
 		this.coursesTaken[course].types = types;
