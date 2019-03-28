@@ -24,7 +24,7 @@ class CourseObserver {
 		this.addObservers = this.addObservers.filter((subscriber) => subscriber !== func);
 	}
 	
-	broadcastAddEvent(courseId, catalogEntry, grade, hours, type, validationOperation) {
-		this.addObservers.forEach((subscriber) => subscriber(courseId, catalogEntry, grade, hours, type, validationOperation));
+	broadcastAddEvent(courseId, catalogEntry, grade, hours, year, term, type, validationOperation) {
+		this.addObservers.forEach((subscriber) => subscriber(courseId, catalogEntry, grade, hours, year, term, type, validationOperation));
 	}
 }
