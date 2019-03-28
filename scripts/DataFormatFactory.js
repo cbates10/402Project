@@ -1,11 +1,25 @@
 class DataFormatFactory {
 	
-	static formatData(programLevel) {
+	static formatData(programLevel, requirements) {
+		this.requirements = requirements;
 		if(programLevel === "Masters") {
 			return this.formatMastersData();
 		} else if(programLevel === "PhD") {
 			return this.formatPhDData();
 		}
+	}
+	
+	static formatMajorData(data, counter, fieldPrefix, courseEntry) {
+		data[fieldPrefix + "Grade" + counter] = courseEntry.grade;
+		data[fieldPrefix + "CourseHours" + counter] = courseEntry.hours;
+		data[fieldPrefix + "CourseYear" + counter] = courseEntry.year + "/" + courseEntry.term;
+		data[fieldPrefix + "CourseNamePrefix" + counter] = courseEntry.prefix;
+		data[fieldPrefix + "CourseNumber" + counter] = courseEntry.number;
+		data[fieldPrefix + "CourseTitle" + counter] = courseEntry.name;
+		if(courseEntry.flags.length > 0) {
+			data[fieldPrefix + "Flag" + counter] = "*";
+		}
+		return data;
 	}
 	
 	static formatCookieInformation(data) {
@@ -23,16 +37,36 @@ class DataFormatFactory {
 	static formatMastersData() {
 		var data = [];
 		var courseCounter = 1;
+		var transferCounter = 1;
 		data = this.formatCookieInformation(data);
-		$("#courseTableBody tr.courseEntry").each(function() {
-			var courseId = $(this).attr("id");
-			data["MajorGrade" + courseCounter] = $(this).find("#grade").text();
-			data["MajorCourseHours" + courseCounter] = $(this).find("#hours").text();
-			data["MajorCourseYear" + courseCounter] = $(this).find("#year").text() + "/" + $(this).find("#term").text();
-			data["MajorCourseNamePrefix" + courseCounter] = courseCatalog[courseId].prefix;
-			data["MajorCourseNumber" + courseCounter] = courseCatalog[courseId].number;
-			data["MajorCourseTitle" + (courseCounter++)] = courseCatalog[courseId].name;
+		var degreeProgram = this.requirements.find(function(requirement) {
+			return requirement.getRequirementType() == requirementType.DEGREE;
 		});
+		if(!degreeProgram) {
+			return data;
+		}
+		var appliedCourses = degreeProgram.getAppliedCourses();
+		Object.keys(appliedCourses).forEach(function(courseId) {
+			if(appliedCourses[courseId].flags.includes(ruleFlags.HOURSTRANSFER)) {
+				data = this.formatMajorData(data, transferCounter, "Transfer", appliedCourses[courseId]);
+				transferCounter++;
+			} else {
+				data = this.formatMajorData(data, courseCounter, "Major", appliedCourses[courseId]);
+				courseCounter++;
+			}
+		}, this);
+		var minor = this.requirements.find(function(requirement) {
+			return requirement.getRequirementType() == requirementType.MINOR && requirement.fufillsRequirements();
+		});
+		if(!minor) {
+			return data;
+		}
+		appliedCourses = minor.getAppliedCourses();
+		courseCounter = 1;
+		Object.keys(appliedCourses).forEach(function(courseId) {
+			data = this.formatMajorData(data, courseCounter, "Minor", appliedCourses[courseId]);
+			courseCounter++;
+		}, this);
 		return data;
 	}
 	
@@ -41,24 +75,20 @@ class DataFormatFactory {
 		var courseCounter = 1;
 		var courseCounterPhD = 1;
 		data = this.formatCookieInformation(data);
-		$("#courseTableBody tr.courseEntry").each(function() {
-			var courseId = $(this).attr("id");
-			if($(this).attr("type") === "PhD") {
-				data["MajorGrade" + courseCounter] = $(this).find("#grade").text();
-				data["MajorCourseHours" + courseCounter] = $(this).find("#hours").text();
-				data["MajorCourseYear" + courseCounter] = $(this).find("#year").text() + "/" + $(this).find("#term").text();
-				data["MajorCourseNamePrefix" + courseCounter] = courseCatalog[courseId].prefix;
-				data["MajorCourseNumber" + courseCounter] = courseCatalog[courseId].number;
-				data["MajorCourseTitle" + (courseCounter++)] = courseCatalog[courseId].name;
-			} else {
-				data["MasterGrade" + courseCounterPhD] = $(this).find("#grade").text();
-				data["MasterCourseHours" + courseCounterPhD] = $(this).find("#hours").text();
-				data["MasterCourseYear" + courseCounterPhD] = $(this).find("#year").text() + "/" + $(this).find("#term").text();
-				data["MasterCourseNamePrefix" + courseCounterPhD] = courseCatalog[courseId].prefix;
-				data["MasterCourseNumber" + courseCounterPhD] = courseCatalog[courseId].number;
-				data["MasterCourseTitle" + (courseCounterPhD++)] = courseCatalog[courseId].name;
-			}
+		var degreeProgram = this.requirements.find(function(requirement) {
+			return requirement.getRequirementType() == requirementType.DEGREE;
 		});
+		var appliedCourses = degreeProgram.getAppliedCourses();
+		
+		Object.keys(appliedCourses).forEach(function(courseId) {
+			if(appliedCourses[courseId].types.includes("PhD")) {
+				data = this.formatMajorData(data, courseCounter, "Major", appliedCourses[courseId]);
+				courseCounter++;
+			} else {
+				data = this.formatMajorData(data, courseCounterPhD, "Master", appliedCourses[courseId]);
+				courseCounterPhD++;
+			}
+		}, this);
 		return data;
 	}
 }

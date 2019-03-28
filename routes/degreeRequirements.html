@@ -15,7 +15,9 @@
 			var catalogsLoaded = 0;
 			var $catalogs = [];
 			var requirements;
+			var requirementObjects = [];
 			var selectedCourses = [];
+			var extraCourseCounter = 1; // This counter is used to assign catalog ids to outside department and transfer courses
 			var courseObserver = new CourseObserver();
 			
             $(document).ready(function(){
@@ -24,9 +26,10 @@
 				if(programLevel === "PhD") {
 					$("#appliedToMastersContainer").show();
 				}
+				initializeOtherCourseForm(programLevel);
 				
 				$("#candidacyForm").click(function(event) {
-					var data = DataFormatFactory.formatData(programLevel);
+					var data = DataFormatFactory.formatData(programLevel, requirementObjects);
 					createForm(data).submit();
 				}); 			
 				
@@ -44,6 +47,15 @@
 				$("#catalogList").change(function() {
 					$("#courseList").detach();
 					$catalogs[$(this).val()].insertAfter("#catalogList");
+					// The last option is reserved for manual course entry. If it is the last option then display no hour information
+					console.log($(this));
+					console.log($("#catalogList option:last"));
+					if($(this).val() !== $("#catalogList option:last").val()) {
+						setCourseHours($("#courseList option:selected").val());
+					} else {
+						$("#hours").removeAttr("max");
+						$("#hours").removeAttr("min");
+					}
 				});
 				
 				$("#addCourse").click(function() {
@@ -65,18 +77,31 @@
 						return false;
 					}
 					var selectedCourse = $("#courseList option:selected").val();
+					if(!selectedCourse) {
+						selectedCourse = "extra" + extraCourseCounter++;
+						let outsideCatalogEntry = {};
+						outsideCatalogEntry.prefix = $("#prefix").val();
+						outsideCatalogEntry.number = $("#courseNumber").val();
+						outsideCatalogEntry.name = $("#courseTitle").val();
+						courseCatalog[selectedCourse] = outsideCatalogEntry;
+					} else {
+						selectedCourse = parseInt(selectedCourse);
+					}
+					console.log(courseCatalog);
 					var closeButton = $("<button/>", {
 						text: "X"
 					});
 					if(!selectedCourses.includes(selectedCourse)){
 						selectedCourses.push(selectedCourse);
+						
 						var $row = $("<tr>", {
 							class: "courseEntry",
-							id: $("#courseList option:selected").val()
+							id: selectedCourse,
+							flagged: false
 						});
 						$row.append($("<td>", {
 							id: "courseNumber",
-							text: $("#courseList option:selected").text()
+							text: courseCatalog[selectedCourse].prefix + " " + courseCatalog[selectedCourse].number
 						})).append($("<td>", {
 							id: "grade",
 							text: $("#grade").val()
@@ -95,21 +120,35 @@
 							text: "X"
 						});
 						
+						let courseType = [];
 						if($("#appliedToMasters").is(":checked")) {
-							$row.attr("type", "masters");
+							$row.attr("type", "Masters");
+							courseType.push("Masters");
 						} else {
 							$row.attr("type", "PhD");
+							courseType.push("PhD");
 						}
-	
+						
+						if($("#catalogList option:selected").val() === "other") {
+							if(programLevel === "Masters") {
+								courseType.push($("input[name='otheroption']:checked").val());
+							} else {
+								courseType.push("NoCatalog");
+							}
+						}
+						
 						$closeButton.click(removeCourseEventHandler);
 						$row.append($closeButton);
 						$("#courseTableBody").append($row);
-						courseObserver.broadcastAddEvent(parseInt(selectedCourse), courseCatalog[selectedCourse], $("#grade").val(), parseInt($("#hours").val()), !$("#appliedToMasters").is(":checked"), function(isValid) {
-							if(isValid) {
-								$row.removeAttr("invalid");
+						courseObserver.broadcastAddEvent(selectedCourse, courseCatalog[selectedCourse], $("#grade").val(), parseInt($("#hours").val()), parseInt($("#year").val()), $("#term option:selected").val(), courseType, function(flags) {
+							if(flags.length === 0) {
+								$row.attr("flagged", false);
 								$row.attr("style", "color:black");
 							} else {
-								$row.attr("invalid", true);
+								$row.attr("flagged", flags[0]);
+								for(var i = 1; i < flags.length; i++) {
+									$row.attr("flagged", $row.attr("flagged") + "," + flags[i]);
+								}
 								$row.attr("style", "color:red");
 							}
 						});
@@ -120,6 +159,12 @@
 				});
 				
             });
+			
+			function initializeOtherCourseForm(programLevel) {
+				if(programLevel === "Masters") {
+					$("#courseListMastersOptions").show();
+				}
+			}
 			
 			function getHourType(type) {
 				switch(type) {
@@ -134,12 +179,14 @@
 				console.log("Inside the remove course event handler");
 				var $row = $(this).parent();
 				var courseId = $row.attr("id");
+				if(!isNaN(courseId)) {
+					courseId = parseInt(courseId);
+				}
 				selectedCourses = selectedCourses.filter(function(id) {
 					return id != courseId;
 				});
-				var isPhD = $row.attr("type") === "PhD";
 				console.log("This is the hours on the page " + $row.find("#hours").text());
-				courseObserver.broadcastRemoveEvent(parseInt(courseId), isPhD, $row.find("#hours").text());
+				courseObserver.broadcastRemoveEvent(courseId, $row.find("#hours").text());
 				$row.remove();
 			}
 			
@@ -242,12 +289,20 @@
 				});
 				catalogsLoaded++;
 				if(catalogsLoaded == requirements["Catalogs"].length) {
+					// Assumes at least one catalog has been loaded. The "Other" option is still selected so it will be detached and the first catalog will be set as the
+					// selected option. 
+					$catalogs[$("#catalogList option:selected").val()] = $("#courseList").detach();
+					$("#catalogList")[0].selectedIndex = 0;
+					// Set the course list that is displayed. This will cause the "Other" field to have its manual entry displayed if there are no catalogs
 					setCourseList();
-					setCourseHours($("#courseList option:selected").val());
+					// If at least one catalog has been loaded then there is information to be displayed for the current hours
+					if(catalogsLoaded > 0) {
+						setCourseHours($("#courseList option:selected").val());
+					}
 					processDegree();
 				}
             };
-
+			
 			function getHoursDisplayString(courseId, courseOverride) {
 				if(courseCatalog[courseId].lowHours != courseCatalog[courseId].highHours) {
 					if(courseOverride) {
@@ -267,10 +322,12 @@
 			}
 				
 			function loadCatalog(name) {
-				$("#catalogList").append($("<option>", {
+				var $option = $("<option>", {
 					value: name,
 					text: name
-				}));
+				});
+				$option.insertBefore($("#catalogList option:last"));
+
 				var $catalogList = $("<select>", {
 					id: "courseList"
 				})
@@ -305,7 +362,7 @@
 				var requiredList = $("#requiredCourses");
 				var requirement = new Requirements();
 				var $progressBar = $("#requiredHoursProgress");
-				
+				requirement.setRequirementType(requirementType.DEGREE);
 				processRequirements(requirements["Degree Program"], requiredList, $progressBar, $("#progressBarContainer"), requirement, false);
 				
 				requirement.setFufilledOperation(function(isSet) {
@@ -317,6 +374,7 @@
 				});
 				courseObserver.subscribeAddCourse(requirement.addCourse.bind(requirement));
 				courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
+				requirementObjects.push(requirement);
 				if(requirements["Certificate"]) {
 					certificateRequirementsHandler(requirements["Certificate"]);
 				}
@@ -336,6 +394,7 @@
 					var $minorHeader = $("<h3>", {
 						text: minors[i].name
 					});
+
 					var $progressBar = $("<progress>", {
 						value: 0,
 						max: minors[i].requiredHours
@@ -353,10 +412,19 @@
 						id: "applicableCourseList" + i
 					});
 					var requirement = new Requirements();
+					/*requirement.setFufilledOperation(function(isSet) {
+						if(isSet) {
+							$applyButton.show();
+						} else {
+							$applyButton.hide();
+						}
+					}); */
 					$minorContainer.append($minorHeader).append($progressBar).append($minorsListHeader).append($minorsList).append($applicableListHeader).append($applicableCourseList);
 					$("#minorsContainer").append($minorContainer);
+					requirement.setRequirementType(requirementType.MINOR);
 					processRequirements(minors[i], $minorsList, $progressBar, null, requirement, true, $applicableCourseList);
 					
+					requirementObjects.push(requirement);
 					courseObserver.subscribeAddCourse(requirement.addCourse.bind(requirement));
 					courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
 				}
@@ -369,7 +437,8 @@
 				var $certificateEntry = $("#certificateList");
 				certificates.forEach(function(certificate) {
 					var requirement = new Requirements();
-
+					requirement.setRequirementType(requirementType.CERTIFICATE);
+					
 					$certificateEntry.append($("<li>", {
 						text: certificate.name
 					}));
@@ -383,7 +452,7 @@
 							text: courseCatalog[i].prefix + " " + courseCatalog[i].number
 						});
 						$courseList.append($courseItem);
-						requirement.addRequiredCourse(i, certificateCourseEvent.bind($courseItem)); 
+						requirement.addRequiredCourse(parseInt(i), certificateCourseEvent.bind($courseItem)); 
 						
 						/* Check to see if any of the courses have substitutions that may be taken in place of required course */
 						if(certificate.requiredCourses[i].length > 0) {
@@ -393,11 +462,11 @@
 							for(var y = 0; y < certificate.requiredCourses[i].length; y++) {
 								var courseId = certificate.requiredCourses[i][y];
 
-								requirement.setSubstitutableCourses(i, courseId);
+								requirement.setSubstitutableCourses(parseInt(i), parseInt(courseId));
 								var $courseItem = $("<li>", {
 									text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number
 								});	
-								requirement.addRequiredCourse(courseId, certificateCourseEvent.bind($courseItem));
+								requirement.addRequiredCourse(parseInt(courseId), certificateCourseEvent.bind($courseItem));
 								$certificateSubEntry.append($courseItem);
 							}
 							$courseList.append($certificateSubEntry);
@@ -409,6 +478,7 @@
 						alert(certificate.name + " earned");
 					});
 					
+					requirementObjects.push(requirement);
 					courseObserver.subscribeAddCourse(requirement.addCourse.bind(requirement));
 					courseObserver.subscribeRemoveCourse(requirement.removeCourse.bind(requirement));
 				});
@@ -484,6 +554,16 @@
 						requirement.set600MinLevelHours(degreeObject.hours600.minimum.hours, getHourType(degreeObject.hours600.minimum.type), degreeHoursEvent.bind($hours600Bar));
 					}
 				}
+				if(degreeObject.hoursTransfer) {
+					if(degreeObject.hoursTransfer.maximum) {
+						requirement.setTransferMaxLevelHours(degreeObject.hoursTransfer.maximum.hours, getHourType(degreeObject.hoursTransfer.maximum.type), function() { alert("Maximum transfer hours exceeded"); });
+					}
+				}
+				if(degreeObject.hoursOutside) {
+					if(degreeObject.hoursOutside.maximum) {
+						requirement.setOutsideMaxLevelHours(degreeObject.hoursOutside.maximum.hours, getHourType(degreeObject.hoursOutside.maximum.type), function() { alert("Maximum outside hours exceeded"); });
+					}
+				}
 				if(programLevel === "PhD") {
 					if(degreeObject.hoursPhDOnly) {
 						if(degreeObject.hoursPhDOnly.minimum) {
@@ -545,7 +625,7 @@
 						text: courseCatalog[i].prefix + " " + courseCatalog[i].number + " " + courseCatalog[i].name + " hours " + hourString
 					});
 					requiredList.append($courseItem);
-					requirement.addRequiredCourse(i, degreeCourseEvent.bind($courseItem)); // Add the courseId of the required course to the requirements object
+					requirement.addRequiredCourse(parseInt(i), degreeCourseEvent.bind($courseItem)); // Add the courseId of the required course to the requirements object
 					
 					/* Check to see if any of the courses have substitutions that may be taken in place of required course */
 					if(degreeObject.requiredCourses[i].length > 0) {
@@ -567,8 +647,8 @@
 								text: courseCatalog[courseId].prefix + " " + courseCatalog[courseId].number + " " + courseCatalog[courseId].name + " hours " + hourString
 							});
 							substitutableCourses.append($courseItem);
-							requirement.addRequiredCourse(courseId, degreeCourseEvent.bind($courseItem));
-							requirement.setSubstitutableCourses(i, courseId);
+							requirement.addRequiredCourse(parseInt(courseId), degreeCourseEvent.bind($courseItem));
+							requirement.setSubstitutableCourses(parseInt(i), parseInt(courseId));
 						}
 						requiredList.append(substitutableCourses);
 					}
@@ -619,9 +699,18 @@
 		<div>
 			<form id="courseMenu" hidden>
 				<select id="catalogList">
-				
+					<option value="other">Other</option>
 				</select>
-
+				<span id="courseList">
+					<span id="courseListMastersOptions" hidden>
+						<label for="transfer">Transfer Credit</label><input type="radio" id="transfer" name="otheroption" value="Transfer">
+						<label for="outside">Outside Department</label><input type="radio" id="outside" name="otheroption" value="Outside">
+						<label for="outside">Not in Catalog</label><input type="radio" id="outside" name="otheroption" value="NoCatalog">
+					</span>
+					<label for="prefix">Prefix</label><input type="text" id="prefix" style="width:50px" required>
+					<label for="courseNumber">Number</label><input type="text" id="courseNumber" style="width:50px" required>
+					<label for="coureTitle">Title</label><input type="text" id="courseTitle" style="width:50px" required>
+				</span>
 				
 				<label for="grade">Grade</label><input type="text" id="grade" name="grade" size="2" maxlength="2" pattern="[ABCDF]{1}[-+]{0,1}" required></input>
 				<label for="year">Year</label><input type="number" id="year" style="width:50px" required></input>
