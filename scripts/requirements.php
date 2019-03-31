@@ -10,13 +10,28 @@ if($mysqli->connect_errno) {
 
 $degreeOption = $_POST["idObjects"];
 
+/* Get the global requirements for the object types */
+$sqlGlobalRequirements = "SELECT type, minGrade, minGPA FROM globalrequirements NATURAL JOIN types";
+
+$result = $mysqli->query($sqlGlobalRequirements);
+
+$globalRequirements = array();
+
+if($result->num_rows > 0) {
+	while($row = $result->fetch_assoc()) {
+		$globalRequirements[$row["type"]] = new stdClass();
+		$globalRequirements[$row["type"]]->minGrade = $row["minGrade"];
+		$globalRequirements[$row["type"]]->minGPA = $row["minGPA"];
+	}
+}
+
 /* Build the array for all objects to retrieve for the degree program */
-$sqlObjects = "SELECT idObjects, type, name FROM objectmapping NATURAL JOIN objects NATURAL JOIN types WHERE idObjectDegree = ?";
+$sqlObjects = "SELECT idObjects, type, name FROM objectmapping NATURAL JOIN objects NATURAL JOIN types WHERE idObjectDegree = ? UNION SELECT idObjects, type, name FROM objects NATURAL JOIN types WHERE idObjects = ?";
 $stmtObjects = $mysqli->prepare($sqlObjects);
 if(!$stmtObjects) {
 	die("Could not prepare statement $mysqli->error");
 }
-if(!$stmtObjects->bind_param("i", $degreeOption)) {
+if(!$stmtObjects->bind_param("ii", $degreeOption, $degreeOption)) {
 	die("Could not bind parameters $stmt->error");
 }
 $rc = $stmtObjects->execute();
@@ -26,10 +41,6 @@ if(false === $rc) {
 $stmtObjects->bind_result($idObjects, $type, $name);
 
 $objects = array();
-$object = new stdClass();
-$object->idObjects = $degreeOption;
-$object->type = "Degree Program";
-array_push($objects, $object);
 
 while($stmtObjects->fetch()) {
 	$object = new stdClass();
@@ -53,7 +64,7 @@ if(!$stmtSubCourses) {
 	die("Could not prepare statement $mysqli->error");
 }
 
-$sqlHours = "SELECT requiredHours, minGrade FROM objects WHERE idObjects = ?";
+$sqlHours = "SELECT requiredHours, minGrade, minGPA FROM objects WHERE idObjects = ?";
 $stmtHours = $mysqli->prepare($sqlHours);
 if(!$stmtHours) {
 	die("Could not prepare statement $mysqli->error");
@@ -110,7 +121,6 @@ while($stmtTypes->fetch()) {
 }
 $stmtTypes->close();
 
-
 if(!$stmtCatalogs->bind_param("i", $degreeOption)) {
 	die("Could not bind parameters $stmtCourse->error");
 }
@@ -166,11 +176,21 @@ for($x = 0; $x < count($objects); $x++) {
 	if(false === $rc) {
 		die("Could not execute statement $stmtHours->error");
 	}
-	$stmtHours->bind_result($requiredHours, $minGrade);
+	$stmtHours->bind_result($requiredHours, $minGrade, $minGPA);
 
 	if($stmtHours->fetch()) {
 		$objectRequirements->requiredHours = $requiredHours;
-		$objectRequirements->minGrade = $minGrade;
+		// If there is no value set for the object requirement for minGrade or minGPA then set these values to those in the globalRequirements
+		if(!$minGrade && isset($globalRequirements[$objects[$x]->type])) {
+			$objectRequirements->minGrade = $globalRequirements[$objects[$x]->type]->minGrade;
+		} else {
+			$objectRequirements->minGrade = $minGrade;
+		}
+		if(!$minGPA && isset($globalRequirements[$objects[$x]->type])) {
+			$objectRequirements->minGPA = $globalRequirements[$objects[$x]->type]->minGPA;
+		} else {
+			$objectRequirements->minGPA = $minGPA;
+		}
 	}
 	$stmtHours->free_result();
 	
@@ -250,11 +270,11 @@ for($x = 0; $x < count($objects); $x++) {
 	
 	$objectRequirements->id = $objects[$x]->idObjects;
 	$field = $objects[$x]->type;
-	if($field !== "Degree Program") {
+	if($field !== "Masters" && $field !== "PhD") {
 		$objectRequirements->name = $objects[$x]->name;
 		array_push($requirements[$field], $objectRequirements);
 	} else {
-		$requirements[$field] = $objectRequirements;
+		$requirements["Degree Program"] = $objectRequirements;
 	}
 }
 
