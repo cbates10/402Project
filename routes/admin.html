@@ -18,6 +18,9 @@
 			var certificates;
 			var $certificatesSubjectSelect = {};
 			var selectedCertificates;
+			var addCourse = [];
+			var removeCourse = [];
+			var objectsParam = [];
 			
 			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
@@ -85,6 +88,140 @@
 							text: certificates[certificateId].name
 						}).append($removeButton));
 					}
+				});
+
+				$("#saveForm").click(function(){
+					var catalogFormChange = {Hrs400Min: false, Hrs400Max: false, Hrs500Min: false, Hrs500Max: false, Hrs600Min: false, Hrs600Max:false}
+					var catalogFormObj = {
+						requiredHrs:$("#requiredHrs").val(),
+						Hrs400Min: $("#400HrsMin").val(),
+						Hrs400MinOptionFixed: $("#400HrsMinOptionFixed").is(":checked"),
+						Hrs400MinOptionVariable: $("#400HrsMinOptionVariable").is(":checked"),
+						Hrs400Max: $("#400HrsMax").val(),
+						Hrs400MaxOptionFixed: $("#400HrsMaxOptionFixed").is(":checked"),
+						Hrs400MaxOptionVariable: $("#400HrsMaxOptionVariable").is(":checked"),
+				
+						Hrs500Min: $("#500HrsMin").val(),
+						Hrs500MinOptionFixed: $("#500HrsMinOptionFixed").is(":checked"),
+						Hrs500MinOptionVariable: $("#500HrsMinOptionVariable").is(":checked"),
+						Hrs500Max: $("#500HrsMax").val(),
+						Hrs500MaxOptionFixed: $("#500HrsMaxOptionFixed").is(":checked"),
+						Hrs500MaxOptionVariable: $("#500HrsMaxOptionVariable").is(":checked"),
+
+						Hrs600Min: $("#600HrsMin").val(),
+						Hrs600MinOptionFixed: $("#600HrsMinOptionFixed").is(":checked"),
+						Hrs600MinOptionVariable: $("#600HrsMinOptionVariable").is(":checked"),
+						Hrs600Max: $("#600HrsMax").val(),
+						Hrs600MaxOptionFixed: $("#600HrsMaxOptionFixed").is(":checked"),
+						Hrs600MaxOptionVariable: $("#600HrsMaxOptionVariable").is(":checked"),
+
+						Trhrs: $("#trhrs").val(),
+						Ohrs: $("#ohrs").val(),
+						Grade: $("#grade").val()				
+						}
+						console.log(catalogFormObj);
+						console.log(catalogRule["Degree Program"]);
+
+						if(catalogFormObj.Hrs400Min != "" && catalogFormObj.Hrs400MinOptionFixed == false && catalogFormObj.Hrs400MinOptionVariable == false){
+							alert("400HrsMin: Fixed or Variable?")
+						}
+						if(catalogFormObj.Hrs400Max != "" && catalogFormObj.Hrs400MaxOptionFixed == false && catalogFormObj.Hrs400MaxOptionVariable == false){
+							alert("400HrsMax: Fixed or Variable?")
+						}
+						if(catalogFormObj.Hrs500Min != "" && catalogFormObj.Hrs500MinOptionFixed == false && catalogFormObj.Hrs500MinOptionVariable == false){
+							alert("500HrsMin: Fixed or Variable?")
+						}
+						if(catalogFormObj.Hrs500Max != "" && catalogFormObj.Hrs500MaxOptionFixed == false && catalogFormObj.Hrs500MaxOptionVariable == false){
+							alert("500HrsMax: Fixed or Variable?")
+						}
+						if(catalogFormObj.Hrs600Min != "" && catalogFormObj.Hrs600MinOptionFixed == false && catalogFormObj.Hrs600MinOptionVariable == false){
+							alert("600HrsMin: Fixed or Variable?")
+						}
+						if(catalogFormObj.Hrs600Max != "" && catalogFormObj.Hrs600MaxOptionFixed == false && catalogFormObj.Hrs600MaxOptionVariable == false){
+							alert("600HrsMax: Fixed or Variable?")
+						}
+						
+						if((!catalogRule["Degree Program"].hours400 && catalogFormObj.Hrs400Min != "") || (catalogRule["Degree Program"].hours400 && !catalogRule["Degree Program"].hours400.minimum && catalogFormObj.Hrs400Min != "")  || (catalogRule["Degree Program"].hours400 && catalogRule["Degree Program"].hours400.minimum && catalogRule["Degree Program"].hours400.minimum.hours != catalogFormObj.Hrs400Min)){
+							if(catalogFormObj.Hrs400MinOptionFixed == true){
+								if(catalogFormObj.Hrs400Min < 1){
+									alert("400HrsMin if Fixed cant be below 1")
+								}			
+							}else if(catalogFormObj.Hrs400MinOptionVariable == true){
+								if(catalogFormObj.Hrs400Min > 1){
+									alert("400HrsMin if Variable cant be above 1")
+								}
+							}		
+							catalogFormChange.Hrs400Min = true;					
+						}
+
+						if((!catalogRule["Degree Program"].hours400 && catalogFormObj.Hrs400Max != "") || (catalogRule["Degree Program"].hours400 && !catalogRule["Degree Program"].hours400.maximum && catalogFormObj.Hrs400Max != "")  || (catalogRule["Degree Program"].hours400 && catalogRule["Degree Program"].hours400.maximum && catalogRule["Degree Program"].hours400.maximum.hours != catalogFormObj.Hrs400Max)){
+							if(catalogFormObj.Hrs400MaxOptionFixed == true){
+								if(catalogFormObj.Hrs400Max < 1){
+									alert("400HrsMax if Fixed cant be below 1")
+								}			
+							}else if(catalogFormObj.Hrs400MaxOptionVariable == true){
+								if(catalogFormObj.Hrs400Max > 1){
+									alert("400HrsMax if Variable cant be above 1")
+								}
+							}		
+							catalogFormChange.Hrs400Max = true;					
+						}
+
+						if((!catalogRule["Degree Program"].hours500 && catalogFormObj.Hrs500Min != "") || (catalogRule["Degree Program"].hours500 && !catalogRule["Degree Program"].hours500.minimum && catalogFormObj.Hrs500Min != "")  || (catalogRule["Degree Program"].hours500 && catalogRule["Degree Program"].hours500.minimum && catalogRule["Degree Program"].hours500.minimum.hours != catalogFormObj.Hrs500Min)){
+							if(catalogFormObj.Hrs500MinOptionFixed == true){
+								if(catalogFormObj.Hrs500Min < 1){
+									alert("500HrsMin if Fixed cant be below 1")
+								}			
+							}else if(catalogFormObj.Hrs500MinOptionVariable == true){
+								if(catalogFormObj.Hrs500Min > 1){
+									alert("500HrsMin if Variable cant be above 1")
+								}
+							}		
+							catalogFormChange.Hrs500Min = true;					
+						}
+
+						if((!catalogRule["Degree Program"].hours500 && catalogFormObj.Hrs500Max != "") || (catalogRule["Degree Program"].hours500 && !catalogRule["Degree Program"].hours500.maximum && catalogFormObj.Hrs500Max != "")  || (catalogRule["Degree Program"].hours500 && catalogRule["Degree Program"].hours500.maximum && catalogRule["Degree Program"].hours500.maximum.hours != catalogFormObj.Hrs500Max)){
+							if(catalogFormObj.Hrs500MaxOptionFixed == true){
+								if(catalogFormObj.Hrs500Max < 1){
+									alert("500HrsMax if Fixed cant be below 1")
+								}			
+							}else if(catalogFormObj.Hrs500MaxOptionVariable == true){
+								if(catalogFormObj.Hrs500Max > 1){
+									alert("500HrsMax if Variable cant be above 1")
+								}
+							}		
+							catalogFormChange.Hrs500Max = true;					
+						}
+
+						if((!catalogRule["Degree Program"].hours600 && catalogFormObj.Hrs600Min != "") || (catalogRule["Degree Program"].hours600 && !catalogRule["Degree Program"].hours600.minimum && catalogFormObj.Hrs600Min != "")  || (catalogRule["Degree Program"].hours600 && catalogRule["Degree Program"].hours600.minimum && catalogRule["Degree Program"].hours600.minimum.hours != catalogFormObj.Hrs600Min)){
+							if(catalogFormObj.Hrs600MinOptionFixed == true){
+								if(catalogFormObj.Hrs600Min < 1){
+									alert("600HrsMin if Fixed cant be below 1")
+								}			
+							}else if(catalogFormObj.Hrs600MinOptionVariable == true){
+								if(catalogFormObj.Hrs600Min > 1){
+									alert("600HrsMin if Variable cant be above 1")
+								}
+							}		
+							catalogFormChange.Hrs600Min = true;					
+						}
+
+						if((!catalogRule["Degree Program"].hours600 && catalogFormObj.Hrs600Max != "") || (catalogRule["Degree Program"].hours600 && !catalogRule["Degree Program"].hours600.maximum && catalogFormObj.Hrs600Max != "")  || (catalogRule["Degree Program"].hours600 && catalogRule["Degree Program"].hours600.maximum && catalogRule["Degree Program"].hours600.maximum.hours != catalogFormObj.Hrs600Max)){
+							if(catalogFormObj.Hrs600MaxOptionFixed == true){
+								if(catalogFormObj.Hrs600Max < 1){
+									alert("600HrsMax if Fixed cant be below 1")
+								}			
+							}else if(catalogFormObj.Hrs600MaxOptionVariable == true){
+								if(catalogFormObj.Hrs600Max > 1){
+									alert("600HrsMax if Variable cant be above 1")
+								}
+							}		
+							catalogFormChange.Hrs600Max = true;					
+						}
+
+						console.log(catalogFormChange);
+
+						//TODO Finish checking ohrs and trhrs
 				});
             });
             
@@ -510,7 +647,7 @@
 				Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Minor:</label><input type="button" id="addCertificateButton" value="Add Minor"/>
 			  </div>
 			  <br>
-			  <input type="submit" value="Save"></input>
+			  <input id="saveForm" type="submit" value="Save"></input>
 			</div>
 		</div>
     </body>
