@@ -31,6 +31,50 @@ const ruleFlags = {
 	NOCATALOG: "NoCatalog"
 }
 
+const gpaMapping = {
+	A: 4.0,
+	AMINUS: 3.7,
+	BPLUS: 3.3,
+	B: 3.0,
+	BMINUS: 2.7,
+	CPLUS: 2.3,
+	C: 2.0,
+	CMINUS: 1.7,
+	DPLUS: 1.3,
+	D: 1.3,
+	DMINUS: 0.7,
+	F: 0.0
+}
+
+function getGPA(letterGrade) {
+	switch(letterGrade) {
+		case "A":
+			return gpaMapping.A;
+		case "A-":
+			return gpaMapping.AMINUS;
+		case "B+":
+			return gpaMapping.BPLUS;
+		case "B":
+			return gpaMapping.B;
+		case "B-":
+			return gpaMapping.BMINUS;
+		case "C+":
+			return gpaMapping.CPLUS;
+		case "C":
+			return gpaMapping.C;
+		case "C-":
+			return gpaMapping.CMINUS;
+		case "D+":
+			return gpaMapping.DPLUS;
+		case "D":
+			return gpaMapping.D;
+		case "D-":
+			return gpaMapping.DMINUS;
+		case "F":
+			return gpaMapping.F;
+	}
+}
+
 class Requirements {
 
 	constructor() {
@@ -47,6 +91,9 @@ class Requirements {
 		this.fufilledNotification = false;
 		this.gradeRestriction = null;
 		this.gradeAction = null;
+		this.gpaRestriction = null;
+		this.currentGpaTotal = 0;
+		this.gpaAction = null;
 		this.gradeOverrides = {};
 		this.lowHourOverrides = {};
 		this.lowHourOverrideAction = null;
@@ -173,6 +220,11 @@ class Requirements {
 	setGradeRestriction(grade, gradeAction) {
 		this.gradeRestriction = grade;
 		this.gradeAction = gradeAction;
+	}
+	
+	setGpaRestriction(gpa, gpaAction) {
+		this.gpaRestriction = gpa;
+		this.gpaAction = gpaAction;
 	}
 	
 	setGradeOverride(courseId, grade) {
@@ -338,7 +390,11 @@ class Requirements {
 		this.coursesTaken[course].types = types;
 		this.coursesTaken[course].flags = [];
 		this.currentHours += hours;
-		
+		this.currentGpaTotal += getGPA(grade);
+		if(this.gpaAction) {
+			var gpa = this.currentGpaTotal/Object.keys(this.coursesTaken).length;
+			this.gpaAction(gpa, gpa < this.gpaRestriction);
+		}
 		if(this.gradeRestriction) {
 			if(this.violatesGradeRestriction(course, grade)) {
 				var requiredGrade = (this.gradeOverrides[course]) ? this.gradeOverrides[course] : this.gradeRestriction;
@@ -614,6 +670,11 @@ class Requirements {
 		var beforeRemovalHours = this.currentHours;
 		this.currentHours -= hours;
 		this.hoursAction(this.currentHours);
+		this.currentGpaTotal -= getGPA(catalogEntry.grade);
+		if(this.gpaAction) {
+			var gpa = this.currentGpaTotal/Object.keys(this.coursesTaken).length;
+			this.gpaAction(gpa, gpa < this.gpaRestriction);
+		}
 		if(this.requiredCourses[course] !== undefined) {
 			this.requiredCourses[course] = false;
 			if(this.courseActions[course] !== undefined) {
