@@ -19,6 +19,7 @@
 			var selectedCourses = [];
 			var extraCourseCounter = 1; // This counter is used to assign catalog ids to outside department and transfer courses
 			var courseObserver = new CourseObserver();
+			var transferInstitution;
 			
             $(document).ready(function(){
 				
@@ -83,6 +84,10 @@
 						outsideCatalogEntry.prefix = $("#prefix").val();
 						outsideCatalogEntry.number = $("#courseNumber").val();
 						outsideCatalogEntry.name = $("#courseTitle").val();
+						if(!outsideCatalogEntry.prefix || !outsideCatalogEntry.number || !outsideCatalogEntry.name) {
+							alert("Required course information missing");
+							return false;
+						}
 						courseCatalog[selectedCourse] = outsideCatalogEntry;
 					} else {
 						selectedCourse = parseInt(selectedCourse);
@@ -131,6 +136,16 @@
 						
 						if($("#catalogList option:selected").val() === "other") {
 							if(programLevel === "Masters") {
+								if(!$("input[name='otheroption']:checked").val()) {
+									alert("An option must be selected");
+									return false;
+								}								
+								if(!transferInstitution && $("input[name='otheroption']:checked").val() === "Transfer") {
+									transferInstitution = prompt("Input the name of the transfer institution");
+									if(!transferInstitution) {
+										return false;
+									}
+								}
 								courseType.push($("input[name='otheroption']:checked").val());
 							} else {
 								courseType.push("NoCatalog");
@@ -208,6 +223,15 @@
 			
 			function gradeEvent(requiredGrade) {
 				alert("The entered grade is below the minimum grade of " + requiredGrade + " this course will be flagged for approval on forms"); 
+			}
+			
+			function gpaEvent(currentGPA, isBelowMin) {
+				$("#currentGPA").text(currentGPA.toPrecision(3));
+				if(isBelowMin) {
+					$("#currentGPA").attr("style", "color:red");
+				} else {
+					$("#currentGPA").attr("style", "color:black");
+				}
 			}
 			
 			// This is used to update progress bar values. Progress bar is set to the new value and if a new max value is indicated it will adjust the max value of the progress bar. Assumes max is never 0
@@ -304,14 +328,29 @@
             };
 			
 			function getHoursDisplayString(courseId, courseOverride) {
-				if(courseCatalog[courseId].lowHours != courseCatalog[courseId].highHours) {
-					if(courseOverride) {
-						var hourString = courseOverride + " - " + courseCatalog[courseId].highHours;
+				var hourString;
+				console.log("This is the course override");
+				console.log(courseOverride);
+				if(courseOverride && (courseOverride.minHours || courseOverride.maxHours)) {
+					if(courseOverride.maxHours && !courseOverride.minHours) {
+						if(courseOverride.maxHours < courseCatalog[courseId].lowHours) {
+							hourString = courseOverride.maxHours;
+						} else {
+							hourString = courseCatalog[courseId].lowHours + " - " + courseOverride.maxHours;
+						}
+					} else if(courseOverride.maxHours && courseOverride.minHours) {
+						hourString = courseOverride.minHours + " - " + courseOverride.maxHours;
 					} else {
-						var hourString = courseCatalog[courseId].lowHours + " - " + courseCatalog[courseId].highHours;
+						if(courseOverride.minHours > courseCatalog[courseId].highHours) {
+							hourString = courseOverride.minHours;
+						} else {
+							hourString = courseOverride.minHours + " - " + courseCatalog[courseId].highHours;
+						}
 					}
+				} else if(courseCatalog[courseId].lowHours != courseCatalog[courseId].highHours) {
+					hourString = courseCatalog[courseId].lowHours + " - " + courseCatalog[courseId].highHours;
 				} else {
-					var hourString = courseCatalog[courseId].highHours;
+					hourString = courseCatalog[courseId].highHours;
 				}
 				return hourString;
 			}
@@ -412,13 +451,7 @@
 						id: "applicableCourseList" + i
 					});
 					var requirement = new Requirements();
-					/*requirement.setFufilledOperation(function(isSet) {
-						if(isSet) {
-							$applyButton.show();
-						} else {
-							$applyButton.hide();
-						}
-					}); */
+
 					$minorContainer.append($minorHeader).append($progressBar).append($minorsListHeader).append($minorsList).append($applicableListHeader).append($applicableCourseList);
 					$("#minorsContainer").append($minorContainer);
 					requirement.setRequirementType(requirementType.MINOR);
@@ -487,6 +520,24 @@
 			function processRequirements(degreeObject, requiredList, $progressBarTotal, $progressBarContainer, requirement, displayApplicableCourses, applicableCourseList) {
 				var hourString;
 				var maxProgressHours;
+				if(degreeObject.minGPA) {
+					var $gpaContainer = $("<div>", {
+						id: "gpaContainer"
+					}).append($("<span>", {
+						id: "currentGPAheader",
+						text: "Current GPA  "
+					})).append($("<span>", {
+						id: "currentGPA",
+						text: "-"
+					})).append($("<span>", {
+						id: "totalGPA",
+						text: "/4.00"
+					})).append($("<span>", {
+						id: "requiredGPA",
+						text: "  Minimum GPA: " + degreeObject.minGPA
+					}));
+					$gpaContainer.insertBefore($progressBarContainer);
+				}
 				if(degreeObject.requiredHours !== undefined) {
 					$progressBarTotal.attr("max", degreeObject.requiredHours.toString());
 					requirement.setRequiredHours(degreeObject.requiredHours, degreeHoursEvent.bind($progressBarTotal));
@@ -589,6 +640,7 @@
 				requirement.setHighHourOverrideEvent(highHourOverrideEvent);
 				
 				requirement.setGradeRestriction(degreeObject.minGrade, gradeEvent);
+				requirement.setGpaRestriction(degreeObject.minGPA, gpaEvent);
 				
 				for(var i in courseCatalog) {
 					if(degreeObject.courseOverride[i]) {
@@ -613,9 +665,12 @@
 					
 					/* For display purposes, add a string detailing the hour range for any course that is variable hours and append the item to the list */
 					if(degreeObject.courseOverride[i]) {
+						hourString = getHoursDisplayString(i, degreeObject.courseOverride[i]);
+						/*
 						if(degreeObject.courseOverride[i].minHours) {
 							hourString = getHoursDisplayString(i, degreeObject.courseOverride[i].minHours);
 						}
+						*/
 					} else {
 						hourString = getHoursDisplayString(i);
 					}
@@ -635,9 +690,10 @@
 							var courseId = degreeObject.requiredCourses[i][y];
 
 							if(degreeObject.courseOverride[courseId]) {
-								if(degreeObject.courseOverride[courseId].minHours) {
+								hourString = getHoursDisplayString(courseId, degreeObject.courseOverride[courseId]);
+								/*if(degreeObject.courseOverride[courseId].minHours) {
 									hourString = getHoursDisplayString(courseId, degreeObject.courseOverride[courseId].minHours);
-								}
+								} */
 							} else {
 								hourString = getHoursDisplayString(courseId);
 							}
