@@ -21,7 +21,7 @@ if($result->num_rows > 0) {
 	while($row = $result->fetch_assoc()) {
 		$globalRequirements[$row["type"]] = new stdClass();
 		$globalRequirements[$row["type"]]->minGrade = $row["minGrade"];
-		$globalRequirements[$row["type"]]->minGPA = $row["minGPA"];
+		$globalRequirements[$row["type"]]->minGPA = floatval($row["minGPA"]);
 	}
 }
 
@@ -189,7 +189,7 @@ for($x = 0; $x < count($objects); $x++) {
 		if(!$minGPA && isset($globalRequirements[$objects[$x]->type])) {
 			$objectRequirements->minGPA = $globalRequirements[$objects[$x]->type]->minGPA;
 		} else {
-			$objectRequirements->minGPA = $minGPA;
+			$objectRequirements->minGPA = floatval($minGPA);
 		}
 	}
 	$stmtHours->free_result();
