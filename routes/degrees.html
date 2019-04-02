@@ -24,6 +24,16 @@
 
             });
             
+			function setOptionHandlers() {
+				$("#optionList li").click(function() {
+					var $listItem = $(this);
+					while($listItem.attr("value")) {
+						$listItem.find("input[type='radio']").prop("checked", true);
+						$listItem = $listItem.parent().prev("li");
+					}
+				});
+			}
+			
 			function degreeHandler() {
 				console.log(this.response);
 				var degreePrograms = JSON.parse(this.response);
@@ -75,6 +85,7 @@
 					} 
 					$("#degreePrograms").append(degreeSubjects);
 				}
+				setOptionHandlers();
 			}
         </script>
     </head>
