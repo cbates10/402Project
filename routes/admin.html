@@ -28,8 +28,13 @@
 				xhr.send();
 				
 				$("#catalogList").change(function(){
-					$("#courseList").detach();
-					$catalogs[$(this).val()].insertAfter($("#classListLabel"));
+					$("#classListLabel").next().detach();
+					$catalogs[$(this).val()].clone().insertAfter($("#classListLabel"));
+				});
+				
+				$("#catalogListOverrides").change(function(){
+					$("#classListLabelOverrides").next().detach();
+					$catalogs[$(this).val()].clone().insertAfter($("#classListLabelOverrides"));
 				});
 				
 				$("#minorSubjectList").change(function(){
@@ -285,7 +290,16 @@
 						value: degreeName
 					}).append($("<label>", {
 						text: degreeName
-					}))); 
+					})));
+					$("#listContainer").append($("<li>", {
+						value: "globalRequirements"
+					}).append($("<label>", {
+						text: "Global Requirements"
+					})).append($("<button>", {
+						value: degreeName,
+						name: "modifyGlobal",
+						text: "Modify"
+					})));
 
 					// Create nested list under each degree program with the subject, e.g., Computer Science 
 					$degreeSubjects = $("<ul id='subjectList'>");
@@ -522,12 +536,13 @@
 
 			function addClassHandler(){
 				for(var i in catalogRule["Catalogs"]){
-					$("#catalogList").append($("<option>",{
+					$("#catalogList, #catalogListOverrides").append($("<option>",{
 						value: catalogRule["Catalogs"][i],
 						text: catalogRule["Catalogs"][i]
 					}));
 				}
-				$catalogs[catalogRule["Catalogs"][0]].insertAfter($("#classListLabel"));
+				$catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabel"));
+				$catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabelOverrides"));
 			}
 			
 			function processList($globalList, $subjectList, idName, requirementList) {
@@ -575,6 +590,8 @@
 			}
 			
 			function closepopup(){
+				$("#certificateList").empty();
+				$("#courseOverrideList").empty();
 				$("#minorList").empty();
 				$("#classsublist").empty();
 				$("#popupform").children("input[type='number']").val("");
@@ -582,8 +599,11 @@
 				$("#popupform").children("input[type='radio']:checked").prop("checked", false);
 				$("#minorSelect").detach();
 				$("#minorSubjectList").empty();
-				$("#courseList").detach();
+				$("#certificateSelect").detach();
+				$("#certificateSubjectList").empty();
+				$("[id='courseList']").remove();
 				$("#catalogList").empty();
+				$("#catalogListOverrides").empty();
 				$("#classsublist").empty();
 				var modal = document.getElementById('myModal');
 				modal.style.display = "none";	
@@ -647,6 +667,7 @@
 			  
 				</ul>
 			  </div>
+			  Catalog: <select id="catalogListOverrides"></select><label for="classList" id="classListLabelOverrides">Class:</label><input type="button" id="addClassButtonOverrides" value="Add Class"/>
 			  <div id="minorContainer">
 				<h2>Applicable Minors</h2>
 				<ul id="minorList">
