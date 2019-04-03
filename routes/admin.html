@@ -5,7 +5,6 @@
         <meta charset="utf8">
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
         <script>
 			var catalogRule;
 			var catalogs;
@@ -24,7 +23,7 @@
 			
 			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
-				xhr.addEventListener("load", degreeHandler);
+				xhr.addEventListener("load", degreeHandlerInit);
 				xhr.open("GET", "../scripts/degreePrograms.php");
 				xhr.send();
 				
@@ -250,8 +249,21 @@
 				$(this).parent().remove();
 			}
 			
-			function degreeHandler() {
-				var degreePrograms = JSON.parse(this.response);
+			function degreeHandlerInit() {
+				degreeHandler(JSON.parse(this.response), true);
+				
+				var xhr = new XMLHttpRequest();
+				xhr.addEventListener("load", nonDegreeHandlerInit);
+				xhr.open("GET", "../scripts/nondegreeObjects.php");
+				xhr.send();
+			}
+			
+			function nonDegreeHandlerInit() {
+				degreeHandler(JSON.parse(this.response), false);
+			}
+			
+			function degreeHandler(programs, showEditCatalog) {
+				var degreePrograms = programs;
 				console.log(degreePrograms);
 				var $degreeSubjects;
 				var $degreeOptions;
@@ -275,13 +287,15 @@
 						
 						$degreeOptions = $("<ul id='optionList'>");
 						
-						$degreeOptions.append($("<li>", {
-							name: "catalog"
-						}).append($("<a>", {
-							href: "addremove.html",
-							text: "Edit Course Catalog",
-							onclick: "document.cookie = 'program=" + degreeSubject + "'"
-						})));
+						if(showEditCatalog) {
+							$degreeOptions.append($("<li>", {
+								name: "catalog"
+							}).append($("<a>", {
+								href: "addremove.html",
+								text: "Edit Course Catalog",
+								onclick: "document.cookie = 'program=" + degreeSubject + "'"
+							})));
+						}
 						
 						for(var degreeOption in degreePrograms[degreeName][degreeSubject]) {
 							$degreeOptions.append($("<li>", {
