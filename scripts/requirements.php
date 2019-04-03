@@ -8,7 +8,8 @@ if($mysqli->connect_errno) {
 	die("Failed to connect to MYSQL: ($mysqli->connect_errno) $mysqli->connect_error");
 }
 
-$degreeOption = $_POST["idObjects"];
+//$degreeOption = $_POST["idObjects"];
+$degreeOption = 9;
 
 /* Get the global requirements for the object types */
 $sqlGlobalRequirements = "SELECT type, minGrade, minGPA FROM globalrequirements NATURAL JOIN types";
@@ -270,7 +271,7 @@ for($x = 0; $x < count($objects); $x++) {
 	
 	$objectRequirements->id = $objects[$x]->idObjects;
 	$field = $objects[$x]->type;
-	if($field !== "Masters" && $field !== "PhD") {
+	if($field !== "Masters" && $field !== "PhD" && isset($requirements[$field])) {
 		$objectRequirements->name = $objects[$x]->name;
 		array_push($requirements[$field], $objectRequirements);
 	} else {
