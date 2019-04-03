@@ -8,8 +8,7 @@ if($mysqli->connect_errno) {
 	die("Failed to connect to MYSQL: ($mysqli->connect_errno) $mysqli->connect_error");
 }
 
-//$degreeOption = $_POST["idObjects"];
-$degreeOption = 9;
+$degreeOption = $_POST["idObjects"];
 
 /* Get the global requirements for the object types */
 $sqlGlobalRequirements = "SELECT type, minGrade, minGPA FROM globalrequirements NATURAL JOIN types";

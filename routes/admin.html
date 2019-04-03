@@ -260,6 +260,17 @@
 			
 			function nonDegreeHandlerInit() {
 				degreeHandler(JSON.parse(this.response), false);
+				$("button[name='modifyButton']").click(function(){
+					$.ajax({
+						type: "POST",
+						url: "../scripts/requirements.php",
+						data: {idObjects: $(this).val()},
+						dataType: "json",
+						success: function(json) {
+							popupHandler(json);
+						}
+					});
+				});
 			}
 			
 			function degreeHandler(programs, showEditCatalog) {
@@ -312,17 +323,7 @@
 					}
 					$("#listContainer").append($degreeSubjects);
 				}
-				$("button[name='modifyButton']").click(function(){
-					$.ajax({
-						type: "POST",
-						url: "../scripts/requirements.php",
-						data: {idObjects: $(this).val()},
-						dataType: "json",
-						success: function(json) {
-							popupHandler(json);
-						}
-					});
-				});
+				
 			}
 
 			function popupHandler(json){
