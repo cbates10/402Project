@@ -14,10 +14,11 @@
 			var requiredCourseIds; // This is an array initialized at the start of every modify popup
 			var minors;
 			var $minorsSubjectSelect = {};
-			var selectedMinors;
+			var selectedMinors = [];
 			var certificates;
 			var $certificatesSubjectSelect = {};
-			var selectedCertificates;
+			var selectedCertificates = [];
+			var selectedOverrides = [];
 			var addCourse = [];
 			var removeCourse = [];
 			var objectsParam = [];
@@ -83,6 +84,23 @@
 						$("#newObjectSubjectSpan").show();
 					} else {
 						$("#newObjectSubjectSpan").hide();
+					}
+				});
+				
+				$("#addClassButtonOverrides").click(function(){
+					var courseId = $("#overridesContainer > #courseList option:selected").val();
+					if(!courseId) {
+						return false;
+					}
+					console.log(selectedOverrides);
+					if(!selectedOverrides.includes(courseId)) {
+						selectedOverrides.push(courseId);
+						var courseOverrideInfo = {};
+						courseOverrideInfo.maxCount = 1;
+						courseOverrideInfo.minGrade = catalogRule["Degree Program"].minGrade;
+						courseOverrideInfo.minHours = catalogs[courseId].lowHours;
+						courseOverrideInfo.maxHours = catalogs[courseId].highHours;
+						attachCourseOverrideEntry(courseId, courseOverrideInfo);
 					}
 				});
 				
@@ -274,6 +292,14 @@
             });
             
 			// TODO modularize these event handlers into one
+			function removeOverrideHandler() {
+				var courseId = $(this).attr("id");
+				selectedOverrides = selectedOverrides.filter(function(id) {
+					return id != courseId;
+				});
+				$(this).parent().remove();
+			}
+			
 			function removeRequiredHandler() {
 				var courseId = $(this).attr("id");
 				requiredCourseIds = requiredCourseIds.filter(function(id) {
@@ -499,8 +525,73 @@
 				}
 			}
 
+			function attachCourseOverrideEntry(courseId, courseOverrideInfo) {
+				var $removeButton = $("<input>",{
+					id: courseId,
+					type: "submit",
+					name: "removeOverrideButton",
+					value: "Remove"
+				});
+				$removeButton.click(removeOverrideHandler);
+				$("#courseOverrideList").append($("<li>", {
+					text: catalogs[courseId].name + " "
+				}).append($("<label>", {
+					for: "overrideCount" + courseId,
+					text: "Maximum Times Countable"
+				})).append($("<input>", {
+					id: "overrideCount" + courseId,
+					type: "number",
+					value: courseOverrideInfo.maxCount,
+					style: "width:50px"
+				})).append($("<label>", {
+					for: "overrideGrade" + courseId,
+					text: "Minimum Grade"
+				})).append($("<input>", {
+					id: "overrideGrade" + courseId,
+					type: "text",
+					value: courseOverrideInfo.minGrade,
+					maxlength: "2",
+					pattern: "[ABCDF]{1}[-+]{0,1}",
+					style: "width:50px"
+				})).append($("<label>", {
+					for: "overrideLowHours" + courseId,
+					text: "Minium Hours"
+				})).append($("<input>", {
+					id: "overrideLowHours" + courseId,
+					type: "number",
+					value: courseOverrideInfo.minHours,
+					style: "width:50px"
+				})).append($("<label>", {
+					for: "overrideHighHours" + courseId,
+					text: "Maximum Hours"
+				})).append($("<input>", {
+					id: "overrideHighHours" + courseId,
+					type: "number",
+					value: courseOverrideInfo.maxHours,
+					style: "width:50px"
+				})).append($removeButton));
+			}
+			
+			// This function will set any null entries in the override info to be the information in the catalog 
+			function processOverrides(courseId, courseOverrideInfo) {
+				if(!courseOverrideInfo.minGrade) {
+					courseOverrideInfo.minGrade = catalogRule["Degree Program"].minGrade;
+				}
+				if(!courseOverrideInfo.maxCount) {
+					courseOverrideInfo.maxCount = 1;
+				}
+				if(!courseOverrideInfo.minHours) {
+					courseOverrideInfo.minHours = catalogs[courseId].lowHours;
+				}
+				if(!courseOverrideInfo.maxHours) {
+					courseOverrideInfo.maxHours = catalogs[courseId].highHours;
+				}
+				return courseOverrideInfo;
+			}
+			
 			function courseHandler(catalogArray, catalogName){
 				console.log(catalogArray);
+				selectedOverrides = [];
 				if(!catalogs) {
 					catalogs = catalogArray;
 				} else {
@@ -538,47 +629,14 @@
 							text: catalogs[i].name
 						}).append($removeButton));
 					}
+					
 					//Iterate through any course overrides and display information
+					console.log(catalogRule["Degree Program"].courseOverride);
 					for(var courseId in catalogRule["Degree Program"].courseOverride) {
 						var courseOverrideInfo = catalogRule["Degree Program"].courseOverride[courseId];
-						console.log(courseOverrideInfo);
-						$("#courseOverrideList").append($("<li>", {
-							text: catalogs[courseId].name + " "
-						}).append($("<label>", {
-							for: "overrideCount" + courseId,
-							text: "Maximum Times Countable"
-						})).append($("<input>", {
-							id: "overrideCount" + courseId,
-							type: "number",
-							value: courseOverrideInfo.maxCount,
-							style: "width:50px"
-						})).append($("<label>", {
-							for: "overrideGrade" + courseId,
-							text: "Minimum Grade"
-						})).append($("<input>", {
-							id: "overrideGrade" + courseId,
-							type: "text",
-							value: courseOverrideInfo.minGrade,
-							maxlength: "2",
-							pattern: "[ABCDF]{1}[-+]{0,1}",
-							style: "width:50px"
-						})).append($("<label>", {
-							for: "overrideLowHours" + courseId,
-							text: "Minium Hours"
-						})).append($("<input>", {
-							id: "overrideLowHours" + courseId,
-							type: "number",
-							value: courseOverrideInfo.minHours,
-							style: "width:50px"
-						})).append($("<label>", {
-							for: "overrideHighHours" + courseId,
-							text: "Maximum Hours"
-						})).append($("<input>", {
-							id: "overrideHighHours" + courseId,
-							type: "number",
-							value: courseOverrideInfo.maxHours,
-							style: "width:50px"
-						})));
+						courseOverrideInfo = processOverrides(courseId, courseOverrideInfo);
+						selectedOverrides.push(courseId);
+						attachCourseOverrideEntry(courseId, courseOverrideInfo);
 					}					
 
 					// Set the contents of the required course select
@@ -780,14 +838,15 @@
 				</ul>
 			  </div>
 			  Catalog: <select id="catalogList"></select><label for="classList" id="classListLabel">Class:</label><input type="button" id="addClassButton" value="Add Class"/>
-			  <div>
+			  <div id="overridesContainer">
 				<h2>Course Overrides</h2>
 				<ul id="courseOverrideList">
 			  
 				</ul>
-			  </div>
-			  Catalog: <select id="catalogListOverrides"></select><label for="classList" id="classListLabelOverrides">Class:</label><input type="button" id="addClassButtonOverrides" value="Add Class"/>
-			  <div id="minorContainer">
+			  
+				Catalog: <select id="catalogListOverrides"></select><label for="classList" id="classListLabelOverrides">Class:</label><input type="button" id="addClassButtonOverrides" value="Add Class"/>
+			 </div>
+			 <div id="minorContainer">
 				<h2>Applicable Minors</h2>
 				<ul id="minorList">
 				
