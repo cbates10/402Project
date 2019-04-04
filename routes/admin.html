@@ -11,6 +11,7 @@
 			var $catalogs = {};
 			var $objectSubjects = {};
 			var catalogsLoaded = 0;
+			var catalogNames = [];
 			var requiredCourseIds; // This is an array initialized at the start of every modify popup
 			var minors;
 			var $minorsSubjectSelect = {};
@@ -22,12 +23,30 @@
 			var addCourse = [];
 			var removeCourse = [];
 			var objectsParam = [];
+			var degreeProgramIds = [];
 			
 			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", degreeHandlerInit);
 				xhr.open("GET", "../scripts/degreePrograms.php");
 				xhr.send();
+				
+				$("#deleteForm").click(function() {
+					if(confirm("Are you sure you want to delete this program? Press OK to delete")) {
+						$.ajax({
+							type: "POST",
+							url: "../scripts/deleteObject.php",
+							data: {idObject : $(this).attr("idobjects") },
+							//dataType: "json",
+							success: function(json) {
+								location.reload();
+							},
+							error: function(xhr, ajaxOptions, thrownError) {
+								console.log(thrownError);
+							}
+						});
+					} 
+				});
 				
 				$("#addNewItemButton").click(function() {
 					console.log("Inside the button");
@@ -54,7 +73,7 @@
 						data: data,
 						//dataType: "json",
 						success: function(json) {
-							console.log(json + " That ");
+							location.reload();
 						},
 						error: function(xhr, ajaxOptions, thrownError) {
 							console.log(thrownError);
@@ -292,6 +311,10 @@
             });
             
 			// TODO modularize these event handlers into one
+			function removeCatalogHandler() {
+				
+			}
+			
 			function removeOverrideHandler() {
 				var courseId = $(this).attr("id");
 				selectedOverrides = selectedOverrides.filter(function(id) {
@@ -336,6 +359,11 @@
 			function nonDegreeHandlerInit() {
 				degreeHandler(JSON.parse(this.response), false);
 				$("button[name='modifyButton']").click(function(){
+					if(degreeProgramIds.includes($(this).val())) {
+						$("#additionalOptionsContainer").show();
+					} else {
+						$("#additionalOptionsContainer").hide();
+					}
 					$.ajax({
 						type: "POST",
 						url: "../scripts/requirements.php",
@@ -374,13 +402,18 @@
 				
 			}
 			
+			
+			/**
+			param: programs - Array of programs to process into the list. This will be done according to the subject of the program
+			param: showEditCatalog - If true this will add the option to edit the catalog for any subjects
+			*/
 			function degreeHandler(programs, showEditCatalog) {
 				var degreePrograms = programs;
 				console.log(degreePrograms);
 				var $degreeSubjects;
 				var $degreeOptions;
 
-				// Iterate through all degree programs (Masters/PhD) and add to DOM
+				// Iterate through all degree programs (Masters,PhD,etc) and add to DOM
 				for(var degreeName in degreePrograms) {
 					$("#newItemCategories").append($("<option>", {
 						value: degreeName,
@@ -413,10 +446,11 @@
 						$degreeSubjects.append($("<li>", {
 							text: degreeSubject
 						}));
-						$subjects.append($("<option>", {
+						var $subjectOption = $("<option>", {
 							value: degreeSubject,
 							text: degreeSubject
-						}));
+						});
+						$subjects.append($subjectOption);
 						
 						$degreeOptions = $("<ul id='optionList'>");
 						
@@ -440,6 +474,14 @@
 								name: "modifyButton",
 								text: "Modify"	
 							})));
+							// Add the ID to the degreeProgram ID list. This will be used to display additional options if the object ID is a degree program
+							if(degreeName === "Masters" || degreeName === "PhD") {
+								if(!catalogNames.includes(degreeSubject)) {
+									$("#applicableCatalogsSelect").append($subjectOption);
+									catalogNames.push(degreeSubject);
+								}
+								degreeProgramIds.push(degreePrograms[degreeName][degreeSubject][degreeOption]);
+							}
 						} 
 						$degreeSubjects.append($degreeOptions);
 					}
@@ -468,6 +510,7 @@
 				requiredCourseIds = [];
 				selectedMinors = [];
 				selectedCertificates = [];
+				$("#deleteForm").attr("idobjects", catalogRule["Degree Program"].id);
 				console.log(catalogRule);
 
 				var modal = document.getElementById('myModal');
@@ -511,8 +554,20 @@
 				$("#trhrs").attr('value',catalogRule["Degree Program"].transferCredit);
 				$("#ohrs").attr('value',catalogRule["Degree Program"].outsideCredit);
 				$("#grade").attr('value',catalogRule["Degree Program"].minGrade);
+				// Load in all the catalogs for the program. This is done before setting information like required courses because the catalog information needs
+				// to be known in order to retireve the course information.
 				for(var i in catalogRule["Catalogs"]){
 					let catalogName = catalogRule["Catalogs"][i];
+					var $removeButton = $("<input>",{
+						id: catalogName,
+						type: "submit",
+						name: "removeCatalogButton",
+						value: "Remove"
+					});
+					$removeButton.click(removeCatalogHandler);
+					$("#applicableCatalogsList").append($("<li>",{
+						text: catalogName
+					}).append($removeButton));
 					$.ajax({
 						type: "POST",
 						url: "../scripts/courseCatalog.php",
@@ -748,6 +803,7 @@
 				$("#certificateList").empty();
 				$("#courseOverrideList").empty();
 				$("#minorList").empty();
+				$("#applicableCatalogsList").empty();
 				$("#classsublist").empty();
 				$("#popupform").children("input[type='number']").val("");
 				$("#popupform").children("input[type='number']").attr("oldvalue", "");
@@ -831,6 +887,13 @@
 					<br>
 					Minimum Grade: <input type="text" id="grade" style="width:50px">
 			  </div>
+			  <div id="applicableCatalogs">
+				<h2>Applicable Catalogs</h2>
+				<ul id="applicableCatalogsList">
+				
+				</ul>
+				Catalog: <select id="applicableCatalogsSelect"></select><input type="button" id="addCatalog" value="Add Catalog"/>
+			  </div>
 			  <div id="requiredClasses">
 				<h2>Required Courses</h2>
 				<ul id="classsublist">
@@ -846,22 +909,25 @@
 			  
 				Catalog: <select id="catalogListOverrides"></select><label for="classList" id="classListLabelOverrides">Class:</label><input type="button" id="addClassButtonOverrides" value="Add Class"/>
 			 </div>
-			 <div id="minorContainer">
-				<h2>Applicable Minors</h2>
-				<ul id="minorList">
-				
-				</ul>
-				Subject: <select id="minorSubjectList"></select><label for="minorSelect" id="minorSelectLabel">Minor:</label><input type="button" id="addMinorButton" value="Add Minor"/>
-			  </div>
-			  <div id="certificateContainer">
-				<h2>Certificates</h2>
-				<ul id="certificateList">
-				
-				</ul>
-				Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Minor:</label><input type="button" id="addCertificateButton" value="Add Minor"/>
-			  </div>
-			  <br>
-			  <input id="saveForm" type="submit" value="Save"></input>
+			 <div id="additionalOptionsContainer" hidden>
+				 <div id="minorContainer">
+					<h2>Applicable Minors</h2>
+					<ul id="minorList">
+					
+					</ul>
+					Subject: <select id="minorSubjectList"></select><label for="minorSelect" id="minorSelectLabel">Minor:</label><input type="button" id="addMinorButton" value="Add Minor"/>
+				  </div>
+				  <div id="certificateContainer">
+					<h2>Certificates</h2>
+					<ul id="certificateList">
+					
+					</ul>
+					Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Minor:</label><input type="button" id="addCertificateButton" value="Add Minor"/>
+				  </div>
+				  <br>
+				  <input id="saveForm" type="submit" value="Save"></input>
+				  <input id="deleteForm" type="button" value="Delete Program"></input>
+				</div>
 			</div>
 		</div>
     </body>
