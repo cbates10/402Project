@@ -287,7 +287,23 @@
 
 						console.log(catalogFormChange);
 
+						$.ajax({
+						type: "POST",
+						url: "../scripts/submitChange.php",
+						data: {
+						dataObj:catalogFormObj,
+						dataObjChange:catalogFormChange,
+						idObject: catalogRule["Degree Program"].id},
+						dataType: "json",
+						success: function(json) {
+							console.log("Worked");
+						},
+						error: function(msg){
+							console.log("Error");
+						}
+					});
 						//TODO Finish checking ohrs and trhrs
+
 				});
             });
             
