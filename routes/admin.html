@@ -20,6 +20,7 @@
 			var $certificatesSubjectSelect = {};
 			var selectedCertificates = [];
 			var selectedOverrides = [];
+			var selectedCatalogs = [];
 			var addCourse = [];
 			var removeCourse = [];
 			var objectsParam = [];
@@ -82,12 +83,12 @@
 				});
 				
 				$("#catalogList").change(function(){
-					$("#classListLabel").next().detach();
+					$("#classListLabel + select").detach();
 					$catalogs[$(this).val()].clone().insertAfter($("#classListLabel"));
 				});
 				
 				$("#catalogListOverrides").change(function(){
-					$("#classListLabelOverrides").next().detach();
+					$("#classListLabelOverrides + select").detach();
 					$catalogs[$(this).val()].clone().insertAfter($("#classListLabelOverrides"));
 				});
 				
@@ -120,6 +121,25 @@
 						courseOverrideInfo.minHours = catalogs[courseId].lowHours;
 						courseOverrideInfo.maxHours = catalogs[courseId].highHours;
 						attachCourseOverrideEntry(courseId, courseOverrideInfo);
+					}
+				});
+				
+				$("#addCatalogButton").click(function() {
+					var catalogName = $("#applicableCatalogsSelect option:selected").val();
+					if(!selectedCatalogs.includes(catalogName)) {
+						selectedCatalogs.push(catalogName);
+						$.ajax({
+							type: "POST",
+							url: "../scripts/courseCatalog.php",
+							data: {catalogName : catalogName},
+							dataType: "json",
+							success: function(json) {
+								addNewCatalog(json, catalogName);
+							},
+							error: function(xhr, ajaxOptions, thrownError) {
+								console.log(thrownError);
+							}
+						});
 					}
 				});
 				
@@ -326,6 +346,28 @@
 				});
             });
             
+			function addNewCatalog(catalogArray, catalogName) {
+				processCatalog(catalogArray, catalogName);
+				if(Object.keys($catalogs).length === 1) {
+					$catalogs[catalogName].clone().insertAfter($("#classListLabel"));
+					$catalogs[catalogName].clone().insertAfter($("#classListLabelOverrides"));
+				}
+				var $removeButton = $("<input>",{
+					id: catalogName,
+					type: "submit",
+					name: "removeClassButton",
+					value: "Remove"
+				});
+				$removeButton.click(removeCatalogHandler);
+				$("#applicableCatalogsList").append($("<li>",{
+					text: catalogName
+				}).append($removeButton));
+				$("#catalogList, #catalogListOverrides").append($("<option>",{
+					value: catalogName,
+					text: catalogName
+				}));
+			}
+			
 			// TODO modularize these event handlers into one
 			function removeCatalogHandler() {
 				
@@ -572,8 +614,10 @@
 				$("#grade").attr('value',catalogRule["Degree Program"].minGrade);
 				// Load in all the catalogs for the program. This is done before setting information like required courses because the catalog information needs
 				// to be known in order to retireve the course information.
+				selectedCatalogs = [];
 				for(var i in catalogRule["Catalogs"]){
 					let catalogName = catalogRule["Catalogs"][i];
+					selectedCatalogs.push(catalogName);
 					var $removeButton = $("<input>",{
 						id: catalogName,
 						type: "submit",
@@ -660,9 +704,8 @@
 				return courseOverrideInfo;
 			}
 			
-			function courseHandler(catalogArray, catalogName){
-				console.log(catalogArray);
-				selectedOverrides = [];
+			function processCatalog(catalogArray, catalogName) {
+				console.log("Processing catalog");
 				if(!catalogs) {
 					catalogs = catalogArray;
 				} else {
@@ -682,6 +725,12 @@
 					}));
 				}
 				$catalogs[catalogName] = $courseList;
+			}
+			
+			function courseHandler(catalogArray, catalogName){
+				console.log(catalogArray);
+				selectedOverrides = [];
+				processCatalog(catalogArray, catalogName);
 			
 				// Load in options once all catalogs have been retrieved
 				if(catalogsLoaded === catalogRule["Catalogs"].length) {
@@ -908,7 +957,7 @@
 				<ul id="applicableCatalogsList">
 				
 				</ul>
-				Catalog: <select id="applicableCatalogsSelect"></select><input type="button" id="addCatalog" value="Add Catalog"/>
+				Catalog: <select id="applicableCatalogsSelect"></select><input type="button" id="addCatalogButton" value="Add Catalog"/>
 			  </div>
 			  <div id="requiredClasses">
 				<h2>Required Courses</h2>
