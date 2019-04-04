@@ -9,6 +9,7 @@
 			var catalogRule;
 			var catalogs;
 			var $catalogs = {};
+			var $objectSubjects = {};
 			var catalogsLoaded = 0;
 			var requiredCourseIds; // This is an array initialized at the start of every modify popup
 			var minors;
@@ -27,6 +28,39 @@
 				xhr.open("GET", "../scripts/degreePrograms.php");
 				xhr.send();
 				
+				$("#addNewItemButton").click(function() {
+					console.log("Inside the button");
+					var data = {};
+					if($("#objectSubjects option:selected").val() === "newSubject") {
+						data["subject"] = $("#newObjectSubject").val();
+						if(data["subject"] === "") {
+							alert("Subject name is required");
+							return false;
+						}
+					} else {
+						data["subject"] = $("#objectSubjects option:selected").val();
+					}
+					data["typeName"] = $("#newItemCategories option:selected").val();
+					data["name"] = $("#newItemName").val();
+					if(data["name"] === "") {
+						alert("Name is required");
+						return false;
+					}
+					console.log(data);
+					$.ajax({
+						type: "POST",
+						url: "../scripts/addNewObject.php",
+						data: data,
+						//dataType: "json",
+						success: function(json) {
+							console.log(json + " That ");
+						},
+						error: function(xhr, ajaxOptions, thrownError) {
+							console.log(thrownError);
+						}
+					});
+				});
+				
 				$("#catalogList").change(function(){
 					$("#classListLabel").next().detach();
 					$catalogs[$(this).val()].clone().insertAfter($("#classListLabel"));
@@ -40,6 +74,16 @@
 				$("#minorSubjectList").change(function(){
 					$("#minorSelect").detach();
 					$minorsSubjectSelect[$(this).val()].insertAfter($("#minorSelectLabel"));
+				});
+				
+				$("#newItemCategories").change(function(){
+					$("#objectSubjects").detach();
+					$objectSubjects[$(this).val()].insertAfter($("#objectSubjectLabel"));
+					if($("#objectSubects option:selected").val() === "newSubject") {
+						$("#newObjectSubjectSpan").show();
+					} else {
+						$("#newObjectSubjectSpan").hide();
+					}
 				});
 				
 				//TODO modularize these click events into one
@@ -276,6 +320,32 @@
 						}
 					});
 				});
+				
+				// Initialize page contents with select lists and add buttons
+				for(var index in $objectSubjects) {
+					$objectSubjects[index].change(function(){
+						if($(this).val() === "newSubject") {
+							$("#newObjectSubjectSpan").show();
+						} else {
+							$("#newObjectSubjectSpan").hide();
+						}
+					});
+				}
+				$objectSubjects[$("#newItemCategories option:selected").val()].insertAfter($("#objectSubjectLabel"));
+				if($("#objectSubects option:selected").val() === "newSubject") {
+					$("#newObjectSubjectSpan").show();
+				}
+				var $addItemButton = $("<button>", {
+					name: "addNewItem",
+					text: "Add New Item"
+				});
+				$addItemButton.click(function() {
+					popupHandlerAddNewItem();
+				});
+				$("#listContainer").append($("<li>", {
+					name: "addNewItem"
+				}).append($addItemButton));
+				
 			}
 			
 			function degreeHandler(programs, showEditCatalog) {
@@ -286,6 +356,10 @@
 
 				// Iterate through all degree programs (Masters/PhD) and add to DOM
 				for(var degreeName in degreePrograms) {
+					$("#newItemCategories").append($("<option>", {
+						value: degreeName,
+						text: degreeName
+					}));
 					$("#listContainer").append($("<li>", {
 						value: degreeName
 					}).append($("<label>", {
@@ -300,6 +374,10 @@
 						name: "modifyGlobal",
 						text: "Modify"
 					})));
+					
+					var $subjects = $("<select>", {
+						id: "objectSubjects"
+					});
 
 					// Create nested list under each degree program with the subject, e.g., Computer Science 
 					$degreeSubjects = $("<ul id='subjectList'>");
@@ -307,6 +385,10 @@
 					for(var degreeSubject in degreePrograms[degreeName]) {
 					
 						$degreeSubjects.append($("<li>", {
+							text: degreeSubject
+						}));
+						$subjects.append($("<option>", {
+							value: degreeSubject,
 							text: degreeSubject
 						}));
 						
@@ -335,11 +417,21 @@
 						} 
 						$degreeSubjects.append($degreeOptions);
 					}
+					$subjects.append($("<option>", {
+						value: "newSubject",
+						text: "New Subject"
+					}));
+					$objectSubjects[degreeName] = $subjects;
 					$("#listContainer").append($degreeSubjects);
 				}
 				
 			}
 
+			function popupHandlerAddNewItem() {
+				var modal = document.getElementById('addNewItemModal');
+				modal.style.display = "block";
+			}
+			
 			function popupHandler(json){
 				catalogRule = json;
 				catalogsLoaded = 0;
@@ -589,6 +681,11 @@
 				$certificatesSubjectSelect[$("#certificateSubjectList option:selected").val()].insertAfter($("#certificateSelectLabel")); 
 			}
 			
+			function closeAddItem() {
+				var modal = document.getElementById('addNewItemModal');
+				modal.style.display = "none";	
+			}
+			
 			function closepopup(){
 				$("#certificateList").empty();
 				$("#courseOverrideList").empty();
@@ -617,6 +714,28 @@
     <body>
         <div id="listContainer">
 
+		</div>
+		<div id="addNewItemModal" class="modal">
+			<div class="modal-content">
+				<span onclick="closeAddItem()" class="close">&times;</span>
+				<div id="addNewItemContent">
+					<label for="newItemCategories">Category :</label>
+					<select id="newItemCategories">
+				
+					</select>
+					<br>
+					<label for="objectSubect" id="objectSubjectLabel">Subject :</label>
+					<span id="newObjectSubjectSpan" hidden>
+						<label for="newObjectSubject">Subject Name :</label>
+						<input type="text" id="newObjectSubject"></input>
+					</span>
+					<br>
+					<label for="newItemName">Name: </label>
+					<input type="text" id="newItemName"></input>
+					<br>
+					<input type="button" id="addNewItemButton" value="Add"></input>
+				</div>
+			</div>
 		</div>
 		<div id="myModal" class="modal">
 			<div class="modal-content">
