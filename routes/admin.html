@@ -199,34 +199,46 @@
 					var modifyData = []
 					var catalogFormChange = {Hrs400Min: false, Hrs400Max: false, Hrs500Min: false, Hrs500Max: false, Hrs600Min: false, Hrs600Max:false}
 					var Hrs400MinObj = {
-						Hrs400Min: $("#400HrsMin").val(),
-						Hrs400MinOptionFixed: $("#400HrsMinOptionFixed").is(":checked"),
-						Hrs400MinOptionVariable: $("#400HrsMinOptionVariable").is(":checked")
+						hour: 400,
+						cap: 'minimum',
+						val: $("#400HrsMin").val(),
+						fixed: $("#400HrsMinOptionFixed").is(":checked"),
+						variable: $("#400HrsMinOptionVariable").is(":checked")
 					}
 					var Hrs400MaxObj = {
-						Hrs400Max: $("#400HrsMax").val(),
-						Hrs400MaxOptionFixed: $("#400HrsMaxOptionFixed").is(":checked"),
-						Hrs400MaxOptionVariable: $("#400HrsMaxOptionVariable").is(":checked")
+						hour: 400,
+						cap: 'maximum',
+						val: $("#400HrsMax").val(),
+						fixed: $("#400HrsMaxOptionFixed").is(":checked"),
+						variable: $("#400HrsMaxOptionVariable").is(":checked")
 					}
 					var Hrs500MinObj = {
-						Hrs500Min: $("#500HrsMin").val(),
-						Hrs500MinOptionFixed: $("#500HrsMinOptionFixed").is(":checked"),
-						Hrs500MinOptionVariable: $("#500HrsMinOptionVariable").is(":checked")
+						hour: 500,
+						cap: 'minimum',
+						val: $("#500HrsMin").val(),
+						fixed: $("#500HrsMinOptionFixed").is(":checked"),
+						variable: $("#500HrsMinOptionVariable").is(":checked")
 					}
 					var Hrs500MaxObj = {
-						Hrs500Max: $("#500HrsMax").val(),
-						Hrs500MaxOptionFixed: $("#500HrsMaxOptionFixed").is(":checked"),
-						Hrs500MaxOptionVariable: $("#500HrsMaxOptionVariable").is(":checked")
+						hour: 500,
+						cap: 'maximum',
+						val: $("#500HrsMax").val(),
+						fixed: $("#500HrsMaxOptionFixed").is(":checked"),
+						variable: $("#500HrsMaxOptionVariable").is(":checked")
 					}
 					var Hrs600MinObj = {
-						Hrs600Min: $("#600HrsMin").val(),
-						Hrs600MinOptionFixed: $("#600HrsMinOptionFixed").is(":checked"),
-						Hrs600MinOptionVariable: $("#600HrsMinOptionVariable").is(":checked")
+						hour: 600,
+						cap: 'minimum',
+						val: $("#600HrsMin").val(),
+						fixed: $("#600HrsMinOptionFixed").is(":checked"),
+						variable: $("#600HrsMinOptionVariable").is(":checked")
 					}
 					var Hrs600MaxObj = {
-						Hrs600Max: $("#600HrsMax").val(),
-						Hrs600MaxOptionFixed: $("#600HrsMaxOptionFixed").is(":checked"),
-						Hrs600MaxOptionVariable: $("#600HrsMaxOptionVariable").is(":checked"),
+						hour: 600,
+						cap: 'maximum',
+						val: $("#600HrsMax").val(),
+						fixed: $("#600HrsMaxOptionFixed").is(":checked"),
+						variable: $("#600HrsMaxOptionVariable").is(":checked"),
 					}
 					var catalogFormObj = {
 						requiredHrs:$("#requiredHrs").val(),
@@ -241,61 +253,60 @@
 						Grade: $("#grade").val()				
 					}
 
-						if(catalogFormObj.Hrs400Min.Hrs400Min != "" && catalogFormObj.Hrs400MinOptionFixed == false && catalogFormObj.Hrs400MinOptionVariable == false){
+						if(catalogFormObj.Hrs400Min.val != "" && catalogFormObj.Hrs400Min.fixed== false && catalogFormObj.Hrs400Min.variable == false){
 							alert("400HrsMin: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs400Max.Hrs400Max != "" && catalogFormObj.Hrs400MaxOptionFixed == false && catalogFormObj.Hrs400MaxOptionVariable == false){
+						if(catalogFormObj.Hrs400Max.val != "" && catalogFormObj.Hrs400Max.fixed == false && catalogFormObj.Hrs400Max.variable == false){
 							alert("400HrsMax: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs500Min.Hrs500Min != "" && catalogFormObj.Hrs500MinOptionFixed == false && catalogFormObj.Hrs500MinOptionVariable == false){
+						if(catalogFormObj.Hrs500Min.val!= "" && catalogFormObj.Hrs500Min.fixed== false && catalogFormObj.Hrs500Min.variable == false){
 							alert("500HrsMin: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs500Max.Hrs500Max != "" && catalogFormObj.Hrs500MaxOptionFixed == false && catalogFormObj.Hrs500MaxOptionVariable == false){
+						if(catalogFormObj.Hrs500Max.val!= "" && catalogFormObj.Hrs500Max.fixed== false && catalogFormObj.Hrs500Max.variable == false){
 							alert("500HrsMax: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs600Min.Hrs600Min != "" && catalogFormObj.Hrs600MinOptionFixed == false && catalogFormObj.Hrs600MinOptionVariable == false){
+						if(catalogFormObj.Hrs600Min.val != "" && catalogFormObj.Hrs600Min.fixed == false && catalogFormObj.Hrs600Min.variable == false){
 							alert("600HrsMin: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs600Max.Hrs600Max != "" && catalogFormObj.Hrs600MaxOptionFixed == false && catalogFormObj.Hrs600MaxOptionVariable == false){
+						if(catalogFormObj.Hrs600Max.val!= "" && catalogFormObj.Hrs600Max.fixed == false && catalogFormObj.Hrs600Max.variable == false){
 							alert("600HrsMax: Fixed or Variable?")
 						}
-						console.log(catalogFormObj.Hrs400Min.Hrs400Min);
-						if(catalogFormObj.Hrs400Min.Hrs400Min != $("#400HrsMin").attr("oldvalue")){
+						if(catalogFormObj.Hrs400Min.val != $("#400HrsMin").attr("oldvalue")){
 							if(catalogRule["Degree Program"].hours400 != null && catalogRule["Degree Program"].hours400.minimum != null){
 								modifyData.push(catalogFormObj.Hrs400Min);
 							}else{
 								addData.push(catalogFormObj.Hrs400Min);
 							}
 						}
-						if(catalogFormObj.Hrs400Max.Hrs400Max != $("#400HrsMax").attr("oldvalue")){
+						if(catalogFormObj.Hrs400Max.val != $("#400HrsMax").attr("oldvalue")){
 							if(catalogRule["Degree Program"].hours400 != null && catalogRule["Degree Program"].hours400.maximum != null){
 								modifyData.push(catalogFormObj.Hrs400Max);
 							}else{
 								addData.push(catalogFormObj.Hrs400Max);
 							}
 						}
-						if(catalogFormObj.Hrs500Min.Hrs500Min != $("#500HrsMin").attr("oldvalue")){
+						if(catalogFormObj.Hrs500Min.val!= $("#500HrsMin").attr("oldvalue")){
 							if(catalogRule["Degree Program"].hours500 != null && catalogRule["Degree Program"].hours500.minimum != null){
 								modifyData.push(catalogFormObj.Hrs500Min);
 							}else{
 								addData.push(catalogFormObj.Hrs500Min);
 							}
 						}
-						if(catalogFormObj.Hrs500Max.Hrs500Max != $("#500HrsMax").attr("oldvalue")){
+						if(catalogFormObj.Hrs500Max.val!= $("#500HrsMax").attr("oldvalue")){
 							if(catalogRule["Degree Program"].hours500 != null && catalogRule["Degree Program"].hours500.maximum != null){
 								modifyData.push(catalogFormObj.Hrs500Max);
 							}else{
 								addData.push(catalogFormObj.Hrs500Max);
 							}
 						}
-						if(catalogFormObj.Hrs600Min.Hrs600Min != $("#600HrsMin").attr("oldvalue")){
+						if(catalogFormObj.Hrs600Min.val != $("#600HrsMin").attr("oldvalue")){
 							if(catalogRule["Degree Program"].hours600 != null && catalogRule["Degree Program"].hours600.minimum != null){
 								modifyData.push(catalogFormObj.Hrs600Min);
 							}else{
 								addData.push(catalogFormObj.Hrs600Min);
 							}
 						}
-						if(catalogFormObj.Hrs600Max.Hrs600Max != $("#600HrsMax").attr("oldvalue")){
+						if(catalogFormObj.Hrs600Max.val != $("#600HrsMax").attr("oldvalue")){
 							if(catalogRule["Degree Program"].hours600 != null && catalogRule["Degree Program"].hours600.maximum != null){
 								modifyData.push(catalogFormObj.Hrs600Max);
 							}else{
@@ -303,19 +314,20 @@
 							}
 						}
 
-						dataObj = {addData: addData,modifyData: modifyData}
+						dataObj = {addData: addData,modifyData: modifyData};
 						console.log(dataObj);
 						$.ajax({
 						type: "POST",
 						url: "../scripts/submitChange.php",
 						data: {
-						dataObj: dataObj,
-						idObject: catalogRule["Degree Program"].id},
+						"dataObj": dataObj,
+						"idObject": catalogRule["Degree Program"].id},
 						dataType: "json",
 						success: function(json) {
 							console.log("Worked");
 						},
 						error: function(msg){
+							console.log(msg);
 							console.log("Error");
 						}
 					});

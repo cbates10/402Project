@@ -8,17 +8,21 @@
     }
 
     $dataObj = $_POST['dataObj'];
-    $dataObjChange = $_POST['dataObjChange'];
     $dataObjID = $_POST['idObject'];
-
+    $var = 'variable';
+    $fix = 'fixed';
     //Simple test to see how saving work
-    $sql = "UPDATE hoursbylevel SET hours='6' WHERE idObjects=dataObjID AND type='fixed'";
-
-    if (mysqli_query($mysqli, $sql)) {
-        echo "Admin Record updated successfully.";
-    } else {
-        echo "Admin Error updating record: " . mysqli_error($mysqli);
+    foreach($dataObj["modifyData"] as $modifyData){
+        $sql = "UPDATE hoursbylevel SET hours = ? ,type = ? WHERE idObjects = ? AND hourLevel = ? AND cap = ? ";
+        $stmt = $mysqli->prepare($sql);
+        if($modifyData["fixed"] == true){
+            $stmt->bind_param("dsiss",$modifyData["val"],$fix,$dataObjID,$modifyData["hour"],$modifyData["cap"]);
+        }else{
+            $stmt->bind_param("dsiss",$modifyData["val"],$var,$dataObjID,$modifyData["hour"],$modifyData["cap"]);
+        }
+        $stmt->execute();
     }
     
+    $stmt->close();
     mysqli_close($mysqli);
 ?>
