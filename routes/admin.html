@@ -13,7 +13,7 @@
 			var $objectSubjects = {};
 			var catalogsLoaded = 0;
 			var catalogNames = [];
-			var requiredCourseIds; // This is an array initialized at the start of every modify popup
+			var requiredCourseIds = []; // This is an array initialized at the start of every modify popup
 			var minors;
 			var $minorsSubjectSelect = {};
 			var selectedMinors = [];
@@ -84,13 +84,11 @@
 				});
 				
 				$("#catalogList").change(function(){
-					$("#classListLabel + select").detach();
-					$catalogs[$(this).val()].clone().insertAfter($("#classListLabel"));
+					swapRequired($(this).val())
 				});
 				
 				$("#catalogListOverrides").change(function(){
-					$("#classListLabelOverrides + select").detach();
-					$catalogs[$(this).val()].clone().insertAfter($("#classListLabelOverrides"));
+					swapOverride($(this).val())
 				});
 				
 				$("#minorSubjectList").change(function(){
@@ -348,9 +346,23 @@
 				});
             });
             
+			function swapRequired(catalogName) {
+				$("#classListLabel + select").detach();
+				if(catalogName) {
+					$catalogs[catalogName].clone().insertAfter($("#classListLabel"));
+				}
+			}
+			
+			function swapOverride(catalogName) {
+				$("#classListLabelOverrides + select").detach();
+				if(catalogName) {
+					$catalogs[catalogName].clone().insertAfter($("#classListLabelOverrides"));
+				}
+			}
+				
 			function addNewCatalog(catalogArray, catalogName) {
 				processCatalog(catalogArray, catalogName);
-				if(Object.keys($catalogs).length === 1) {
+				if(Object.keys($catalogs).length === 1 || !$("#catalogList option:selected").val()) {
 					$catalogs[catalogName].clone().insertAfter($("#classListLabel"));
 					$catalogs[catalogName].clone().insertAfter($("#classListLabelOverrides"));
 				}
@@ -372,14 +384,39 @@
 			
 			// TODO modularize these event handlers into one
 			function removeCatalogHandler() {
-				console.log("Inside the handler");
 				var catalogName = $(this).attr("id");
-				console.log($("li[value='" + catalogName + "']"));
-				$("li[value='" + catalogName + "']").each(function(index, value) {
+				$(this).parent().remove();
+				selectedCatalogs = selectedCatalogs.filter(function(name) {
+					return name != catalogName;
+				});
+				// Remove all required courses from the removed catalog
+				$("#requiredClasses li[value='" + catalogName + "']").each(function(index, value) {
 					var courseId = $(this).children("input[type='submit']").attr("id");
-					console.log(courseId);
+					requiredCourseIds = requiredCourseIds.filter(function(id){ 
+						return id != courseId;
+					});
 					$(this).remove();
 				});
+				// Remove all course overrides from the removed catalog
+				$("#overridesContainer li[value='" + catalogName + "']").each(function(index, value) {
+					var courseId = $(this).children("input[type='submit']").attr("id");
+					selectedOverrides = selectedOverrides.filter(function(id){
+						return id != courseId;
+					});
+					$(this).remove();
+				});
+				// Remove the catalog from the select options
+				var swapOverrideSelect = $("#catalogListOverrides option:selected").val() == catalogName;
+				var swapRequiredSelect = $("#catalogList option:selected").val() == catalogName;
+				$("#catalogListOverrides option[value='" + catalogName + "']").remove();
+				$("#catalogList option[value='" + catalogName + "']").remove();
+				// If the catalog to remove was selected before the removal then the course select will need to be swapped
+				if(swapOverrideSelect) {
+					swapOverride($("#catalogListOverrides option:selected").val());
+				}
+				if(swapRequiredSelect) {
+					swapRequired($("#catalogList option:selected").val());
+				}
 			}
 			
 			function removeOverrideHandler() {
