@@ -22,7 +22,19 @@
         }
         $stmt->execute();
     }
-    
+    /*
+    $stmt->close();
+    foreach($dataObj["addData"] as $addData){
+        $sql = "INSERT INTO hoursbylevel (idObjects,hours,type,cap,hourlevel) VALUE (?,?,?,?,?)";
+        $stmt = $mysqli->prepare($sql);
+        if($modifyData["fixed"] == true){
+            $stmt->bind_param("idsss",$dataObjID,$modifyData["val"],$fix,$modifyData["cap"],$modifyData["hour"]);
+        }else{
+            $stmt->bind_param("idsss",$dataObjID,$modifyData["val"],$var,$modifyData["cap"],$modifyData["hour"]);
+        }
+        $stmt->execute();
+    }
+    */
     $stmt->close();
     mysqli_close($mysqli);
 ?>
