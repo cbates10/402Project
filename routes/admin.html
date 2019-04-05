@@ -22,8 +22,7 @@
 			var selectedCertificates = [];
 			var selectedOverrides = [];
 			var selectedCatalogs = [];
-			var addCourse = [];
-			var removeCourse = [];
+			var modifyData = [];
 			var objectsParam = [];
 			var degreeProgramIds = [];
 			
@@ -196,142 +195,121 @@
 				});
 
 				$("#saveForm").click(function(){
+					var addData = [];
+					var modifyData = []
 					var catalogFormChange = {Hrs400Min: false, Hrs400Max: false, Hrs500Min: false, Hrs500Max: false, Hrs600Min: false, Hrs600Max:false}
-					var catalogFormObj = {
-						requiredHrs:$("#requiredHrs").val(),
+					var Hrs400MinObj = {
 						Hrs400Min: $("#400HrsMin").val(),
 						Hrs400MinOptionFixed: $("#400HrsMinOptionFixed").is(":checked"),
-						Hrs400MinOptionVariable: $("#400HrsMinOptionVariable").is(":checked"),
+						Hrs400MinOptionVariable: $("#400HrsMinOptionVariable").is(":checked")
+					}
+					var Hrs400MaxObj = {
 						Hrs400Max: $("#400HrsMax").val(),
 						Hrs400MaxOptionFixed: $("#400HrsMaxOptionFixed").is(":checked"),
-						Hrs400MaxOptionVariable: $("#400HrsMaxOptionVariable").is(":checked"),
-				
+						Hrs400MaxOptionVariable: $("#400HrsMaxOptionVariable").is(":checked")
+					}
+					var Hrs500MinObj = {
 						Hrs500Min: $("#500HrsMin").val(),
 						Hrs500MinOptionFixed: $("#500HrsMinOptionFixed").is(":checked"),
-						Hrs500MinOptionVariable: $("#500HrsMinOptionVariable").is(":checked"),
+						Hrs500MinOptionVariable: $("#500HrsMinOptionVariable").is(":checked")
+					}
+					var Hrs500MaxObj = {
 						Hrs500Max: $("#500HrsMax").val(),
 						Hrs500MaxOptionFixed: $("#500HrsMaxOptionFixed").is(":checked"),
-						Hrs500MaxOptionVariable: $("#500HrsMaxOptionVariable").is(":checked"),
-
+						Hrs500MaxOptionVariable: $("#500HrsMaxOptionVariable").is(":checked")
+					}
+					var Hrs600MinObj = {
 						Hrs600Min: $("#600HrsMin").val(),
 						Hrs600MinOptionFixed: $("#600HrsMinOptionFixed").is(":checked"),
-						Hrs600MinOptionVariable: $("#600HrsMinOptionVariable").is(":checked"),
+						Hrs600MinOptionVariable: $("#600HrsMinOptionVariable").is(":checked")
+					}
+					var Hrs600MaxObj = {
 						Hrs600Max: $("#600HrsMax").val(),
 						Hrs600MaxOptionFixed: $("#600HrsMaxOptionFixed").is(":checked"),
 						Hrs600MaxOptionVariable: $("#600HrsMaxOptionVariable").is(":checked"),
-
+					}
+					var catalogFormObj = {
+						requiredHrs:$("#requiredHrs").val(),
+						Hrs400Min: Hrs400MinObj,
+						Hrs400Max: Hrs400MaxObj,
+						Hrs500Min: Hrs500MinObj,
+						Hrs500Max: Hrs500MaxObj,
+						Hrs600Min: Hrs600MinObj,
+						Hrs600Max: Hrs600MaxObj,
 						Trhrs: $("#trhrs").val(),
 						Ohrs: $("#ohrs").val(),
 						Grade: $("#grade").val()				
-						}
-						console.log(catalogFormObj);
-						console.log(catalogRule["Degree Program"]);
+					}
 
-						if(catalogFormObj.Hrs400Min != "" && catalogFormObj.Hrs400MinOptionFixed == false && catalogFormObj.Hrs400MinOptionVariable == false){
+						if(catalogFormObj.Hrs400Min.Hrs400Min != "" && catalogFormObj.Hrs400MinOptionFixed == false && catalogFormObj.Hrs400MinOptionVariable == false){
 							alert("400HrsMin: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs400Max != "" && catalogFormObj.Hrs400MaxOptionFixed == false && catalogFormObj.Hrs400MaxOptionVariable == false){
+						if(catalogFormObj.Hrs400Max.Hrs400Max != "" && catalogFormObj.Hrs400MaxOptionFixed == false && catalogFormObj.Hrs400MaxOptionVariable == false){
 							alert("400HrsMax: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs500Min != "" && catalogFormObj.Hrs500MinOptionFixed == false && catalogFormObj.Hrs500MinOptionVariable == false){
+						if(catalogFormObj.Hrs500Min.Hrs500Min != "" && catalogFormObj.Hrs500MinOptionFixed == false && catalogFormObj.Hrs500MinOptionVariable == false){
 							alert("500HrsMin: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs500Max != "" && catalogFormObj.Hrs500MaxOptionFixed == false && catalogFormObj.Hrs500MaxOptionVariable == false){
+						if(catalogFormObj.Hrs500Max.Hrs500Max != "" && catalogFormObj.Hrs500MaxOptionFixed == false && catalogFormObj.Hrs500MaxOptionVariable == false){
 							alert("500HrsMax: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs600Min != "" && catalogFormObj.Hrs600MinOptionFixed == false && catalogFormObj.Hrs600MinOptionVariable == false){
+						if(catalogFormObj.Hrs600Min.Hrs600Min != "" && catalogFormObj.Hrs600MinOptionFixed == false && catalogFormObj.Hrs600MinOptionVariable == false){
 							alert("600HrsMin: Fixed or Variable?")
 						}
-						if(catalogFormObj.Hrs600Max != "" && catalogFormObj.Hrs600MaxOptionFixed == false && catalogFormObj.Hrs600MaxOptionVariable == false){
+						if(catalogFormObj.Hrs600Max.Hrs600Max != "" && catalogFormObj.Hrs600MaxOptionFixed == false && catalogFormObj.Hrs600MaxOptionVariable == false){
 							alert("600HrsMax: Fixed or Variable?")
 						}
-						
-						if((!catalogRule["Degree Program"].hours400 && catalogFormObj.Hrs400Min != "") || (catalogRule["Degree Program"].hours400 && !catalogRule["Degree Program"].hours400.minimum && catalogFormObj.Hrs400Min != "")  || (catalogRule["Degree Program"].hours400 && catalogRule["Degree Program"].hours400.minimum && catalogRule["Degree Program"].hours400.minimum.hours != catalogFormObj.Hrs400Min)){
-							if(catalogFormObj.Hrs400MinOptionFixed == true){
-								if(catalogFormObj.Hrs400Min < 1){
-									alert("400HrsMin if Fixed cant be below 1")
-								}			
-							}else if(catalogFormObj.Hrs400MinOptionVariable == true){
-								if(catalogFormObj.Hrs400Min > 1){
-									alert("400HrsMin if Variable cant be above 1")
-								}
-							}		
-							catalogFormChange.Hrs400Min = true;					
+						console.log(catalogFormObj.Hrs400Min.Hrs400Min);
+						if(catalogFormObj.Hrs400Min.Hrs400Min != $("#400HrsMin").attr("oldvalue")){
+							if(catalogRule["Degree Program"].hours400 != null && catalogRule["Degree Program"].hours400.minimum != null){
+								modifyData.push(catalogFormObj.Hrs400Min);
+							}else{
+								addData.push(catalogFormObj.Hrs400Min);
+							}
+						}
+						if(catalogFormObj.Hrs400Max.Hrs400Max != $("#400HrsMax").attr("oldvalue")){
+							if(catalogRule["Degree Program"].hours400 != null && catalogRule["Degree Program"].hours400.maximum != null){
+								modifyData.push(catalogFormObj.Hrs400Max);
+							}else{
+								addData.push(catalogFormObj.Hrs400Max);
+							}
+						}
+						if(catalogFormObj.Hrs500Min.Hrs500Min != $("#500HrsMin").attr("oldvalue")){
+							if(catalogRule["Degree Program"].hours500 != null && catalogRule["Degree Program"].hours500.minimum != null){
+								modifyData.push(catalogFormObj.Hrs500Min);
+							}else{
+								addData.push(catalogFormObj.Hrs500Min);
+							}
+						}
+						if(catalogFormObj.Hrs500Max.Hrs500Max != $("#500HrsMax").attr("oldvalue")){
+							if(catalogRule["Degree Program"].hours500 != null && catalogRule["Degree Program"].hours500.maximum != null){
+								modifyData.push(catalogFormObj.Hrs500Max);
+							}else{
+								addData.push(catalogFormObj.Hrs500Max);
+							}
+						}
+						if(catalogFormObj.Hrs600Min.Hrs600Min != $("#600HrsMin").attr("oldvalue")){
+							if(catalogRule["Degree Program"].hours600 != null && catalogRule["Degree Program"].hours600.minimum != null){
+								modifyData.push(catalogFormObj.Hrs600Min);
+							}else{
+								addData.push(catalogFormObj.Hrs600Min);
+							}
+						}
+						if(catalogFormObj.Hrs600Max.Hrs600Max != $("#600HrsMax").attr("oldvalue")){
+							if(catalogRule["Degree Program"].hours600 != null && catalogRule["Degree Program"].hours600.maximum != null){
+								modifyData.push(catalogFormObj.Hrs600Max);
+							}else{
+								addData.push(catalogFormObj.Hrs600Max);
+							}
 						}
 
-						if((!catalogRule["Degree Program"].hours400 && catalogFormObj.Hrs400Max != "") || (catalogRule["Degree Program"].hours400 && !catalogRule["Degree Program"].hours400.maximum && catalogFormObj.Hrs400Max != "")  || (catalogRule["Degree Program"].hours400 && catalogRule["Degree Program"].hours400.maximum && catalogRule["Degree Program"].hours400.maximum.hours != catalogFormObj.Hrs400Max)){
-							if(catalogFormObj.Hrs400MaxOptionFixed == true){
-								if(catalogFormObj.Hrs400Max < 1){
-									alert("400HrsMax if Fixed cant be below 1")
-								}			
-							}else if(catalogFormObj.Hrs400MaxOptionVariable == true){
-								if(catalogFormObj.Hrs400Max > 1){
-									alert("400HrsMax if Variable cant be above 1")
-								}
-							}		
-							catalogFormChange.Hrs400Max = true;					
-						}
-
-						if((!catalogRule["Degree Program"].hours500 && catalogFormObj.Hrs500Min != "") || (catalogRule["Degree Program"].hours500 && !catalogRule["Degree Program"].hours500.minimum && catalogFormObj.Hrs500Min != "")  || (catalogRule["Degree Program"].hours500 && catalogRule["Degree Program"].hours500.minimum && catalogRule["Degree Program"].hours500.minimum.hours != catalogFormObj.Hrs500Min)){
-							if(catalogFormObj.Hrs500MinOptionFixed == true){
-								if(catalogFormObj.Hrs500Min < 1){
-									alert("500HrsMin if Fixed cant be below 1")
-								}			
-							}else if(catalogFormObj.Hrs500MinOptionVariable == true){
-								if(catalogFormObj.Hrs500Min > 1){
-									alert("500HrsMin if Variable cant be above 1")
-								}
-							}		
-							catalogFormChange.Hrs500Min = true;					
-						}
-
-						if((!catalogRule["Degree Program"].hours500 && catalogFormObj.Hrs500Max != "") || (catalogRule["Degree Program"].hours500 && !catalogRule["Degree Program"].hours500.maximum && catalogFormObj.Hrs500Max != "")  || (catalogRule["Degree Program"].hours500 && catalogRule["Degree Program"].hours500.maximum && catalogRule["Degree Program"].hours500.maximum.hours != catalogFormObj.Hrs500Max)){
-							if(catalogFormObj.Hrs500MaxOptionFixed == true){
-								if(catalogFormObj.Hrs500Max < 1){
-									alert("500HrsMax if Fixed cant be below 1")
-								}			
-							}else if(catalogFormObj.Hrs500MaxOptionVariable == true){
-								if(catalogFormObj.Hrs500Max > 1){
-									alert("500HrsMax if Variable cant be above 1")
-								}
-							}		
-							catalogFormChange.Hrs500Max = true;					
-						}
-
-						if((!catalogRule["Degree Program"].hours600 && catalogFormObj.Hrs600Min != "") || (catalogRule["Degree Program"].hours600 && !catalogRule["Degree Program"].hours600.minimum && catalogFormObj.Hrs600Min != "")  || (catalogRule["Degree Program"].hours600 && catalogRule["Degree Program"].hours600.minimum && catalogRule["Degree Program"].hours600.minimum.hours != catalogFormObj.Hrs600Min)){
-							if(catalogFormObj.Hrs600MinOptionFixed == true){
-								if(catalogFormObj.Hrs600Min < 1){
-									alert("600HrsMin if Fixed cant be below 1")
-								}			
-							}else if(catalogFormObj.Hrs600MinOptionVariable == true){
-								if(catalogFormObj.Hrs600Min > 1){
-									alert("600HrsMin if Variable cant be above 1")
-								}
-							}		
-							catalogFormChange.Hrs600Min = true;					
-						}
-
-						if((!catalogRule["Degree Program"].hours600 && catalogFormObj.Hrs600Max != "") || (catalogRule["Degree Program"].hours600 && !catalogRule["Degree Program"].hours600.maximum && catalogFormObj.Hrs600Max != "")  || (catalogRule["Degree Program"].hours600 && catalogRule["Degree Program"].hours600.maximum && catalogRule["Degree Program"].hours600.maximum.hours != catalogFormObj.Hrs600Max)){
-							if(catalogFormObj.Hrs600MaxOptionFixed == true){
-								if(catalogFormObj.Hrs600Max < 1){
-									alert("600HrsMax if Fixed cant be below 1")
-								}			
-							}else if(catalogFormObj.Hrs600MaxOptionVariable == true){
-								if(catalogFormObj.Hrs600Max > 1){
-									alert("600HrsMax if Variable cant be above 1")
-								}
-							}		
-							catalogFormChange.Hrs600Max = true;					
-						}
-
-						console.log(catalogFormChange);
-
+						dataObj = {addData: addData,modifyData: modifyData}
+						console.log(dataObj);
 						$.ajax({
 						type: "POST",
 						url: "../scripts/submitChange.php",
 						data: {
-						dataObj:catalogFormObj,
-						dataObjChange:catalogFormChange,
+						dataObj: dataObj,
 						idObject: catalogRule["Degree Program"].id},
 						dataType: "json",
 						success: function(json) {
@@ -341,8 +319,6 @@
 							console.log("Error");
 						}
 					});
-						//TODO Finish checking ohrs and trhrs
-
 				});
             });
             
