@@ -8,6 +8,7 @@
         <script>
 			var catalogRule;
 			var catalogs;
+			var catalogsByName = {};
 			var $catalogs = {};
 			var $objectSubjects = {};
 			var catalogsLoaded = 0;
@@ -145,7 +146,7 @@
 				
 				//TODO modularize these click events into one
 				$("#addClassButton").click(function(){
-					var courseId = $("#courseList option:selected").val();
+					var courseId = $("#requiredClasses > #courseList option:selected").val();
 					if(!requiredCourseIds.includes(courseId)) {
 						requiredCourseIds.push(courseId);
 						var $removeButton = $("<input>", {
@@ -156,7 +157,8 @@
 						});
 						$removeButton.click(removeRequiredHandler);
 						$("#classsublist").append($("<li>",{
-							text: catalogs[courseId].name
+							text: catalogs[courseId].name,
+							value: getCatalogName(courseId)
 						}).append($removeButton));
 					}
 				});
@@ -370,7 +372,14 @@
 			
 			// TODO modularize these event handlers into one
 			function removeCatalogHandler() {
-				
+				console.log("Inside the handler");
+				var catalogName = $(this).attr("id");
+				console.log($("li[value='" + catalogName + "']"));
+				$("li[value='" + catalogName + "']").each(function(index, value) {
+					var courseId = $(this).children("input[type='submit']").attr("id");
+					console.log(courseId);
+					$(this).remove();
+				});
 			}
 			
 			function removeOverrideHandler() {
@@ -615,6 +624,7 @@
 				// Load in all the catalogs for the program. This is done before setting information like required courses because the catalog information needs
 				// to be known in order to retireve the course information.
 				selectedCatalogs = [];
+				catalogsByName = {};
 				for(var i in catalogRule["Catalogs"]){
 					let catalogName = catalogRule["Catalogs"][i];
 					selectedCatalogs.push(catalogName);
@@ -649,7 +659,8 @@
 				});
 				$removeButton.click(removeOverrideHandler);
 				$("#courseOverrideList").append($("<li>", {
-					text: catalogs[courseId].name + " "
+					text: catalogs[courseId].name + " ",
+					value: getCatalogName(courseId)
 				}).append($("<label>", {
 					for: "overrideCount" + courseId,
 					text: "Maximum Times Countable"
@@ -707,8 +718,11 @@
 			function processCatalog(catalogArray, catalogName) {
 				console.log("Processing catalog");
 				if(!catalogs) {
-					catalogs = catalogArray;
+					catalogs = {};
+					catalogs = Object.assign(catalogs, catalogArray); // Make a copy since the catalogs will hold all the courses as they are loaded
+					catalogsByName[catalogName] = catalogArray;
 				} else {
+					catalogsByName[catalogName] = catalogArray;
 				 	for(var i in catalogArray) {
 						catalogs[i] = catalogArray[i];
 					}
@@ -727,6 +741,15 @@
 				$catalogs[catalogName] = $courseList;
 			}
 			
+			function getCatalogName(courseId) {
+				for(var catalogName in catalogsByName) {
+					if(Object.keys(catalogsByName[catalogName]).includes(courseId)) {
+						return catalogName;
+					}
+				}
+				return "";
+			}
+			
 			function courseHandler(catalogArray, catalogName){
 				console.log(catalogArray);
 				selectedOverrides = [];
@@ -734,7 +757,6 @@
 			
 				// Load in options once all catalogs have been retrieved
 				if(catalogsLoaded === catalogRule["Catalogs"].length) {
-					
 					//Iterate through catalog index with degreeID
 					for(var i in catalogRule["Degree Program"].requiredCourses){
 						requiredCourseIds.push(i);
@@ -746,7 +768,8 @@
 						});
 						$removeButton.click(removeRequiredHandler);
 						$("#classsublist").append($("<li>",{
-							text: catalogs[i].name
+							text: catalogs[i].name,
+							value: getCatalogName(i)
 						}).append($removeButton));
 					}
 					
@@ -964,8 +987,8 @@
 				<ul id="classsublist">
 
 				</ul>
+				Catalog: <select id="catalogList"></select><label for="classList" id="classListLabel">Class:</label><input type="button" id="addClassButton" value="Add Class"/>
 			  </div>
-			  Catalog: <select id="catalogList"></select><label for="classList" id="classListLabel">Class:</label><input type="button" id="addClassButton" value="Add Class"/>
 			  <div id="overridesContainer">
 				<h2>Course Overrides</h2>
 				<ul id="courseOverrideList">
