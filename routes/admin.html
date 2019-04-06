@@ -377,7 +377,8 @@
             
 			function addCommitteeMemberToTable(firstName, lastName, title, subject) {
 				var $row = $("<tr>", {
-					id: subject
+					id: subject,
+					name: "tableEntry"
 				});
 				$row.append($("<td>", {
 					id: "memberFirstName",
@@ -471,7 +472,9 @@
 				currentCommittee = $(this).attr("value");
 				
 				loadCommitteeMembers($(this).attr("value"), function(members) {
-					console.log(members);
+					for(var index in members) {
+						addCommitteeMemberToTable(members[index].firstName, members[index].lastName, members[index].title, members[index].committee);
+					}
 				});
 				
 				// Only show the new committee input fields if the option selected is New Member
@@ -485,6 +488,7 @@
 			}
 			
 			function closeCommittee() {
+				$("#committeeTableBody tr[name='tableEntry']").remove();
 				var modal = document.getElementById('committeeModal');
 				modal.style.display = "none";
 			}
