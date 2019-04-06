@@ -25,6 +25,9 @@
 			var modifyData = [];
 			var objectsParam = [];
 			var degreeProgramIds = [];
+			var currentCommittee; // This is used to keep track of the current committe when performing committee operations
+			
+
 			
 			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
@@ -47,6 +50,44 @@
 							}
 						});
 					} 
+				});
+				
+				$("#addNewCommitteeMemberButton").click(function() {
+					var title = $("#committeeTitle").val();
+					if($("#committeeMembers option:selected").val() == "newMember") {
+						var firstName = $("#firstName").val();
+						var lastName = $("#lastName").val();
+						if(firstName == "" || lastName == "") {
+							alert("Name is required");
+							return false;
+						}
+						if(title == "") {
+							alert("Title is required");
+							return false;
+						}
+						$.ajax({
+							type: "POST",
+							url: "../scripts/addNewCommitteeMember.php",
+							data: { firstName : firstName, lastName: lastName },
+							dataType: "json",
+							success: function(json) {
+								addMemberToCommittee(json, currentCommittee, title, function(wasAdded) {
+									if(wasAdded) {
+										addCommitteeMemberToTable(firstName, lastName, title, currentCommittee);
+									} else {
+										alert("Unable to assign member to committee");
+										return false;
+									}
+								});
+							},
+							error: function(xhr, ajaxOptions, thrownError) {
+								console.log(thrownError);
+							}
+						});
+					} else {
+						var firstName = $("$committeeMembers option:selected").attr("firstname");
+						var lastName = $("$committeeMembers option:selected").attr("lastname");
+					}
 				});
 				
 				$("#addNewItemButton").click(function() {
@@ -334,6 +375,45 @@
 				});
             });
             
+			function addCommitteeMemberToTable(firstName, lastName, title, subject) {
+				var $row = $("<tr>", {
+					id: subject
+				});
+				$row.append($("<td>", {
+					id: "memberFirstName",
+					text: firstName
+				})).append($("<td>", {
+					id: "memberLastName",
+					text: lastName
+				})).append($("<td>", {
+					id: "memberTitle",
+					text: title
+				}));
+				var $closeButton = $("<button>", {
+					class: "removeMemberButton",
+					text: "X"
+				});
+				
+				$row.append($closeButton);
+				$("#committeeTableBody").append($row);
+			}
+			
+			function addMemberToCommittee(memberId, committeeName, title, callback) {
+				$.ajax({
+					type: "POST",
+					url: "../scripts/addMemberToCommittee.php",
+					data: { subject: committeeName, id: memberId, title: title },
+					dataType: "json",
+					success: function(json) {
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
 			function swapRequired(catalogName) {
 				$("#classListLabel + select").detach();
 				if(catalogName) {
@@ -368,6 +448,45 @@
 					value: catalogName,
 					text: catalogName
 				}));
+			}
+			
+			// This function will retrieve the information for all committee members for the given committee. Callback returns the committe members
+			function loadCommitteeMembers(committeeName, callback) {
+				$.ajax({
+					type: "POST",
+					url: "../scripts/getCommitteeMembers.php",
+					data: { committeeName: committeeName },
+					dataType: "json",
+					success: function(json) {
+						callback(json);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback({});
+					}
+				});
+			}
+			
+			function editCommitteeHandler() {
+				currentCommittee = $(this).attr("value");
+				
+				loadCommitteeMembers($(this).attr("value"), function(members) {
+					console.log(members);
+				});
+				
+				// Only show the new committee input fields if the option selected is New Member
+				if($("#committeeMembers option:selected").val() == "newMember") {
+					$("#newCommitteeMemberContainer").show();
+				} else {
+					$("#newCommitteeMemberContainer").hide();
+				}
+				var modal = document.getElementById('committeeModal');
+				modal.style.display = "block";
+			}
+			
+			function closeCommittee() {
+				var modal = document.getElementById('committeeModal');
+				modal.style.display = "none";
 			}
 			
 			// TODO modularize these event handlers into one
@@ -442,6 +561,8 @@
 			function degreeHandlerInit() {
 				degreeHandler(JSON.parse(this.response), true);
 				
+				// Once all the degree programs are loaded add the event handler for editing committees
+				$("li[name='editCommittee']").click(editCommitteeHandler);
 				var xhr = new XMLHttpRequest();
 				xhr.addEventListener("load", nonDegreeHandlerInit);
 				xhr.open("GET", "../scripts/nondegreeObjects.php");
@@ -546,6 +667,8 @@
 						
 						$degreeOptions = $("<ul id='optionList'>");
 						
+						// If the catalog is set to be shown then add an item to edit the catalog. All degree program subjects have catalogs and they all
+						// have graudate committees as well so add an item for editing the graduate committee
 						if(showEditCatalog) {
 							$degreeOptions.append($("<li>", {
 								name: "catalog"
@@ -553,6 +676,13 @@
 								href: "addremove.html",
 								text: "Edit Course Catalog",
 								onclick: "document.cookie = 'program=" + degreeSubject + "'"
+							})));
+							$degreeOptions.append($("<li>", {
+								name: "editCommittee",
+								value: degreeSubject
+							}).append($("<a>", {
+								text: "Edit Graduate Committee",
+								style: "cursor:pointer"
 							})));
 						}
 						
@@ -570,6 +700,7 @@
 							if(degreeName === "Masters" || degreeName === "PhD") {
 								if(!catalogNames.includes(degreeSubject)) {
 									$("#applicableCatalogsSelect").append($subjectOption);
+									$("#committeesSelect").append($subjectOption);
 									catalogNames.push(degreeSubject);
 								}
 								degreeProgramIds.push(degreePrograms[degreeName][degreeSubject][degreeOption]);
@@ -941,6 +1072,36 @@
     <body>
         <div id="listContainer">
 
+		</div>
+		<div id="committeeModal" class="modal">
+			<div class="modal-content">
+				<span onclick="closeCommittee()" class="close">&times;</span>
+				<div id="committeeContent">
+					<h2>Merged Committees</h2>
+					<ul id="mergedCommitteesList">
+					
+					</ul>
+					Committee<select id="committeesSelect"></select><input type="button" id="addCommitteeButton" value="Merge Committees"/>
+					<h2>Add Members</h2>
+					Member<select id="committeeMembers"><option value="newMember">New Member</option></select>
+					<span id="newCommitteeMemberContainer" hidden>
+						<label for="firstName">First Name:</label><input type="text" id="firstName" style="width:100px"></input>
+						<label for="lastName">Last Name:</label><input type="text" id="lastName" style="width:100px"></input>
+					</span>
+					<label for="Title">Title:</label><input type="text" id="committeeTitle" style="width:100px"></input>
+					<input type="button" id="addNewCommitteeMemberButton" value="Add"></input>
+					<h2>Committee</h2>
+					<table id="committeeTable">
+						<tbody id="committeeTableBody">
+							<tr>
+								<th>First Name</th>
+								<th>Last Name</th>
+								<th>Title</th>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 		</div>
 		<div id="addNewItemModal" class="modal">
 			<div class="modal-content">
