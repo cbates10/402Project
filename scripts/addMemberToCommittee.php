@@ -10,7 +10,7 @@ if($con->connect_errno) {
 	die("Failed to connect to MYSQL: ($mysql->connect_errno) $mysqli->connect_error");
 }
 
-$sql = "INSERT INTO committeemapping (subjectName, memberId, memberTitle) VALUES (? , ?, ?)";
+$sql = "INSERT INTO committeemapping (subjectName, memberId, idTitle) VALUES (? , ?, ?)";
 
 $stmt = $con->prepare($sql);
 if(!$stmt) {
