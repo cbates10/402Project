@@ -27,7 +27,6 @@
 			var degreeProgramIds = [];
 			var currentCommittee; // This is used to keep track of the current committe when performing committee operations
 			
-
 			
 			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
@@ -53,8 +52,11 @@
 				});
 				
 				$("#addNewCommitteeMemberButton").click(function() {
-					var title = $("#committeeTitle").val();
-					if($("#committeeMembers option:selected").val() == "newMember") {
+					var $committeeTitle = $("#committeeTitle option:selected");
+					var $committeeMember = $("#committeeMembers option:selected");
+					var title = $committeeTitle.attr("id");
+					var titleName = $committeeTitle.val();
+					if($committeeMember.val() == "newMember") {
 						var firstName = $("#firstName").val();
 						var lastName = $("#lastName").val();
 						if(firstName == "" || lastName == "") {
@@ -71,9 +73,10 @@
 							data: { firstName : firstName, lastName: lastName },
 							dataType: "json",
 							success: function(json) {
+								addCommitteeMemberToSelect(json, firstName, lastName);
 								addMemberToCommittee(json, currentCommittee, title, function(wasAdded) {
 									if(wasAdded) {
-										addCommitteeMemberToTable(firstName, lastName, title, currentCommittee);
+										addCommitteeMemberToTable(json, firstName, lastName, titleName, title, currentCommittee);
 									} else {
 										alert("Unable to assign member to committee");
 										return false;
@@ -85,8 +88,17 @@
 							}
 						});
 					} else {
-						var firstName = $("$committeeMembers option:selected").attr("firstname");
-						var lastName = $("$committeeMembers option:selected").attr("lastname");
+						var firstName = $committeeMember.attr("firstname");
+						var lastName = $committeeMember.attr("lastname");
+						var id = $committeeMember.attr("id");
+						addMemberToCommittee(id, currentCommittee, title, function(wasAdded) {
+							if(wasAdded) {
+								addCommitteeMemberToTable(id, firstName, lastName, titleName, title, currentCommittee);
+							} else {
+								alert("Unable to assign member to committee");
+								return false;
+							}
+						});
 					}
 				});
 				
@@ -121,6 +133,14 @@
 							console.log(thrownError);
 						}
 					});
+				});
+				
+				$("#committeeMembers").change(function() {
+					if($(this).val() == "newMember") {
+						$("#newCommitteeMemberContainer").show();
+					} else {
+						$("#newCommitteeMemberContainer").hide();
+					}
 				});
 				
 				$("#catalogList").change(function(){
@@ -375,7 +395,27 @@
 				});
             });
             
-			function addCommitteeMemberToTable(firstName, lastName, title, subject) {
+			function addCommitteeTitleToSelect(id, title) {
+				var $option = $("<option>", {
+					id: id,
+					value: title,
+					text: title
+				});
+				$("#committeeTitle").append($option);
+			}
+			
+			function addCommitteeMemberToSelect(id, firstName, lastName) {
+				var $option = $("<option>", {
+					value: "Member",
+					id: id,
+					firstname: firstName,
+					lastname: lastName,
+					text: firstName + " " + lastName
+				});
+				$("#committeeMembers").append($option);
+			}
+			
+			function addCommitteeMemberToTable(id, firstName, lastName, title, titleId, subject) {
 				var $row = $("<tr>", {
 					id: subject,
 					name: "tableEntry"
@@ -391,10 +431,13 @@
 					text: title
 				}));
 				var $closeButton = $("<button>", {
-					class: "removeMemberButton",
+					id: id,
+					committee: subject,
+					name: "removeMemberButton",
+					title: titleId,
 					text: "X"
 				});
-				
+				$closeButton.click(removeCommitteeMemberHandler);
 				$row.append($closeButton);
 				$("#committeeTableBody").append($row);
 			}
@@ -455,8 +498,38 @@
 			function loadCommitteeMembers(committeeName, callback) {
 				$.ajax({
 					type: "POST",
-					url: "../scripts/getCommitteeMembers.php",
+					url: "../scripts/getCommitteeMembersBySubject.php",
 					data: { committeeName: committeeName },
+					dataType: "json",
+					success: function(json) {
+						callback(json);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback({});
+					}
+				});
+			}
+			
+			function loadAllCommitteeMembers(callback) {
+				$.ajax({
+					type: "GET",
+					url: "../scripts/getAllCommitteeMembers.php",
+					dataType: "json",
+					success: function(json) {
+						callback(json);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback({});
+					}
+				});
+			}
+			
+			function loadCommitteeTitles(callback) {
+				$.ajax({
+					type: "GET",
+					url: "../scripts/getCommitteeTitles.php",
 					dataType: "json",
 					success: function(json) {
 						callback(json);
@@ -471,9 +544,24 @@
 			function editCommitteeHandler() {
 				currentCommittee = $(this).attr("value");
 				
+				// Load in all members for the committee that is selected
 				loadCommitteeMembers($(this).attr("value"), function(members) {
 					for(var index in members) {
-						addCommitteeMemberToTable(members[index].firstName, members[index].lastName, members[index].title, members[index].committee);
+						addCommitteeMemberToTable(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].committee);
+					}
+				});
+				
+				// Load in the titles that a committee member may have
+				loadCommitteeTitles(function(titles) {
+					for(var id in titles) {
+						addCommitteeTitleToSelect(id, titles[id]);
+					}
+				});
+				
+				// Load in every committee member regardless of whether this member is on the committee
+				loadAllCommitteeMembers(function(members) {
+					for(var index in members) {
+						addCommitteeMemberToSelect(members[index].id, members[index].firstName, members[index].lastName);
 					}
 				});
 				
@@ -488,9 +576,32 @@
 			}
 			
 			function closeCommittee() {
+				$("#committeeMembers option[value!='newMember']").remove();
 				$("#committeeTableBody tr[name='tableEntry']").remove();
 				var modal = document.getElementById('committeeModal');
 				modal.style.display = "none";
+			}
+			
+			function removeCommitteeMemberHandler() {
+				var memberId = $(this).attr("id");
+				var committee = $(this).attr("committee");
+				var title = $(this).attr("title");
+				var $button = $(this);
+				$.ajax({
+					type: "POST",
+					url: "../scripts/removeFromCommittee.php",
+					data: { id: memberId, committee: committee, title: title },
+					dataType: "json",
+					success: function(json) {
+						console.log("success");
+						$button.parent().remove();
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						alert("Unable to remove from committee");
+						return false;
+					}
+				});
 			}
 			
 			// TODO modularize these event handlers into one
@@ -1092,7 +1203,7 @@
 						<label for="firstName">First Name:</label><input type="text" id="firstName" style="width:100px"></input>
 						<label for="lastName">Last Name:</label><input type="text" id="lastName" style="width:100px"></input>
 					</span>
-					<label for="Title">Title:</label><input type="text" id="committeeTitle" style="width:100px"></input>
+					Title<select id="committeeTitle" style="width:100px"></select>
 					<input type="button" id="addNewCommitteeMemberButton" value="Add"></input>
 					<h2>Committee</h2>
 					<table id="committeeTable">
