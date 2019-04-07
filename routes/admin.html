@@ -25,6 +25,7 @@
 			var modifyData = [];
 			var objectsParam = [];
 			var degreeProgramIds = [];
+			var mergedCommittees = [];
 			var currentCommittee; // This is used to keep track of the current committe when performing committee operations
 			
 			
@@ -163,6 +164,25 @@
 						$("#newObjectSubjectSpan").show();
 					} else {
 						$("#newObjectSubjectSpan").hide();
+					}
+				});
+				
+				$("#addCommitteeButton").click(function() {
+					var committeeName = $("#committeesSelect option:selected").val();
+					if(!mergedCommittees.includes(committeeName)) {
+						mergeCommittees(currentCommittee, committeeName, true, function(wasSuccessful) {
+							if(!wasSuccessful) {
+								alert("Unable to merge committees");
+							}
+						});
+						// Merging committees does not inherit the any committees the committee in question has merged, so pass false
+						loadCommitteeMembers(committeeName, false, function(members) {
+							addMergedCommitteeToList(committeeName);
+							for(var index in members) {
+								addCommitteeMemberToTable(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].committee);						
+							}
+							mergedCommittees.push(committeeName);
+						});
 					}
 				});
 				
@@ -417,7 +437,7 @@
 			
 			function addCommitteeMemberToTable(id, firstName, lastName, title, titleId, subject) {
 				var $row = $("<tr>", {
-					id: subject,
+					value: subject,
 					name: "tableEntry"
 				});
 				$row.append($("<td>", {
@@ -458,6 +478,18 @@
 				});
 			}
 			
+			function addMergedCommitteeToList(committeeName) {
+				var $removeButton = $("<button>", {
+					committee: committeeName,
+					name: "removeMergeButton",
+					text: "X"
+				});
+				$removeButton.click(removeMergeHandler);
+				$("#mergedCommitteesList").append($("<li>",{
+					text: committeeName
+				}).append($removeButton));
+			}
+			
 			function swapRequired(catalogName) {
 				$("#classListLabel + select").detach();
 				if(catalogName) {
@@ -494,11 +526,41 @@
 				}));
 			}
 			
-			// This function will retrieve the information for all committee members for the given committee. Callback returns the committe members
-			function loadCommitteeMembers(committeeName, callback) {
+			// This function will set two committees as merged in the database
+			function mergeCommittees(committeeName1, committeeName2, merge, callback) {
+				var url;
+				if(merge) {
+					url = "../scripts/mergeCommittees.php"
+				} else {
+					url = "../scripts/unmergeCommittees.php"
+				}
 				$.ajax({
 					type: "POST",
-					url: "../scripts/getCommitteeMembersBySubject.php",
+					url: url,
+					data: { committeeName1: committeeName1, committeeName2: committeeName2 },
+					dataType: "json",
+					success: function(json) {
+						console.log(json);
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
+			// This function will retrieve the information for all committee members for the given committee. Callback returns the committe members
+			function loadCommitteeMembers(committeeName, merge, callback) {
+				var url;
+				if(merge) {
+					url = "../scripts/getCommitteeMembersBySubject.php";
+				} else {
+					url = "../scripts/getCommitteeMembersBySubjectWithoutMerge.php";
+				}
+				$.ajax({
+					type: "POST",
+					url: url,
 					data: { committeeName: committeeName },
 					dataType: "json",
 					success: function(json) {
@@ -544,10 +606,21 @@
 			function editCommitteeHandler() {
 				currentCommittee = $(this).attr("value");
 				
+				// Hide the currentCommittee in the merge list. There should not be an option to merge a committee with itself
+				$("#committeesSelect option[value='" + currentCommittee + "']").hide();
+				$("#committeesSelect").val($("#committeesSelect option[value!='" + currentCommittee + "']").val());
+				
 				// Load in all members for the committee that is selected
-				loadCommitteeMembers($(this).attr("value"), function(members) {
+				mergedCommittees = [];
+				mergedCommittees.push(currentCommittee);
+
+				loadCommitteeMembers($(this).attr("value"), true, function(members) {
 					for(var index in members) {
 						addCommitteeMemberToTable(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].committee);
+						if(!mergedCommittees.includes(members[index].committee)) {
+							addMergedCommitteeToList(members[index].committee);
+							mergedCommittees.push(members[index].committee);
+						}						
 					}
 				});
 				
@@ -576,10 +649,29 @@
 			}
 			
 			function closeCommittee() {
+				$("#mergedCommitteesList").empty();
+				$("#committeesSelect option[value='" + currentCommittee + "']").show();
 				$("#committeeMembers option[value!='newMember']").remove();
 				$("#committeeTableBody tr[name='tableEntry']").remove();
 				var modal = document.getElementById('committeeModal');
 				modal.style.display = "none";
+			}
+			
+			function removeMergeHandler() {
+				var committeeName = $(this).attr("committee");
+				var mergedListItem = $(this).parent();
+				mergeCommittees(currentCommittee, committeeName, false, function(wasSuccessful) {
+					if(!wasSuccessful) {
+						alert("Unable to separate committees");
+					} else {
+						// If the unmerge is successful then remove the merged committee from the list
+						mergedListItem.remove();
+						mergedCommittees = mergedCommittees.filter(function(name) {
+							return name != committeeName;
+						});
+						$("#committeeTableBody tr[value='" + committeeName + "']").remove();
+					}
+				});
 			}
 			
 			function removeCommitteeMemberHandler() {
