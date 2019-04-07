@@ -275,6 +275,31 @@
 					}
 				});
 
+				$("#saveGlobal").click(function(){
+					console.log("Inside save global");
+					if(!$("#globalGrade")[0].checkValidity()){
+						alert("Invalid Grade Format (Must be either empty or A+ to F)");
+						return false;
+					}
+					if($("#globalGPA").val() < 0 || $("#globalGPA").val() > 4){
+						alert("Invalid GPA (Must be between 0 and 4)");
+						return false;
+					}
+					var typeName = $(this).attr("typename");
+					$.ajax({
+						type: "POST",
+						url: "../scripts/saveGlobalRequirements.php",
+						data: { Grade : $("#globalGrade").val(), GPA : $("#globalGPA").val(), typeName : typeName },
+						dataType: "json",
+						success: function(json) {
+							alert("Saved Successfully");
+						},
+						error: function(msg){
+							alert("Unable to save requirements");
+						}
+					});
+				});
+				
 				$("#saveForm").click(function(){
 					var addData = [];
 					var modifyData = []
@@ -787,7 +812,7 @@
 					$.ajax({
 						type: "POST",
 						url: "../scripts/requirements.php",
-						data: {idObjects: $(this).val()},
+						data: { idObjects: $(this).val()},
 						dataType: "json",
 						success: function(json) {
 							popupHandler(json);
@@ -795,6 +820,22 @@
 					});
 				});
 				
+				$("button[name='modifyGlobal']").click(function(){
+					var typeName = $(this).val();
+					$.ajax({
+						type: "POST",
+						url: "../scripts/globalRequirements.php",
+						data: { typeName: $(this).val()},
+						dataType: "json",
+						success: function(json) {
+							popupHandlerGlobal(json, typeName);
+						},
+						error: function(xhr, ajaxOptions, thrownError) {
+							console.log(thrownError);
+							return false;
+						}
+					});
+				});
 				// Initialize page contents with select lists and add buttons
 				for(var index in $objectSubjects) {
 					$objectSubjects[index].change(function(){
@@ -906,7 +947,7 @@
 							// Add the ID to the degreeProgram ID list. This will be used to display additional options if the object ID is a degree program
 							if(degreeName === "Masters" || degreeName === "PhD") {
 								if(!catalogNames.includes(degreeSubject)) {
-									$("#applicableCatalogsSelect").append($subjectOption);
+									$("#applicableCatalogsSelect").append($subjectOption.clone());
 									$("#committeesSelect").append($subjectOption);
 									catalogNames.push(degreeSubject);
 								}
@@ -928,6 +969,16 @@
 			function popupHandlerAddNewItem() {
 				var modal = document.getElementById('addNewItemModal');
 				modal.style.display = "block";
+			}
+			
+			// This function will initialize the contents of the global requirements popup. It will display the popup and populate the min grade and GPA fields
+			function popupHandlerGlobal(globalRequirements, typeName) {
+				var modal = document.getElementById('globalModal');
+				modal.style.display = "block";
+				$("#globalGrade").val(globalRequirements.minGrade);
+				$("#globalGPA").val(globalRequirements.minGPA);
+				$("#saveGlobal").attr("typeName", typeName);
+				console.log(globalRequirements);
 			}
 			
 			function popupHandler(json){
@@ -1250,6 +1301,11 @@
 				modal.style.display = "none";	
 			}
 			
+			function closeGlobal() {
+				var modal = document.getElementById('globalModal');
+				modal.style.display = "none";
+			}
+			
 			function closepopup(){
 				$("#certificateList").empty();
 				$("#courseOverrideList").empty();
@@ -1279,6 +1335,16 @@
     <body>
         <div id="listContainer">
 
+		</div>
+		<div id="globalModal" class="modal">
+			<div class="modal-content">
+				<span onclick="closeGlobal()" class="close">&times;</span>
+				<div id="globalContent">
+					<label for="globalGrade">Minimum Grade: </label><input type="text" id="globalGrade" size="2" maxlength="2" pattern="([ABCDF]{1}[-+]{0,1}){0,1}">
+					<label for="globalGPA">Minimum GPA: </label><input type="number" id="globalGPA" step="0.01" style="width:50px">
+					<input id="saveGlobal" type="submit" value="Save"></input>
+				</div>
+			</div>
 		</div>
 		<div id="committeeModal" class="modal">
 			<div class="modal-content">
