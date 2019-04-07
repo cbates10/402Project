@@ -1032,9 +1032,22 @@
 						$("input[name='600HrsMaxOption']").val([catalogRule["Degree Program"].hours600.maximum.type]);
 					}
 				}
-				$("#trhrs").attr('value',catalogRule["Degree Program"].transferCredit);
-				$("#ohrs").attr('value',catalogRule["Degree Program"].outsideCredit);
+				if(catalogRule["Degree Program"].hoursTransfer) {
+					if(catalogRule["Degree Program"].hoursTransfer.maximum) {                     
+						$("#trhrs").val(catalogRule["Degree Program"].hoursTransfer.maximum.hours);
+						$("#trhrs").attr('oldvalue',catalogRule["Degree Program"].hoursTransfer.maximum.hours);
+						$("input[name='TransferHrsMaxOption']").val([catalogRule["Degree Program"].hoursTransfer.maximum.type]);
+					}
+				}
+				if(catalogRule["Degree Program"].hoursOutside) {
+					if(catalogRule["Degree Program"].hoursOutside.maximum) {                     
+						$("#ohrs").val(catalogRule["Degree Program"].hoursOutside.maximum.hours);
+						$("#ohrs").attr('oldvalue',catalogRule["Degree Program"].hoursOutside.maximum.hours);
+						$("input[name='OutsideHrsMaxOption']").val([catalogRule["Degree Program"].hoursOutside.maximum.type]);
+					}
+				}
 				$("#grade").attr('value',catalogRule["Degree Program"].minGrade);
+				$("#minimumGPA").val(catalogRule["Degree Program"].minGPA);
 				// Load in all the catalogs for the program. This is done before setting information like required courses because the catalog information needs
 				// to be known in order to retireve the course information.
 				selectedCatalogs = [];
@@ -1428,11 +1441,17 @@
 					<label for="600HrsMaxOptionFixed">Fixed</label><input type="radio" id="600HrsMaxOptionFixed" name="600HrsMaxOption" value="fixed">
 					<label for="600HrsMaxOptionVariable">Variable</label><input type="radio" id="600HrsMaxOptionVariable" name="600HrsMaxOption" value="variable">
 					<br>
-					Transfer Credit Hours: <input type="number" id="trhrs" style="width:50px">
+					Transfer Hours Maximum: <input type="number" id="trhrs" style="width:50px">
+					<label for="TransferHrsMaxOptionFixed">Fixed</label><input type="radio" id="TransferHrsMaxOptionFixed" name="TransferHrsMaxOption" value="fixed">
+					<label for="TransferHrsMaxOptionVariable">Variable</label><input type="radio" id="TransferHrsMaxOptionVariable" name="TransferHrsMaxOption" value="variable">
 					<br>
-					Outside Credit Hours: <input type="number" id="ohrs" style="width:50px">
+					Outside Hours Maximum: <input type="number" id="ohrs" style="width:50px">
+					<label for="OutsideHrsMaxOptionFixed">Fixed</label><input type="radio" id="OutsideHrsMaxOptionFixed" name="OutsideHrsMaxOption" value="fixed">
+					<label for="OutsideHrsMaxOptionVariable">Variable</label><input type="radio" id="OutsideHrsMaxOptionVariable" name="OutsideHrsMaxOption" value="variable">
 					<br>
 					Minimum Grade: <input type="text" id="grade" style="width:50px">
+					<br>
+					Minimum GPA: <input type="number" id="minimumGPA" step="0.01" style="width:50px">
 			  </div>
 			  <div id="applicableCatalogs">
 				<h2>Applicable Catalogs</h2>
