@@ -14,6 +14,7 @@
 			var catalogsLoaded = 0;
 			var catalogNames = [];
 			var requiredCourseIds = []; // This is an array initialized at the start of every modify popup
+			var applicableCourseIds = [];
 			var minors;
 			var $minorsSubjectSelect = {};
 			var selectedMinors = [];
@@ -27,7 +28,18 @@
 			var degreeProgramIds = [];
 			var mergedCommittees = [];
 			var currentCommittee; // This is used to keep track of the current committe when performing committee operations
-			
+			var removedCatalogs = [];
+			var addedCatalogs = [];
+			var addedRequiredCourses = [];
+			var removedRequiredCourses = [];
+			var addedCourseOverrides = [];
+			var removedCourseOverrides = [];
+			var addedMinors = [];
+			var removedMinors = [];
+			var addedCertificates = [];
+			var removedCertificates = [];
+			var addedRestrictedCourses = [];
+			var removedRestrictedCourses = [];
 			
 			$(document).ready(function(){			
 				var xhr = new XMLHttpRequest();
@@ -50,6 +62,15 @@
 							}
 						});
 					} 
+				});
+				
+				// Event handler for radio change (shows container to specify restricted catalog courses)
+				$("input[name='restrictedOptions']").change(function() {
+					if($(this).val() == "restrictedCourses") {
+						$("#restrictedCatalogOptions").show();
+					} else {
+						$("#restrictedCatalogOptions").hide();
+					}
 				});
 				
 				$("#addNewCommitteeMemberButton").click(function() {
@@ -152,6 +173,10 @@
 					swapOverride($(this).val())
 				});
 				
+				$("#catalogListRestricted").change(function(){
+					swapRestricted($(this).val());
+				});
+				
 				$("#minorSubjectList").change(function(){
 					$("#minorSelect").detach();
 					$minorsSubjectSelect[$(this).val()].insertAfter($("#minorSelectLabel"));
@@ -191,9 +216,15 @@
 					if(!courseId) {
 						return false;
 					}
-					console.log(selectedOverrides);
 					if(!selectedOverrides.includes(courseId)) {
 						selectedOverrides.push(courseId);
+						if(removedCourseOverrides.includes(courseId)) {
+							removedCourseOverrides = removedCourseOverrides.filter(function(id) {
+								id != courseId;
+							});
+						} else {
+							addedCourseOverrides.push(courseId);
+						}
 						var courseOverrideInfo = {};
 						courseOverrideInfo.maxCount = 1;
 						courseOverrideInfo.minGrade = catalogRule["Degree Program"].minGrade;
@@ -207,6 +238,14 @@
 					var catalogName = $("#applicableCatalogsSelect option:selected").val();
 					if(!selectedCatalogs.includes(catalogName)) {
 						selectedCatalogs.push(catalogName);
+						// Process the catalog name into the added array. If the catalog was previously removed but was readded then it will neither be added or removed in the database
+						if(removedCatalogs.includes(catalogName)) {
+							removedCatalogs = removedCatalogs.filter(function(name) {
+								name != catalogName;
+							});
+						} else {
+							addedCatalogs.push(catalogName);
+						}
 						$.ajax({
 							type: "POST",
 							url: "../scripts/courseCatalog.php",
@@ -227,6 +266,13 @@
 					var courseId = $("#requiredClasses > #courseList option:selected").val();
 					if(!requiredCourseIds.includes(courseId)) {
 						requiredCourseIds.push(courseId);
+						if(removedRequiredCourses.includes(courseId)) {
+							removedRequiredCourses = removedRequiredCourses.filter(function(id) {
+								id != courseId;
+							});
+						} else {
+							addedRequiredCourses.push(courseId);
+						}
 						var $removeButton = $("<input>", {
 							id: courseId,
 							type: "submit",
@@ -241,14 +287,49 @@
 					}
 				});
 				
+				$("#addClassButtonRestricted").click(function(){
+					var courseId = $("#restrictedCatalogOptions > #courseList option:selected").val();
+					if(!courseId) {
+						return false;
+					}
+					if(!applicableCourseIds.includes(courseId)) {
+						applicableCourseIds.push(courseId);
+						if(removedRestrictedCourses.includes(courseId)) {
+							removedRestrictedCourses = removedRestrictedCourses.filter(function(id) {
+								id != courseId;
+							});
+						} else {
+							addedRestrictedCourses.push(courseId);
+						}
+						var $removeButton = $("<input>", {
+							id: courseId,
+							type: "submit",
+							name: "removeRestrictedClassButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeRestrictedHandler);
+						$("#restrictedCourseList").append($("<li>",{
+							text: catalogs[courseId].name,
+							value: getCatalogName(courseId)
+						}).append($removeButton));
+					}
+				});
+				
 				$("#addMinorButton").click(function(){
 					var minorId = parseInt($("#minorSelect option:selected").val());
 					if(!selectedMinors.includes(minorId)) {
 						selectedMinors.push(minorId);
+						if(removedMinors.includes(minorId)) {
+							removedMinors = removedMinors.filter(function(id) {
+								id != minorId;
+							});
+						} else {
+							addedMinors.push(minorId);
+						}
 						var $removeButton = $("<input>", {
 							id: minorId,
 							type: "submit",
-							name: "removeClassButton",
+							name: "removeMinorButton",
 							value: "Remove"
 						});
 						$removeButton.click(removeMinorHandler);
@@ -262,10 +343,17 @@
 					var certificateId = parseInt($("#certificateSelect option:selected").val());
 					if(!selectedCertificates.includes(certificateId)) {
 						selectedCertificates.push(certificateId);
+						if(removedCertificates.includes(certificateId)) {
+							removedCertificates = removedCertificates.filter(function(id) {
+								id != certificateId;
+							});
+						} else {
+							removedCertificates.push(certificateId);
+						}
 						var $removeButton = $("<input>", {
 							id: certificateId,
 							type: "submit",
-							name: "removeClassButton",
+							name: "removeCertificateButton",
 							value: "Remove"
 						});
 						$removeButton.click(removeCertificateHandler);
@@ -300,7 +388,7 @@
 					});
 				});
 				
-				$("#saveForm").click(function(){
+				function saveHours() {
 					var addData = [];
 					var modifyData = []
 					var catalogFormChange = {Hrs400Min: false, Hrs400Max: false, Hrs500Min: false, Hrs500Max: false, Hrs600Min: false, Hrs600Max:false}
@@ -359,70 +447,70 @@
 						Grade: $("#grade").val()				
 					}
 
-						if(catalogFormObj.Hrs400Min.val != "" && catalogFormObj.Hrs400Min.fixed== false && catalogFormObj.Hrs400Min.variable == false){
-							alert("400HrsMin: Fixed or Variable?")
+					if(catalogFormObj.Hrs400Min.val != "" && catalogFormObj.Hrs400Min.fixed== false && catalogFormObj.Hrs400Min.variable == false){
+						alert("400HrsMin: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs400Max.val != "" && catalogFormObj.Hrs400Max.fixed == false && catalogFormObj.Hrs400Max.variable == false){
+						alert("400HrsMax: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs500Min.val!= "" && catalogFormObj.Hrs500Min.fixed== false && catalogFormObj.Hrs500Min.variable == false){
+						alert("500HrsMin: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs500Max.val!= "" && catalogFormObj.Hrs500Max.fixed== false && catalogFormObj.Hrs500Max.variable == false){
+						alert("500HrsMax: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs600Min.val != "" && catalogFormObj.Hrs600Min.fixed == false && catalogFormObj.Hrs600Min.variable == false){
+						alert("600HrsMin: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs600Max.val!= "" && catalogFormObj.Hrs600Max.fixed == false && catalogFormObj.Hrs600Max.variable == false){
+						alert("600HrsMax: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs400Min.val != $("#400HrsMin").attr("oldvalue")){
+						if(catalogRule["Degree Program"].hours400 != null && catalogRule["Degree Program"].hours400.minimum != null){
+							modifyData.push(catalogFormObj.Hrs400Min);
+						}else{
+							addData.push(catalogFormObj.Hrs400Min);
 						}
-						if(catalogFormObj.Hrs400Max.val != "" && catalogFormObj.Hrs400Max.fixed == false && catalogFormObj.Hrs400Max.variable == false){
-							alert("400HrsMax: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs400Max.val != $("#400HrsMax").attr("oldvalue")){
+						if(catalogRule["Degree Program"].hours400 != null && catalogRule["Degree Program"].hours400.maximum != null){
+							modifyData.push(catalogFormObj.Hrs400Max);
+						}else{
+							addData.push(catalogFormObj.Hrs400Max);
 						}
-						if(catalogFormObj.Hrs500Min.val!= "" && catalogFormObj.Hrs500Min.fixed== false && catalogFormObj.Hrs500Min.variable == false){
-							alert("500HrsMin: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs500Min.val!= $("#500HrsMin").attr("oldvalue")){
+						if(catalogRule["Degree Program"].hours500 != null && catalogRule["Degree Program"].hours500.minimum != null){
+							modifyData.push(catalogFormObj.Hrs500Min);
+						}else{
+							addData.push(catalogFormObj.Hrs500Min);
 						}
-						if(catalogFormObj.Hrs500Max.val!= "" && catalogFormObj.Hrs500Max.fixed== false && catalogFormObj.Hrs500Max.variable == false){
-							alert("500HrsMax: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs500Max.val!= $("#500HrsMax").attr("oldvalue")){
+						if(catalogRule["Degree Program"].hours500 != null && catalogRule["Degree Program"].hours500.maximum != null){
+							modifyData.push(catalogFormObj.Hrs500Max);
+						}else{
+							addData.push(catalogFormObj.Hrs500Max);
 						}
-						if(catalogFormObj.Hrs600Min.val != "" && catalogFormObj.Hrs600Min.fixed == false && catalogFormObj.Hrs600Min.variable == false){
-							alert("600HrsMin: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs600Min.val != $("#600HrsMin").attr("oldvalue")){
+						if(catalogRule["Degree Program"].hours600 != null && catalogRule["Degree Program"].hours600.minimum != null){
+							modifyData.push(catalogFormObj.Hrs600Min);
+						}else{
+							addData.push(catalogFormObj.Hrs600Min);
 						}
-						if(catalogFormObj.Hrs600Max.val!= "" && catalogFormObj.Hrs600Max.fixed == false && catalogFormObj.Hrs600Max.variable == false){
-							alert("600HrsMax: Fixed or Variable?")
+					}
+					if(catalogFormObj.Hrs600Max.val != $("#600HrsMax").attr("oldvalue")){
+						if(catalogRule["Degree Program"].hours600 != null && catalogRule["Degree Program"].hours600.maximum != null){
+							modifyData.push(catalogFormObj.Hrs600Max);
+						}else{
+							addData.push(catalogFormObj.Hrs600Max);
 						}
-						if(catalogFormObj.Hrs400Min.val != $("#400HrsMin").attr("oldvalue")){
-							if(catalogRule["Degree Program"].hours400 != null && catalogRule["Degree Program"].hours400.minimum != null){
-								modifyData.push(catalogFormObj.Hrs400Min);
-							}else{
-								addData.push(catalogFormObj.Hrs400Min);
-							}
-						}
-						if(catalogFormObj.Hrs400Max.val != $("#400HrsMax").attr("oldvalue")){
-							if(catalogRule["Degree Program"].hours400 != null && catalogRule["Degree Program"].hours400.maximum != null){
-								modifyData.push(catalogFormObj.Hrs400Max);
-							}else{
-								addData.push(catalogFormObj.Hrs400Max);
-							}
-						}
-						if(catalogFormObj.Hrs500Min.val!= $("#500HrsMin").attr("oldvalue")){
-							if(catalogRule["Degree Program"].hours500 != null && catalogRule["Degree Program"].hours500.minimum != null){
-								modifyData.push(catalogFormObj.Hrs500Min);
-							}else{
-								addData.push(catalogFormObj.Hrs500Min);
-							}
-						}
-						if(catalogFormObj.Hrs500Max.val!= $("#500HrsMax").attr("oldvalue")){
-							if(catalogRule["Degree Program"].hours500 != null && catalogRule["Degree Program"].hours500.maximum != null){
-								modifyData.push(catalogFormObj.Hrs500Max);
-							}else{
-								addData.push(catalogFormObj.Hrs500Max);
-							}
-						}
-						if(catalogFormObj.Hrs600Min.val != $("#600HrsMin").attr("oldvalue")){
-							if(catalogRule["Degree Program"].hours600 != null && catalogRule["Degree Program"].hours600.minimum != null){
-								modifyData.push(catalogFormObj.Hrs600Min);
-							}else{
-								addData.push(catalogFormObj.Hrs600Min);
-							}
-						}
-						if(catalogFormObj.Hrs600Max.val != $("#600HrsMax").attr("oldvalue")){
-							if(catalogRule["Degree Program"].hours600 != null && catalogRule["Degree Program"].hours600.maximum != null){
-								modifyData.push(catalogFormObj.Hrs600Max);
-							}else{
-								addData.push(catalogFormObj.Hrs600Max);
-							}
-						}
+					}
 
-						dataObj = {addData: addData,modifyData: modifyData};
-						console.log(dataObj);
-						$.ajax({
+					dataObj = {addData: addData,modifyData: modifyData};
+					console.log(dataObj);
+					$.ajax({
 						type: "POST",
 						url: "../scripts/submitChange.php",
 						data: {
@@ -437,9 +525,196 @@
 							console.log("Error");
 						}
 					});
+				}
+				
+				$("#saveForm").click(function(){
+					var idObjects = $(this).attr("idobjects");
+					if(removedCatalogs.length > 0 || addedCatalogs.length > 0) {
+						saveCatalogs(idObjects, function(wasSuccessful) {
+							if(wasSuccessful) {
+								console.log("Catalogs saved successfully");
+							} else {
+								console.log("Error saving catalogs");
+							}
+						});
+					}
+					if(addedRequiredCourses.length > 0 || removedRequiredCourses > 0) {
+						saveRequiredCourses(idObjects, function(wasSuccessful) {
+							if(wasSuccessful) {
+								console.log("Required courses saved");
+							} else {
+								console.log("Error saving required courses");
+							}
+						});
+					}
+					if(addedCourseOverrides.length > 0 || removedCourseOverrides > 0 || $("#overridesContainer li[value='" + catalogName + "']").length > 0) {
+						saveCourseOverrides(idObjects, function(wasSuccessful) {
+							if(wasSuccessful) {
+								console.log("Course overrides saved");
+							} else {
+								console.log("Error saving course overrides");
+							}
+						});
+					}
+					// Process Minors and Catalogs if the objectId belongs to a degree program
+					if(degreeProgramIds.include(idObjects)) {
+						if(addedMinors.length > 0 || removedMinors.length > 0) {
+							saveMinors(idObjects, function(wasSuccessful) {
+								if(wasSuccessful) {
+									console.log("Minors saved");
+								} else {
+									console.log("Error saving minors");
+								}
+							});
+						}
+						if(addedCertificates.length > 0 || removedCertificates.length > 0) {
+							saveCertificates(idObjects, function(wasSuccessful) {
+								if(wasSuccessful) {
+									console.log("Certificates saved");
+								} else {
+									console.log("Error saving certificates");
+								}
+							});
+						}
+					} else { // Otherwise the objectId is a nondegree program and can have restricted applicable courses
+						saveRestrictedCourses(idObjects, function(wasSuccessful) {
+							if(wasSuccessful) {
+								console.log("Applicable courses saved");
+							} else {
+								console.log("Error saving applicable courses");
+							}
+						});
+					}
 				});
             });
             
+			function saveCatalogs(objectId, callback) {
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveCatalogs.php",
+					data: { removedCatalogs: removedCatalogs, addedCatalogs: addedCatalogs, objectId: objectId },
+					dataType: "json",
+					success: function(json) {
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
+			function saveRequiredCourses(objectId, callback) {
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveRequiredCourses.php",
+					data: { removedRequiredCourses: removedRequiredCourses, addedRequiredCourses: addedRequiredCourses, objectId: objectId },
+					dataType: "json",
+					success: function(json) {
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
+			function saveCourseOverrides(objectId, callback) {
+				// Iterate through the current course overrides. If the course override is new and needs to be inserted into the database then collect information
+				// in the newOverrides array, otherwise if the course is an existing override then add then collect the information in the modifiedOverrides array
+				var newOverrides = [];
+				var modifiedOverrides = [];
+				$("#overridesContainer li[value='" + catalogName + "']").each(function(index, value) {
+					var overrideInfo = {};
+					var courseId = $(this).children("input[type='submit']").attr("id");
+					overrideInfo.courseId = courseId;
+					overrideInfo.timesCountable = $(this).children("input[id='overrideCount']").val();
+					overrideInfo.minGrade = $(this).children("input[id='overrideGrade']").val();
+					overrideInfo.minHours = $(this).children("input[id='overrideLowHours']").val();
+					overrideInfo.maxHours = $(this).children("input[id='overrideHighHours']").val();
+					if(addedCourseOverrides.includes(courseId)) {
+						newOverrides.push(overrideInfo);
+					} else {
+						modifiedOverrides.push(overrideInfo);
+					}
+				});
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveCourseOverrides.php",
+					data: { removedCourseOverrides: removedCourseOverrides, addedCourseOverrides: newOverrides, modifiedOverrides: modifiedOverrides, objectId: objectId },
+					dataType: "json",
+					success: function(json) {
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			};
+			
+			function saveMinors(objectId, callback) {
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveMinors.php",
+					data: { removedMinors: removedMinors, addedMinors: addedMinors, objectId: objectId },
+					dataType: "json",
+					success: function(json) {
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
+			function saveCertificates(objectId, callback) {
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveCertificates.php",
+					data: { removedCertificates: removedCertificates, addedCertificates: addedCertificates, objectId: objectId },
+					dataType: "json",
+					success: function(json) {
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
+			function saveRestrictedCourses(objectId, callback) {
+				var restrictedCourseValue = $("input[name='restrictedOptions']").val();
+				var restrictedCourseIds;
+				var removeCourseIds;
+				if(restrictedCourseValue == "allCourses") {
+					restrictedCourseIds = Object.keys(catalogs);
+					removeCourseIds = applicableCourseIds.concat(removedRestrictedCourses);
+				} else if(restrictedCourseValue == "requiredOnlyCourses") {
+					restrictedCourseIds = [];
+					removeCourseIds = applicableCourseIds.concat(removedRestrictedCourses);
+				} else {
+					restrictedCourseIds = addedRestrictedCourses;
+					removeCourseIds = removedRestrictedCourses;
+				}
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveRestrictedCourses.php",
+					data: { removedCourses: removeCourseIds, addedCourses: restrictedCourseIds, objectId: objectId },
+					dataType: "json",
+					success: function(json) {
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
 			function addCommitteeTitleToSelect(id, title) {
 				var $option = $("<option>", {
 					id: id,
@@ -528,24 +803,32 @@
 					$catalogs[catalogName].clone().insertAfter($("#classListLabelOverrides"));
 				}
 			}
+			
+			function swapRestricted(catalogName) {
+				$("#classListLabelRestricted + select").detach();
+				if(catalogName) {
+					$catalogs[catalogName].clone().insertAfter($("#classListLabelRestricted"));
+				}
+			}
 				
 			function addNewCatalog(catalogArray, catalogName) {
 				processCatalog(catalogArray, catalogName);
 				if(Object.keys($catalogs).length === 1 || !$("#catalogList option:selected").val()) {
 					$catalogs[catalogName].clone().insertAfter($("#classListLabel"));
 					$catalogs[catalogName].clone().insertAfter($("#classListLabelOverrides"));
+					$catalogs[catalogName].clone().insertAfter($("#classListLabelRestricted"));
 				}
 				var $removeButton = $("<input>",{
 					id: catalogName,
 					type: "submit",
-					name: "removeClassButton",
+					name: "removeCatalogButton",
 					value: "Remove"
 				});
 				$removeButton.click(removeCatalogHandler);
 				$("#applicableCatalogsList").append($("<li>",{
 					text: catalogName
 				}).append($removeButton));
-				$("#catalogList, #catalogListOverrides").append($("<option>",{
+				$("#catalogList, #catalogListOverrides, #catalogListRestricted").append($("<option>",{
 					value: catalogName,
 					text: catalogName
 				}));
@@ -728,12 +1011,26 @@
 				selectedCatalogs = selectedCatalogs.filter(function(name) {
 					return name != catalogName;
 				});
+				if(addedCatalogs.includes(catalogName)) {
+					addedCatalogs = addedCatalogs.filter(function(name) {
+						name != catalogName;
+					});
+				} else {
+					removedCatalogs.push(catalogName);
+				}
 				// Remove all required courses from the removed catalog
 				$("#requiredClasses li[value='" + catalogName + "']").each(function(index, value) {
 					var courseId = $(this).children("input[type='submit']").attr("id");
 					requiredCourseIds = requiredCourseIds.filter(function(id){ 
 						return id != courseId;
 					});
+					if(addedRequiredCourses.includes(courseId)) {
+						addedRequiredCourses = addedRequiredCourses.filter(function(id) {
+							id != courseId;
+						});
+					} else {
+						removedRequiredCourses.push(courseId);
+					}
 					$(this).remove();
 				});
 				// Remove all course overrides from the removed catalog
@@ -742,19 +1039,46 @@
 					selectedOverrides = selectedOverrides.filter(function(id){
 						return id != courseId;
 					});
+					if(addedCourseOverrides.includes(courseId)) {
+						addedCourseOverrides = addedCourseOverrides.filter(function(id) {
+							id != courseId;
+						});
+					} else {
+						removedCourseOverrides.push(courseId);
+					}
+					$(this).remove();
+				});
+				// Remove all applicable courses from the removed catalog
+				$("#restrictedCourseList li[value='" + catalogName + "']").each(function(index, value) {
+					var courseId = $(this).children("input[type='submit']").attr("id");
+					applicableCourseIds = applicableCourseIds.filter(function(id){
+						return id != courseId;
+					});
+					if(addedRestrictedCourses.includes(courseId)) {
+						addedRestrictedCourses = addedRestrictedCourses.filter(function(id) {
+							id != courseId;
+						});
+					} else {
+						removedRestrictedCourses.push(courseId);
+					}
 					$(this).remove();
 				});
 				// Remove the catalog from the select options
 				var swapOverrideSelect = $("#catalogListOverrides option:selected").val() == catalogName;
 				var swapRequiredSelect = $("#catalogList option:selected").val() == catalogName;
+				var swapRestrictedSelect = $("#catalogListRestricted option:selected").val == catalogName;
 				$("#catalogListOverrides option[value='" + catalogName + "']").remove();
 				$("#catalogList option[value='" + catalogName + "']").remove();
+				$("#catalogListRestricted option[value='" + catalogName + "']").remove();
 				// If the catalog to remove was selected before the removal then the course select will need to be swapped
 				if(swapOverrideSelect) {
 					swapOverride($("#catalogListOverrides option:selected").val());
 				}
 				if(swapRequiredSelect) {
 					swapRequired($("#catalogList option:selected").val());
+				}
+				if(swapRestrictedSelect) {
+					swapRestricted($("#catalogListRestricted option:selected").val());
 				}
 			}
 			
@@ -763,6 +1087,13 @@
 				selectedOverrides = selectedOverrides.filter(function(id) {
 					return id != courseId;
 				});
+				if(addedCourseOverrides.includes(courseId)) {
+					addedCourseOverrides = addedCourseOverrides.filter(function(id) {
+						id != courseId;
+					});
+				} else {
+					removedCourseOverrides.push(courseId);
+				}
 				$(this).parent().remove();
 			}
 			
@@ -771,6 +1102,28 @@
 				requiredCourseIds = requiredCourseIds.filter(function(id) {
 					return id != courseId;
 				});
+				if(addedRequiredCourses.includes(courseId)) {
+					addedRequiredCourses = addedRequiredCourses.filter(function(id) {
+						id != courseId;
+					});
+				} else {
+					removedRequiredCourses.push(courseId);
+				}
+				$(this).parent().remove();
+			}
+			
+			function removeRestrictedHandler() {
+				var courseId = $(this).attr("id");
+				applicableCourseIds = applicableCourseIds.filter(function(id) {
+					return id != courseId;
+				});
+				if(addedRestrictedCourses.includes(courseId)) {
+					addedRestrictedCourses = addedRestrictedCourses.filter(function(id) {
+						id != courseId;
+					});
+				} else {
+					removedRestrictedCourses.push(courseId);
+				}
 				$(this).parent().remove();
 			}
 			
@@ -779,6 +1132,13 @@
 				selectedMinors = selectedMinors.filter(function(id) {
 					return id != minorId;
 				});
+				if(addedMinors.includes(minorId)) {
+					addedMinors = addedMinors.filter(function(id) {
+						id != minorId;
+					});
+				} else {
+					removedMinors.push(minorId);
+				}
 				$(this).parent().remove();
 			}
 			
@@ -787,6 +1147,13 @@
 				selectedCertificates = selectedCertificates.filter(function(id) {
 					return id != certificateId;
 				});
+				if(addedCertificates.includes(certificateId)) {
+					addedCertificates = addedCertificates.filter(function(id) {
+						id != certificateId;
+					});
+				} else {
+					removedCertificates.push(certificateIdId);
+				}
 				$(this).parent().remove();
 			}
 			
@@ -806,8 +1173,10 @@
 				$("button[name='modifyButton']").click(function(){
 					if(degreeProgramIds.includes($(this).val())) {
 						$("#additionalOptionsContainer").show();
+						$("#restrictedCatalog").hide();
 					} else {
 						$("#additionalOptionsContainer").hide();
+						$("#restrictedCatalog").show();
 					}
 					$.ajax({
 						type: "POST",
@@ -992,6 +1361,7 @@
 				selectedMinors = [];
 				selectedCertificates = [];
 				$("#deleteForm").attr("idobjects", catalogRule["Degree Program"].id);
+				$("#saveForm").attr("idobjects", catalogRule["Degree Program"].id);
 				console.log(catalogRule);
 
 				var modal = document.getElementById('myModal');
@@ -1089,36 +1459,36 @@
 					text: catalogs[courseId].name + " ",
 					value: getCatalogName(courseId)
 				}).append($("<label>", {
-					for: "overrideCount" + courseId,
+					for: "overrideCount",
 					text: "Maximum Times Countable"
 				})).append($("<input>", {
-					id: "overrideCount" + courseId,
+					id: "overrideCount",
 					type: "number",
 					value: courseOverrideInfo.maxCount,
 					style: "width:50px"
 				})).append($("<label>", {
-					for: "overrideGrade" + courseId,
+					for: "overrideGrade",
 					text: "Minimum Grade"
 				})).append($("<input>", {
-					id: "overrideGrade" + courseId,
+					id: "overrideGrade",
 					type: "text",
 					value: courseOverrideInfo.minGrade,
 					maxlength: "2",
 					pattern: "[ABCDF]{1}[-+]{0,1}",
 					style: "width:50px"
 				})).append($("<label>", {
-					for: "overrideLowHours" + courseId,
+					for: "overrideLowHours",
 					text: "Minium Hours"
 				})).append($("<input>", {
-					id: "overrideLowHours" + courseId,
+					id: "overrideLowHours",
 					type: "number",
 					value: courseOverrideInfo.minHours,
 					style: "width:50px"
 				})).append($("<label>", {
-					for: "overrideHighHours" + courseId,
+					for: "overrideHighHours",
 					text: "Maximum Hours"
 				})).append($("<input>", {
-					id: "overrideHighHours" + courseId,
+					id: "overrideHighHours",
 					type: "number",
 					value: courseOverrideInfo.maxHours,
 					style: "width:50px"
@@ -1180,6 +1550,8 @@
 			function courseHandler(catalogArray, catalogName){
 				console.log(catalogArray);
 				selectedOverrides = [];
+				applicableCourseIds = [];
+				requiredCourseIds = [];
 				processCatalog(catalogArray, catalogName);
 			
 				// Load in options once all catalogs have been retrieved
@@ -1198,6 +1570,36 @@
 							text: catalogs[i].name,
 							value: getCatalogName(i)
 						}).append($removeButton));
+					}
+					
+					// Iterate through applicable courses and add to restricted applicable course list
+					for(var i of catalogRule["Degree Program"].applicableCourses) {
+						applicableCourseIds.push(i);
+						var $removeButton = $("<input>",{
+							id: i,
+							type: "submit",
+							name: "removeRestrictedClassButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeRestrictedHandler);
+						$("#restrictedCourseList").append($("<li>",{
+							text: catalogs[i].name,
+							value: getCatalogName(i.toString())
+						}).append($removeButton));
+					}
+
+					// Determine the number of applicable courses. If the number equals the catalog courses then set the radio button for the
+					// entire catalog being applied. If no applicable courses are set then only the required courses option will be set. Otherwise
+					// the applicable courses that are specified will be displayed.
+					if(catalogRule["Degree Program"].applicableCourses.length == Object.keys(catalogs).length) {
+						$("input[name='restrictedOptions']").val(["allCourses"]);
+						$("#restrictedCatalogOptions").hide();
+					} else if(catalogRule["Degree Program"].applicableCourses.length == 0) {
+						$("input[name='restrictedOptions']").val(["requiredOnlyCourses"]);
+						$("#restrictedCatalogOptions").hide();
+					} else {
+						$("input[name='restrictedOptions']").val(["restrictedCourses"]);
+						$("#restrictedCatalogOptions").show();
 					}
 					
 					//Iterate through any course overrides and display information
@@ -1222,7 +1624,7 @@
 						var $removeButton = $("<input>", {
 							id: catalogRule["Minor"][minorIndex].id,
 							type: "submit",
-							name: "removeClassButton",
+							name: "removeMinorButton",
 							value: "Remove"
 						});
 						$removeButton.click(removeMinorHandler);
@@ -1243,7 +1645,7 @@
 						var $removeButton = $("<input>", {
 							id: catalogRule["Certificate"][certificateIndex].id,
 							type: "submit",
-							name: "removeClassButton",
+							name: "removeCertificateButton",
 							value: "Remove"
 						});
 						$removeButton.click(removeCertificateHandler);
@@ -1256,13 +1658,14 @@
 
 			function addClassHandler(){
 				for(var i in catalogRule["Catalogs"]){
-					$("#catalogList, #catalogListOverrides").append($("<option>",{
+					$("#catalogList, #catalogListOverrides, #catalogListRestricted").append($("<option>",{
 						value: catalogRule["Catalogs"][i],
 						text: catalogRule["Catalogs"][i]
 					}));
 				}
 				$catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabel"));
 				$catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabelOverrides"));
+				$catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabelRestricted"));
 			}
 			
 			function processList($globalList, $subjectList, idName, requirementList) {
@@ -1335,7 +1738,9 @@
 				$("[id='courseList']").remove();
 				$("#catalogList").empty();
 				$("#catalogListOverrides").empty();
+				$("#catalogListRestricted").empty();
 				$("#classsublist").empty();
+				$("#restrictedCourseList").empty();
 				var modal = document.getElementById('myModal');
 				modal.style.display = "none";	
 			}
@@ -1460,6 +1865,18 @@
 				</ul>
 				Catalog: <select id="applicableCatalogsSelect"></select><input type="button" id="addCatalogButton" value="Add Catalog"/>
 			  </div>
+			  <div id="restrictedCatalog">
+				<h2>Additional Creditable Courses</h2>
+				<input id="allCoursesRadio" type="radio" name="restrictedOptions" value="allCourses"><label for="allCoursesRadio">Entire Catalog Applies</label><br>
+				<input id="requiredOnlyRadio" type="radio" name="restrictedOptions" value="requiredOnlyCourses"><label for="requiredOnlyRadio">Required Courses Only</label><br>
+				<input id="restictedCoursesRadio" type="radio" name="restrictedOptions" value="restrictedCourses"><label for="restrictedCoursesRadio">Specify Catalog Courses</label><br>
+				<div id="restrictedCatalogOptions" hidden>
+					<ul id="restrictedCourseList">
+				
+					</ul>
+					Catalog: <select id="catalogListRestricted"></select><label for="classList" id="classListLabelRestricted">Class:</label><input type="button" id="addClassButtonRestricted" value="Add Class"/>
+				</div>
+			  </div>
 			  <div id="requiredClasses">
 				<h2>Required Courses</h2>
 				<ul id="classsublist">
@@ -1491,9 +1908,9 @@
 					Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Minor:</label><input type="button" id="addCertificateButton" value="Add Minor"/>
 				  </div>
 				  <br>
-				  <input id="saveForm" type="submit" value="Save"></input>
-				  <input id="deleteForm" type="button" value="Delete Program"></input>
 				</div>
+				<input id="saveForm" type="submit" value="Save"></input>
+				 <input id="deleteForm" type="button" value="Delete Program"></input>
 			</div>
 		</div>
     </body>
