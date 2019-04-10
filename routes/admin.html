@@ -714,30 +714,15 @@
 				}
 				
 				// If the old value is defined then check to see if the database value needs to be modified or deleted
-				var oldValue = $("#400HrsMin").attr("oldvalue");
-				var oldType = $("#400HrsMin").attr("oldtype");
-				checkHourUpdate(oldValue, oldType, hoursForm.Hrs400MinObj, modifyData, removeData, addData);
-				oldValue = $("#400HrsMax").attr("oldvalue");
-				oldType = $("#400HrsMax").attr("oldtype");
-				checkHourUpdate(oldValue, oldType, hoursForm.Hrs400MaxObj, modifyData, removeData, addData);
-				oldValue = $("#500HrsMin").attr("oldvalue");
-				oldType = $("#500HrsMin").attr("oldtype");
-				checkHourUpdate(oldValue, oldType, hoursForm.Hrs500MinObj, modifyData, removeData, addData);
-				oldValue = $("#500HrsMax").attr("oldvalue");
-				oldType = $("#500HrsMax").attr("oldtype");
-				checkHourUpdate(oldValue, oldType, hoursForm.Hrs500MaxObj, modifyData, removeData, addData);
-				oldValue = $("#600HrsMin").attr("oldvalue");
-				oldType = $("#600HrsMin").attr("oldtype");
-				checkHourUpdate(oldValue, oldType, hoursForm.Hrs600MinObj, modifyData, removeData, addData);
-				oldValue = $("#600HrsMax").attr("oldvalue");
-				oldType = $("#600HrsMax").attr("oldtype");
-				checkHourUpdate(oldValue, oldType, hoursForm.Hrs600MaxObj, modifyData, removeData, addData);
-				oldValue = $("#trhrs").attr("oldvalue");
-				oldType = $("#trhrs").attr("oldtype");
-				checkHourUpdate(oldValue, oldType, hoursForm.HrsTransferMaxObj, modifyData, removeData, addData);
-				oldValue = $("#ohrs").attr("oldvalue");
-				oldType = $("#ohrs").attr("oldtype");
-				checkHourUpdate(oldValue, oldType, hoursForm.HrsOutsideMaxObj, modifyData, removeData, addData);
+
+				checkHourUpdate($("#400HrsMin"), hoursForm.Hrs400MinObj, modifyData, removeData, addData);
+				checkHourUpdate($("#400HrsMax"), hoursForm.Hrs400MaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#500HrsMin"), hoursForm.Hrs500MinObj, modifyData, removeData, addData);
+				checkHourUpdate($("#500HrsMax"), hoursForm.Hrs500MaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#600HrsMin"), hoursForm.Hrs600MinObj, modifyData, removeData, addData);
+				checkHourUpdate($("#600HrsMax"), hoursForm.Hrs600MaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#trhrs"), hoursForm.HrsTransferMaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#ohrs"), hoursForm.HrsOutsideMaxObj, modifyData, removeData, addData);
 
 				console.log(modifyData);
 				console.log(removeData);
@@ -787,7 +772,11 @@
 			
 			// This function will push the hourObject onto either the modifyData, removeData, or addData array depending on the values that
 			// are changed when compared to the oldValue and oldType
-			function checkHourUpdate(oldValue, oldType, hourObject, modifyData, removeData, addData) {
+			function checkHourUpdate($entry, hourObject, modifyData, removeData, addData) {
+				var oldValue = $entry.attr("oldvalue");
+				$entry.attr("oldvalue", hourObject.val);
+				var oldType = $entry.attr("oldtype");
+				$entry.attr("oldtype", hourObject.type);
 				if(oldValue) {
 					if(hourObject.val != "" && hourObject.val != oldValue) {
 						modifyData.push(hourObject);
