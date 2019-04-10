@@ -1516,7 +1516,7 @@
 					}
 					if(catalogRule["Degree Program"].hours600.maximum) {
 						$("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours);
-						$("#600HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours600.maximum.hours);
+						$("#600HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours600.maximum.hours);
 						$("input[name='600HrsMaxOption']").val([catalogRule["Degree Program"].hours600.maximum.type]);
 						$("#600HrsMax").attr("oldtype", catalogRule["Degree Program"].hours600.maximum.type);
 					}
@@ -1537,10 +1537,10 @@
 						$("#ohrs").attr("oldtype", catalogRule["Degree Program"].hoursOutside.maximum.type);
 					}
 				}
-				$("#grade").attr('value',catalogRule["Degree Program"].minGrade);
+				$("#grade").val(catalogRule["Degree Program"].minGrade);
 				$("#grade").attr("oldvalue", catalogRule["Degree Program"].minGrade);
 				$("#minimumGPA").val(catalogRule["Degree Program"].minGPA);
-				$("#minimumGPA").val(catalogRule["Degree Program"].minGPA);
+				$("#minimumGPA").attr("oldvalue", catalogRule["Degree Program"].minGPA);
 				// Load in all the catalogs for the program. This is done before setting information like required courses because the catalog information needs
 				// to be known in order to retireve the course information.
 				selectedCatalogs = [];
