@@ -435,7 +435,7 @@
 							console.log("Error saving object information");
 						}
 					});
-					
+					return;
 					if(removedCatalogs.length > 0 || addedCatalogs.length > 0) {
 						saveCatalogs(idObjects, function(wasSuccessful) {
 							if(wasSuccessful) {
@@ -631,7 +631,7 @@
 				});
 			}
 			
-			function saveHours(idObjects, callback) {
+			function saveHours(objectId, callback) {
 				var addData = [];
 				var modifyData = [];
 				var modifyDataObjectSpecific = [];
@@ -715,21 +715,29 @@
 				
 				// If the old value is defined then check to see if the database value needs to be modified or deleted
 				var oldValue = $("#400HrsMin").attr("oldvalue");
-				checkHourUpdate(oldValue, hoursForm.Hrs400MinObj, modifyData, removeData, addData);
+				var oldType = $("#400HrsMin").attr("oldtype");
+				checkHourUpdate(oldValue, oldType, hoursForm.Hrs400MinObj, modifyData, removeData, addData);
 				oldValue = $("#400HrsMax").attr("oldvalue");
-				checkHourUpdate(oldValue, hoursForm.Hrs400MaxObj, modifyData, removeData, addData);
+				oldType = $("#400HrsMax").attr("oldtype");
+				checkHourUpdate(oldValue, oldType, hoursForm.Hrs400MaxObj, modifyData, removeData, addData);
 				oldValue = $("#500HrsMin").attr("oldvalue");
-				checkHourUpdate(oldValue, hoursForm.Hrs500MinObj, modifyData, removeData, addData);
+				oldType = $("#500HrsMin").attr("oldtype");
+				checkHourUpdate(oldValue, oldType, hoursForm.Hrs500MinObj, modifyData, removeData, addData);
 				oldValue = $("#500HrsMax").attr("oldvalue");
-				checkHourUpdate(oldValue, hoursForm.Hrs500MaxObj, modifyData, removeData, addData);
+				oldType = $("#500HrsMax").attr("oldtype");
+				checkHourUpdate(oldValue, oldType, hoursForm.Hrs500MaxObj, modifyData, removeData, addData);
 				oldValue = $("#600HrsMin").attr("oldvalue");
-				checkHourUpdate(oldValue, hoursForm.Hrs600MinObj, modifyData, removeData, addData);
+				oldType = $("#600HrsMin").attr("oldtype");
+				checkHourUpdate(oldValue, oldType, hoursForm.Hrs600MinObj, modifyData, removeData, addData);
 				oldValue = $("#600HrsMax").attr("oldvalue");
-				checkHourUpdate(oldValue, hoursForm.Hrs600MaxObj, modifyData, removeData, addData);
+				oldType = $("#600HrsMax").attr("oldtype");
+				checkHourUpdate(oldValue, oldType, hoursForm.Hrs600MaxObj, modifyData, removeData, addData);
 				oldValue = $("#trhrs").attr("oldvalue");
-				checkHourUpdate(oldValue, hoursForm.HrsTransferMaxObj, modifyData, removeData, addData);
+				oldType = $("#trhrs").attr("oldtype");
+				checkHourUpdate(oldValue, oldType, hoursForm.HrsTransferMaxObj, modifyData, removeData, addData);
 				oldValue = $("#ohrs").attr("oldvalue");
-				checkHourUpdate(oldValue, hoursForm.HrsOutsideMaxObj, modifyData, removeData, addData);
+				oldType = $("#ohrs").attr("oldtype");
+				checkHourUpdate(oldValue, oldType, hoursForm.HrsOutsideMaxObj, modifyData, removeData, addData);
 
 				console.log(modifyData);
 				console.log(removeData);
@@ -738,7 +746,7 @@
 					$.ajax({
 						type: "POST",
 						url: "../scripts/saveHours.php",
-						data: { removedHours: removedData, addedHours: addData, modifiedHours: modifyData, objectId: objectId },
+						data: { removedHours: removeData, addedHours: addData, modifiedHours: modifyData, objectId: objectId },
 						//dataType: "json",
 						success: function(json) {
 							console.log(json);
@@ -777,12 +785,16 @@
 				}
 			}
 			
-			function checkHourUpdate(oldValue, hourObject, modifyData, removeData, addData) {
+			// This function will push the hourObject onto either the modifyData, removeData, or addData array depending on the values that
+			// are changed when compared to the oldValue and oldType
+			function checkHourUpdate(oldValue, oldType, hourObject, modifyData, removeData, addData) {
 				if(oldValue) {
 					if(hourObject.val != "" && hourObject.val != oldValue) {
 						modifyData.push(hourObject);
 					} else if(hourObject.val == "" && oldValue != "") {
 						removeData.push(hourObject);
+					} else if(hourObject.type != oldType) {
+						modifyData.push(hourObject);
 					}
 				} else { // Otherwise check to see if an hour value is inputted and needs to be added to the database
 					if(hourObject.val != "") {
@@ -1484,11 +1496,13 @@
 						$("#400HrsMin").val(catalogRule["Degree Program"].hours400.minimum.hours);
 						$("#400HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours400.minimum.hours);
 						$("input[name='400HrsMinOption']").val([catalogRule["Degree Program"].hours400.minimum.type]);
+						$("#400HrsMin").attr("oldtype", catalogRule["Degree Program"].hours400.minimum.type);
 					}
 					if(catalogRule["Degree Program"].hours400.maximum) {
 						$("#400HrsMax").val(catalogRule["Degree Program"].hours400.maximum.hours);
 						$("#400HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours400.maximum.hours);
 						$("input[name='400HrsMaxOption']").val([catalogRule["Degree Program"].hours400.maximum.type]);
+						$("#400HrsMax").attr("oldtype", catalogRule["Degree Program"].hours400.maximum.type);
 					}
 				}
 				if(catalogRule["Degree Program"].hours500) {
@@ -1496,10 +1510,12 @@
 						$("#500HrsMin").val(catalogRule["Degree Program"].hours500.minimum.hours);
 						$("#500HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours500.minimum.hours);
 						$("input[name='500HrsMinOption']").val([catalogRule["Degree Program"].hours500.minimum.type]);
+						$("#500HrsMin").attr("oldtype", catalogRule["Degree Program"].hours500.minimum.type);
 					}if(catalogRule["Degree Program"].hours500.maximum) {
 						$("#500HrsMax").val(catalogRule["Degree Program"].hours500.maximum.hours);
 						$("#500HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours500.maximum.hours);
 						$("input[name='500HrsMaxOption']").val([catalogRule["Degree Program"].hours500.maximum.type]);
+						$("#500HrsMax").attr("oldtype", catalogRule["Degree Program"].hours500.maximum.type);
 					}
 				}
 				if(catalogRule["Degree Program"].hours600) {
@@ -1507,11 +1523,13 @@
 						$("#600HrsMin").val(catalogRule["Degree Program"].hours600.minimum.hours);
 						$("#600HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours600.minimum.hours);
 						$("input[name='600HrsMinOption']").val([catalogRule["Degree Program"].hours600.minimum.type]);
+						$("#600HrsMin").attr("oldtype", catalogRule["Degree Program"].hours600.minimum.type);
 					}
 					if(catalogRule["Degree Program"].hours600.maximum) {
 						$("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours);
 						$("#600HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours600.maximum.hours);
 						$("input[name='600HrsMaxOption']").val([catalogRule["Degree Program"].hours600.maximum.type]);
+						$("#600HrsMax").attr("oldtype", catalogRule["Degree Program"].hours600.maximum.type);
 					}
 				}
 				if(catalogRule["Degree Program"].hoursTransfer) {
@@ -1519,6 +1537,7 @@
 						$("#trhrs").val(catalogRule["Degree Program"].hoursTransfer.maximum.hours);
 						$("#trhrs").attr('oldvalue',catalogRule["Degree Program"].hoursTransfer.maximum.hours);
 						$("input[name='TransferHrsMaxOption']").val([catalogRule["Degree Program"].hoursTransfer.maximum.type]);
+						$("#trhrs").attr("oldtype", catalogRule["Degree Program"].hoursTransfer.maximum.type);
 					}
 				}
 				if(catalogRule["Degree Program"].hoursOutside) {
@@ -1526,6 +1545,7 @@
 						$("#ohrs").val(catalogRule["Degree Program"].hoursOutside.maximum.hours);
 						$("#ohrs").attr('oldvalue',catalogRule["Degree Program"].hoursOutside.maximum.hours);
 						$("input[name='OutsideHrsMaxOption']").val([catalogRule["Degree Program"].hoursOutside.maximum.type]);
+						$("#ohrs").attr("oldtype", catalogRule["Degree Program"].hoursOutside.maximum.type);
 					}
 				}
 				$("#grade").attr('value',catalogRule["Degree Program"].minGrade);
