@@ -2,6 +2,37 @@
 
 include 'DatabaseInfo.php';
 
+
+function compareGrades($grade1, $grade2) {
+	$grade1Length = strlen($grade1);
+	$grade2Length = strlen($grade2);
+	if($grade1Length == $grade2Length) {
+		return strcmp($grade1, $grade2);
+	} else if($grade1Length == 1) {
+		if(strcmp($grade1, substr($grade2, 0, 1) == 0)) {
+			$grade2sign = substr($grade2, 1, 1);
+			if($grade2sign == "+") {
+				return 1;
+			} else {
+				return -1;
+			}
+		} else {
+			return strcmp($grade1, substr($grade2, 0, 1));
+		}
+	} else { // Otherwise Grade 2 length is 1
+		if(strcmp($grade2, substr($grade1, 0, 1) == 0)) {
+			$grade1sign = substr($grade1, 1, 1);
+			if($grade1sign == "+") {
+				return -1;
+			} else {
+				return 1;
+			}
+		} else {
+			return strcmp($grade2, substr($grade1, 0, 1));
+		}
+	}
+}
+
 $mysqli = new mysqli($servername, $sqlusername, $sqlpassword, $database);
 
 if($mysqli->connect_errno) {
@@ -181,15 +212,44 @@ for($x = 0; $x < count($objects); $x++) {
 	if($stmtHours->fetch()) {
 		$objectRequirements->requiredHours = $requiredHours;
 		// If there is no value set for the object requirement for minGrade or minGPA then set these values to those in the globalRequirements
-		if(!$minGrade && isset($globalRequirements[$objects[$x]->type])) {
-			$objectRequirements->minGrade = $globalRequirements[$objects[$x]->type]->minGrade;
+		if(!$minGrade) {
+			if(isset($globalRequirements[$objects[$x]->type])) {
+				$objectRequirements->minGrade = $globalRequirements[$objects[$x]->type]->minGrade;
+			} else { 
+				$objectRequirements->minGrade = $minGrade;
+			}	
 		} else {
-			$objectRequirements->minGrade = $minGrade;
+			if(isset($globalRequirements[$objects[$x]->type])) {
+				if(!is_null($globalRequirements[$objects[$x]->type]->minGrade)) {
+					if(compareGrades($minGrade, $globalRequirements[$objects[$x]->type]->minGrade) > 0) {
+						$objectRequirements->minGrade = $globalRequirements[$objects[$x]->type]->minGrade;
+					} else {
+						$objectRequirements->minGrade = $minGrade;
+					}
+				}
+			} else {
+				$objectRequirements->minGrade = $minGrade;
+			}
 		}
-		if(!$minGPA && isset($globalRequirements[$objects[$x]->type])) {
-			$objectRequirements->minGPA = $globalRequirements[$objects[$x]->type]->minGPA;
+		
+		if(!$minGPA) {
+			if(isset($globalRequirements[$objects[$x]->type])) {
+				$objectRequirements->minGPA = floatval($globalRequirements[$objects[$x]->type]->minGPA);
+			} else {
+				$objectRequirements->minGPA = $minGPA;
+			}
 		} else {
-			$objectRequirements->minGPA = floatval($minGPA);
+			if(isset($globalRequirements[$objects[$x]->type])) {
+				if(!is_null($globalRequirements[$objects[$x]->type]->minGPA)) {
+					if($minGPA < $globalRequirements[$objects[$x]->type]->minGPA) {
+						$objectRequirements->minGPA= floatval($globalRequirements[$objects[$x]->type]->minGPA);
+					} else {
+						$objectRequirements->minGPA = floatval($minGPA);
+					}
+				}
+			} else {
+				$objectRequirements->minGPA = floatval($minGPA);
+			}
 		}
 	}
 	$stmtHours->free_result();
