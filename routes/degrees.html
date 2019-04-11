@@ -1,102 +1,101 @@
 <!DOCTYPE html>
 <html>
-    
+    <link rel="stylesheet" type="text/css" href = ../styles/degrees.css>
     <head>
         <meta charset="utf8">
-        <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-        <script>
-            $(document).ready(function(){
-				
-				var xhr = new XMLHttpRequest();
-				xhr.addEventListener("load", degreeHandler);
-				xhr.open("GET", "../scripts/degreePrograms.php");
-				xhr.send();
-				
-				$("#programForm").submit(function(event) {
-					event.preventDefault();
-					document.cookie = "programlevel=" + $("input[name='degreeLevel']:checked").val();
-					document.cookie = "program=" + $("input[name='degreeSubject']:checked").val();
-					document.cookie = "option=" + $("input[name='degreeOption']:checked").val();
-					document.cookie = "programId=" + $("input[name='degreeOption']:checked").attr("objectid");
-					window.location.href = "../routes/degreeRequirements.html";
-				});
-
-            });
+            <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+            <script>
+                $(document).ready(function(){
+                                  
+                                  var xhr = new XMLHttpRequest();
+                                  xhr.addEventListener("load", degreeHandler);
+                                  xhr.open("GET", "../scripts/degreePrograms.php");
+                                  xhr.send();
+                                  
+                                  $("#programForm").submit(function(event) {
+                                                           event.preventDefault();
+                                                           document.cookie = "programlevel=" + $("input[name='degreeLevel']:checked").val();
+                                                           document.cookie = "program=" + $("input[name='degreeSubject']:checked").val();
+                                                           document.cookie = "option=" + $("input[name='degreeOption']:checked").val();
+                                                           document.cookie = "programId=" + $("input[name='degreeOption']:checked").attr("objectid");
+                                                           window.location.href = "../routes/degreeRequirements.html";
+                                                           });
+                                  });
+                                  
+                                  function setOptionHandlers() {
+                                      $("#optionList li").click(function() {
+                                                                var $listItem = $(this);
+                                                                while($listItem.attr("value")) {
+                                                                $listItem.find("input[type='radio']").prop("checked", true);
+                                                                $listItem = $listItem.parent().prev("li");
+                                                                }
+                                                                });
+                                  }
             
-			function setOptionHandlers() {
-				$("#optionList li").click(function() {
-					var $listItem = $(this);
-					while($listItem.attr("value")) {
-						$listItem.find("input[type='radio']").prop("checked", true);
-						$listItem = $listItem.parent().prev("li");
-					}
-				});
-			}
-			
-			function degreeHandler() {
-				console.log(this.response);
-				var degreePrograms = JSON.parse(this.response);
-
-				/* Iterate through Masters, PhD, etc and add to DOM as list item */
-				for(var degreeLevel in degreePrograms) {
-					$("#degreePrograms").append($("<li>", {
-						value: degreeLevel
-					}).append($("<input>", {
-						type: "radio",
-						value: degreeLevel,
-						name: "degreeLevel",
-					})).append($("<label>", {
-						text: degreeLevel
-					}))); 
-
-
-					/* Create nested list under each degree level with the subjects offered, e.g., computer science */
-					var degreeSubjects = $("<ul id='sublist'>");
-					for(var degreeSubject in degreePrograms[degreeLevel]) {
-						degreeSubjects.append($("<li>", {
-							value: degreeSubject
-						}).append($("<input>", {
-							type: "radio",
-							value: degreeSubject,
-							name: "degreeSubject",
-							required: true
-						})).append($("<label>", {
-							text: degreeSubject	
-						})));
-						
-						var degreeOptions = $("<ul id='optionList'>");
-						console.log(degreePrograms[degreeLevel]);
-						console.log(degreePrograms[degreeLevel][degreeSubject]);
-						for(var degreeOption in degreePrograms[degreeLevel][degreeSubject]) {
-							degreeOptions.append($("<li>", {
-								value: degreeOption
-							}).append($("<input>", {
-								type: "radio",
-								value: degreeOption,
-								name: "degreeOption",
-								objectid: degreePrograms[degreeLevel][degreeSubject][degreeOption],
-								required: true
-							})).append($("<label>", {
-								text: degreeOption
-							})));
-						}
-						degreeSubjects.append(degreeOptions);
-					} 
-					$("#degreePrograms").append(degreeSubjects);
-				}
-				setOptionHandlers();
-			}
-        </script>
-    </head>
+            function degreeHandler() {
+                console.log(this.response);
+                var degreePrograms = JSON.parse(this.response);
+                /* Iterate through Masters, PhD, etc and add to DOM as list item */
+                for(var degreeLevel in degreePrograms) {
+                    $("#degreePrograms").append($("<li>", {
+                                                  value: degreeLevel
+                                                  }).append($("<input>", {
+                                                              type: "radio",
+                                                              value: degreeLevel,
+                                                              name: "degreeLevel",
+                                                              })).append($("<label>", {
+                                                                           text: degreeLevel
+                                                                           })));
+                                                                           /* Create nested list under each degree level with the subjects offered, e.g., computer science */
+                                                                           var degreeSubjects = $("<ul id='sublist'>");
+                                                                           for(var degreeSubject in degreePrograms[degreeLevel]) {
+                                                                               degreeSubjects.append($("<li>", {
+                                                                                                       value: degreeSubject
+                                                                                                       }).append($("<input>", {
+                                                                                                                   type: "radio",
+                                                                                                                   value: degreeSubject,
+                                                                                                                   name: "degreeSubject",
+                                                                                                                   required: true
+                                                                                                                   })).append($("<label>", {
+                                                                                                                                text: degreeSubject
+                                                                                                                                })));
+                                                                                                                                
+                                                                                                                                var degreeOptions = $("<ul id='optionList'>");
+                                                                                                                                console.log(degreePrograms[degreeLevel]);
+                                                                                                                                console.log(degreePrograms[degreeLevel][degreeSubject]);
+                                                                                                                                for(var degreeOption in degreePrograms[degreeLevel][degreeSubject]) {
+                                                                                                                                    degreeOptions.append($("<li>", {
+                                                                                                                                                           value: degreeOption
+                                                                                                                                                           }).append($("<input>", {
+                                                                                                                                                                       type: "radio",
+                                                                                                                                                                       value: degreeOption,
+                                                                                                                                                                       name: "degreeOption",
+                                                                                                                                                                       objectid: degreePrograms[degreeLevel][degreeSubject][degreeOption],
+                                                                                                                                                                       required: true
+                                                                                                                                                                       })).append($("<label>", {
+                                                                                                                                                                                    text: degreeOption
+                                                                                                                                                                                    })));
+                                                                                                                                }
+                                                                                                                                degreeSubjects.append(degreeOptions);
+                                                                           }
+                                                                           $("#degreePrograms").append(degreeSubjects);
+                }
+                setOptionHandlers();
+            }
+            </script>
+            </head>
     <body>
-		<form id="programForm" action="../scripts/setProgram.php" method="POST">
-			<div>
-				<ul id="degreePrograms">
-
-				</ul>
-			</div>
-			<input type="submit"></input> 
-		</form>
+    <div class="container">
+        <hr/>
+        <form id="programForm" action="../scripts/setProgram.php" method="POST">
+            <div class="deg">
+                <ul id="degreePrograms">
+                    
+                </ul>
+            </div>
+            <input type="submit"></input>
+        </form>
+        </div>
     </body>
 </html>
