@@ -1,0 +1,129 @@
+body {
+    background-color: #58595B;
+}
+
+h1,h2 {
+    text-align: center;
+    color: white;
+    margin: auto;
+    width: 60%;
+    padding: 10px;
+    font: Gotham;
+}
+
+.button {
+    background-color: #ffffff;
+    border: none;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: auto;
+    cursor: pointer;
+}
+
+input[type=submit] {
+    padding:5px 15px;
+    background:#ccc;
+    border:0 none;
+    font-size: 15px;
+    cursor:pointer;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+}
+
+hr {
+    display: block;
+    height: 1 px;
+    border: 0;
+    border-top: 9px solid #FF8200;
+}
+
+input[type=text],input[type=email], input[type=password]{
+    width: 30%;
+    box-sizing: border-box;
+    border: 2px solid #58595B;
+    border-radius: 2px;
+    font-size: 15px;
+    background-color: white;
+}
+
+input[type=text]:focus {
+    border: 1px solid black;
+}
+
+label {
+    display: inline-block;
+    width: 70;
+    text-align: right;
+    padding: 5px;
+}
+
+.container {
+    height: 1000px;
+    background-color: white;
+    background-image:
+    linear-gradient(
+    to right,
+    #58595B,
+    #58595B 15%,
+    #ffffff 15%,
+    #ffffff 85%,
+    #58595B 85%
+    );
+}
+
+#box {
+    background: #FF8200;
+    width:950px;
+    height:140px;
+    margin: 0 auto;
+    
+}
+
+#hourbar {
+    background: #FFffff;
+    width:70%;
+    height:140px;
+    margin: 0 auto;
+    
+}
+
+h5{
+    text-align: left;
+    color: black;
+    margin: auto;
+    width: 650;
+    padding: 10px;
+    font-size: 25px;
+    font: Gotham;
+}
+#progressBarContainer {
+    background: #FFffff;
+    width:70%;
+    height:30px;
+    margin-left: 0%;
+    
+}
+#Coursebox{
+    background: #FFFFFF;
+    width: 70%;
+    height:140px;
+    margin: 0 auto;
+    border: 2px solid black;
+}
+#centerbox{
+    margin-left: 45%;
+    margin-top: 10px;
+}
+#candidacyForm{
+    height: 80px;
+    border-radius: 8px;
+}
+#addCourse
+{
+    height: 50px;
+    border-radius: 8px;
+}
