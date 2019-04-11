@@ -29,6 +29,7 @@
 			var modifyData = [];
 			var objectsParam = [];
 			var degreeProgramIds = [];
+			var phdIds = [];
 			var removedCatalogs = [];
 			var addedCatalogs = [];
 			var addedRequiredCourses = [];
@@ -651,6 +652,12 @@
 					val: $("#ohrs").val(),
 					type: $("input[name='OutsideHrsMaxOption']:checked").val()
 				}
+				hoursForm.HrsPhDMinObj = {
+					hour: "PhDOnly",
+					cap: 'minimum',
+					val: $("#PhDonly").val(),
+					type: $("input[name='PhDHrsMinOption']:checked").val()
+				}
 
 				// Check to see if an hour type is not provided for any hour field with a value
 				if(hoursForm.Hrs400MinObj.val != "" && !hoursForm.Hrs400MinObj.type){
@@ -677,6 +684,9 @@
 				if(hoursForm.HrsOutsideMaxObj.val != "" && !hoursForm.HrsOutsideMaxObj.type){
 					alert("Fixed or Variable option must be selected for Outside Max Hours");
 				}
+				if(hoursForm.HrsPhDMinObj.val != "" && !hoursForm.HrsPhDMinObj.type){
+					alert("Fixed or Variable option must be selected for Graduate Only Min Hours");
+				}
 				
 				// If the old value is defined then check to see if the database value needs to be modified or deleted
 
@@ -688,6 +698,7 @@
 				checkHourUpdate($("#600HrsMax"), hoursForm.Hrs600MaxObj, modifyData, removeData, addData);
 				checkHourUpdate($("#trhrs"), hoursForm.HrsTransferMaxObj, modifyData, removeData, addData);
 				checkHourUpdate($("#ohrs"), hoursForm.HrsOutsideMaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#PhDonly"), hoursForm.HrsPhDMinObj, modifyData, removeData, addData);
 
 				console.log(modifyData);
 				console.log(removeData);
@@ -1125,6 +1136,13 @@
 					if(degreeProgramIds.includes($(this).val())) {
 						$("#additionalOptionsContainer").show();
 						$("#restrictedCatalog").hide();
+						console.log($(this).val());
+						console.log(phdIds);
+						if(phdIds.includes($(this).val())) {
+							$("#PhDOptions").show();
+						} else {
+							$("#PhDOptions").hide();
+						}
 					} else {
 						$("#additionalOptionsContainer").hide();
 						$("#restrictedCatalog").show();
@@ -1269,6 +1287,9 @@
 										text: degreeSubject
 									}));
 								}
+								if(degreeName === "PhD") {
+									phdIds.push(degreePrograms[degreeName][degreeSubject][degreeOption]);
+								}
 								degreeProgramIds.push(degreePrograms[degreeName][degreeSubject][degreeOption]);
 							}
 						} 
@@ -1392,6 +1413,14 @@
 						$("#ohrs").attr('oldvalue',catalogRule["Degree Program"].hoursOutside.maximum.hours);
 						$("input[name='OutsideHrsMaxOption']").val([catalogRule["Degree Program"].hoursOutside.maximum.type]);
 						$("#ohrs").attr("oldtype", catalogRule["Degree Program"].hoursOutside.maximum.type);
+					}
+				}
+				if(catalogRule["Degree Program"].hoursPhDOnly) {
+					if(catalogRule["Degree Program"].hoursPhDOnly.minimum) {                     
+						$("#PhDonly").val(catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
+						$("#PhDonly").attr('oldvalue',catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
+						$("input[name='PhDHrsMinOption']").val([catalogRule["Degree Program"].hoursPhDOnly.minimum.type]);
+						$("#PhDonly").attr("oldtype", catalogRule["Degree Program"].hoursPhDOnly.minimum.type);
 					}
 				}
 				$("#grade").val(catalogRule["Degree Program"].minGrade);
@@ -1740,6 +1769,9 @@
 				$("#popupform").children("input[type='number']").val("");
 				$("#popupform").children("input[type='number']").attr("oldvalue", "");
 				$("#popupform").children("input[type='radio']:checked").prop("checked", false);
+				$("#PhDOptions").children("input[type='number']").val("");
+				$("#PhDOptions").children("input[type='number']").attr("oldvalue", "");
+				$("#PhDOptions").children("input[type='radio']:checked").prop("checked", false);
 				$("#minorSelect").detach();
 				$("#minorSubjectList").empty();
 				$("#certificateSelect").detach();
@@ -1862,6 +1894,12 @@
 					<label for="OutsideHrsMaxOptionFixed">Fixed</label><input type="radio" id="OutsideHrsMaxOptionFixed" name="OutsideHrsMaxOption" value="fixed">
 					<label for="OutsideHrsMaxOptionVariable">Variable</label><input type="radio" id="OutsideHrsMaxOptionVariable" name="OutsideHrsMaxOption" value="variable">
 					<br>
+					<span id="PhDOptions" hidden>
+						Graduate Only Hours Minimum: <input type="number" id="PhDonly" style="width:50px">
+						<label for="PhDHrsMinOptionFixed">Fixed</label><input type="radio" id="PhDHrsMinOptionFixed" name="PhDHrsMinOption" value="fixed">
+						<label for="PhDHrsMinOptionVariable">Variable</label><input type="radio" id="PhDHrsMinOptionVariable" name="PhDHrsMinOption" value="variable">
+					<br>
+					</span>
 					Minimum Grade: <input type="text" id="grade" style="width:50px">
 					<br>
 					Minimum GPA: <input type="number" id="minimumGPA" step="0.01" style="width:50px">
