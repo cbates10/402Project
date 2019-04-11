@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-	<link rel="stylesheet" type="text/css" href = ../styles/degreeRequirements.css>
     <head>
         <meta charset="utf8">
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
@@ -1401,7 +1400,7 @@
                     }
                     if(degreeObject.hours600) {
                         if(degreeObject.hours600.maximum) {
-                            requirement.set600MaxLevelHours(degreeObject.hours600.maximum.hours. getHourType(degreeObject.hours600.maximum.type), function() { alert("Maximum 600 level hours exceeded"); });
+                            requirement.set600MaxLevelHours(degreeObject.hours600.maximum.hours, getHourType(degreeObject.hours600.maximum.type), function() { alert("Maximum 600 level hours exceeded"); });
                         }
                         if(degreeObject.hours600.minimum) {
                             if(getHourType(degreeObject.hours600.minimum.type) === hourType.VARIABLE) {
@@ -1633,4 +1632,3 @@
     </div>
         </body>
     </html>
->>>>>>> ec061a0c881326f90b5141f256267f949db00262
