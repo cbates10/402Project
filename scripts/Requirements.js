@@ -78,6 +78,7 @@ function getGPA(letterGrade) {
 class Requirements {
 
 	constructor() {
+		this.name = "";
 		this.requirementType = null;
 		this.applicableCourseIds = []; // An array of all courseIds that should count towards to requirement
 		this.applicableCourseEvents = {};
@@ -146,6 +147,10 @@ class Requirements {
 		this.currentHoursOutside = 0;
 	}
 	
+	getName() {
+		return this.name;
+	}
+	
 	getRequirementType() {
 		return this.requirementType;
 	}
@@ -197,6 +202,10 @@ class Requirements {
 				unfufilledHours.push("PhD");
 			}
 		}
+	}
+	
+	setName(name) {
+		this.name = name;
 	}
 	
 	setRequirementType(type) {
