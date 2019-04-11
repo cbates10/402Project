@@ -29,8 +29,6 @@
 			var modifyData = [];
 			var objectsParam = [];
 			var degreeProgramIds = [];
-			var mergedCommittees = [];
-			var currentCommittee; // This is used to keep track of the current committe when performing committee operations
 			var removedCatalogs = [];
 			var addedCatalogs = [];
 			var addedRequiredCourses = [];
@@ -80,53 +78,40 @@
 				
 				$("#addNewCommitteeMemberButton").click(function() {
 					var $committeeTitle = $("#committeeTitle option:selected");
-					var $committeeMember = $("#committeeMembers option:selected");
+					var $committeeSubject = $("#committeeSubject option:selected");
 					var title = $committeeTitle.attr("id");
+					var subject = $committeeSubject.val();
 					var titleName = $committeeTitle.val();
-					if($committeeMember.val() == "newMember") {
-						var firstName = $("#firstName").val();
-						var lastName = $("#lastName").val();
+					var firstName;
+					var lastName;
+					var newMember = false;
+					var id;
+					if($("#committeeMembers option:selected").val() == "newMember") {
+						firstName = $("#firstName").val();
+						lastName = $("#lastName").val();
 						if(firstName == "" || lastName == "") {
 							alert("Name is required");
 							return false;
 						}
-						if(title == "") {
-							alert("Title is required");
-							return false;
-						}
-						$.ajax({
-							type: "POST",
-							url: "../scripts/addNewCommitteeMember.php",
-							data: { firstName : firstName, lastName: lastName },
-							dataType: "json",
-							success: function(json) {
-								addCommitteeMemberToSelect(json, firstName, lastName);
-								addMemberToCommittee(json, currentCommittee, title, function(wasAdded) {
-									if(wasAdded) {
-										addCommitteeMemberToTable(json, firstName, lastName, titleName, title, currentCommittee);
-									} else {
-										alert("Unable to assign member to committee");
-										return false;
-									}
-								});
-							},
-							error: function(xhr, ajaxOptions, thrownError) {
-								console.log(thrownError);
-							}
-						});
+						newMember = true;
 					} else {
-						var firstName = $committeeMember.attr("firstname");
-						var lastName = $committeeMember.attr("lastname");
-						var id = $committeeMember.attr("id");
-						addMemberToCommittee(id, currentCommittee, title, function(wasAdded) {
-							if(wasAdded) {
-								addCommitteeMemberToTable(id, firstName, lastName, titleName, title, currentCommittee);
-							} else {
-								alert("Unable to assign member to committee");
-								return false;
-							}
-						});
+						firstName = $("#committeeMembers option:selected").attr("firstName");
+						lastName = $("#committeeMembers option:selected").attr("lastName");
+						id = $("#committeeMembers option:selected").attr("id");
 					}
+					$.ajax({
+						type: "POST",
+						url: "../scripts/addNewCommitteeMember.php",
+						data: { firstName : firstName, lastName: lastName, subject: subject, title: title, newMember: newMember, id: id},
+						dataType: "json",
+						success: function(json) {
+						console.log(json);
+							addCommitteeMemberToTable(json, firstName, lastName, titleName, title, subject);
+						},
+						error: function(xhr, ajaxOptions, thrownError) {
+							console.log(thrownError);
+						}
+					});
 				});
 				
 				$("#addNewItemButton").click(function() {
@@ -194,25 +179,6 @@
 						$("#newObjectSubjectSpan").show();
 					} else {
 						$("#newObjectSubjectSpan").hide();
-					}
-				});
-				
-				$("#addCommitteeButton").click(function() {
-					var committeeName = $("#committeesSelect option:selected").val();
-					if(!mergedCommittees.includes(committeeName)) {
-						mergeCommittees(currentCommittee, committeeName, true, function(wasSuccessful) {
-							if(!wasSuccessful) {
-								alert("Unable to merge committees");
-							}
-						});
-						// Merging committees does not inherit the any committees the committee in question has merged, so pass false
-						loadCommitteeMembers(committeeName, false, function(members) {
-							addMergedCommitteeToList(committeeName);
-							for(var index in members) {
-								addCommitteeMemberToTable(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].committee);						
-							}
-							mergedCommittees.push(committeeName);
-						});
 					}
 				});
 				
@@ -418,7 +384,6 @@
 				});
 				
 
-				
 				$("#saveForm").click(function(){
 					var idObjects = $(this).attr("idobjects");
 					saveHours(idObjects, function(wasSuccessful) {
@@ -801,15 +766,13 @@
 				$("#committeeTitle").append($option);
 			}
 			
-			function addCommitteeMemberToSelect(id, firstName, lastName) {
-				var $option = $("<option>", {
-					value: "Member",
+			function addCommitteeMemberToSelect(id, firstName, lastName, title, titleId, subject) {
+				$("#committeeMembers").append($("<option>", {
 					id: id,
-					firstname: firstName,
-					lastname: lastName,
+					firstName: firstName,
+					lastName: lastName,
 					text: firstName + " " + lastName
-				});
-				$("#committeeMembers").append($option);
+				}));
 			}
 			
 			function addCommitteeMemberToTable(id, firstName, lastName, title, titleId, subject) {
@@ -818,6 +781,9 @@
 					name: "tableEntry"
 				});
 				$row.append($("<td>", {
+					id: "memberSubject",
+					text: subject
+				})).append($("<td>", {
 					id: "memberFirstName",
 					text: firstName
 				})).append($("<td>", {
@@ -837,34 +803,6 @@
 				$closeButton.click(removeCommitteeMemberHandler);
 				$row.append($closeButton);
 				$("#committeeTableBody").append($row);
-			}
-			
-			function addMemberToCommittee(memberId, committeeName, title, callback) {
-				$.ajax({
-					type: "POST",
-					url: "../scripts/addMemberToCommittee.php",
-					data: { subject: committeeName, id: memberId, title: title },
-					dataType: "json",
-					success: function(json) {
-						callback(true);
-					},
-					error: function(xhr, ajaxOptions, thrownError) {
-						console.log(thrownError);
-						callback(false);
-					}
-				});
-			}
-			
-			function addMergedCommitteeToList(committeeName) {
-				var $removeButton = $("<button>", {
-					committee: committeeName,
-					name: "removeMergeButton",
-					text: "X"
-				});
-				$removeButton.click(removeMergeHandler);
-				$("#mergedCommitteesList").append($("<li>",{
-					text: committeeName
-				}).append($removeButton));
 			}
 			
 			function swapRequired(catalogName) {
@@ -911,59 +849,13 @@
 				}));
 			}
 			
-			// This function will set two committees as merged in the database
-			function mergeCommittees(committeeName1, committeeName2, merge, callback) {
-				var url;
-				if(merge) {
-					url = "../scripts/mergeCommittees.php"
-				} else {
-					url = "../scripts/unmergeCommittees.php"
-				}
-				$.ajax({
-					type: "POST",
-					url: url,
-					data: { committeeName1: committeeName1, committeeName2: committeeName2 },
-					dataType: "json",
-					success: function(json) {
-						console.log(json);
-						callback(true);
-					},
-					error: function(xhr, ajaxOptions, thrownError) {
-						console.log(thrownError);
-						callback(false);
-					}
-				});
-			}
-			
-			// This function will retrieve the information for all committee members for the given committee. Callback returns the committe members
-			function loadCommitteeMembers(committeeName, merge, callback) {
-				var url;
-				if(merge) {
-					url = "../scripts/getCommitteeMembersBySubject.php";
-				} else {
-					url = "../scripts/getCommitteeMembersBySubjectWithoutMerge.php";
-				}
-				$.ajax({
-					type: "POST",
-					url: url,
-					data: { committeeName: committeeName },
-					dataType: "json",
-					success: function(json) {
-						callback(json);
-					},
-					error: function(xhr, ajaxOptions, thrownError) {
-						console.log(thrownError);
-						callback({});
-					}
-				});
-			}
-			
 			function loadAllCommitteeMembers(callback) {
 				$.ajax({
 					type: "GET",
 					url: "../scripts/getAllCommitteeMembers.php",
 					dataType: "json",
 					success: function(json) {
+						console.log(json);
 						callback(json);
 					},
 					error: function(xhr, ajaxOptions, thrownError) {
@@ -989,25 +881,6 @@
 			}
 			
 			function editCommitteeHandler() {
-				currentCommittee = $(this).attr("value");
-				
-				// Hide the currentCommittee in the merge list. There should not be an option to merge a committee with itself
-				$("#committeesSelect option[value='" + currentCommittee + "']").hide();
-				$("#committeesSelect").val($("#committeesSelect option[value!='" + currentCommittee + "']").val());
-				
-				// Load in all members for the committee that is selected
-				mergedCommittees = [];
-				mergedCommittees.push(currentCommittee);
-
-				loadCommitteeMembers($(this).attr("value"), true, function(members) {
-					for(var index in members) {
-						addCommitteeMemberToTable(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].committee);
-						if(!mergedCommittees.includes(members[index].committee)) {
-							addMergedCommitteeToList(members[index].committee);
-							mergedCommittees.push(members[index].committee);
-						}						
-					}
-				});
 				
 				// Load in the titles that a committee member may have
 				loadCommitteeTitles(function(titles) {
@@ -1018,45 +891,31 @@
 				
 				// Load in every committee member regardless of whether this member is on the committee
 				loadAllCommitteeMembers(function(members) {
+					var loadedMembers = [];
 					for(var index in members) {
-						addCommitteeMemberToSelect(members[index].id, members[index].firstName, members[index].lastName);
+						if(!loadedMembers.includes(members[index].firstName + " " + members[index].lastName)) {
+							addCommitteeMemberToSelect(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].subject);	
+							loadedMembers.push(members[index].firstName + " " + members[index].lastName);
+						}
+						if(members[index].title && members[index].subject) {
+							addCommitteeMemberToTable(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].subject);	
+						}						
+					}
+					if($("#committeeMembers option:selected").val() == "newMember") {
+						$("#newCommitteeMemberContainer").show();
 					}
 				});
 				
-				// Only show the new committee input fields if the option selected is New Member
-				if($("#committeeMembers option:selected").val() == "newMember") {
-					$("#newCommitteeMemberContainer").show();
-				} else {
-					$("#newCommitteeMemberContainer").hide();
-				}
 				var modal = document.getElementById('committeeModal');
 				modal.style.display = "block";
 			}
 			
 			function closeCommittee() {
-				$("#mergedCommitteesList").empty();
-				$("#committeesSelect option[value='" + currentCommittee + "']").show();
-				$("#committeeMembers option[value!='newMember']").remove();
+				$("#committeeMembers").empty();
+				$("#committeeTitle").empty();
 				$("#committeeTableBody tr[name='tableEntry']").remove();
 				var modal = document.getElementById('committeeModal');
 				modal.style.display = "none";
-			}
-			
-			function removeMergeHandler() {
-				var committeeName = $(this).attr("committee");
-				var mergedListItem = $(this).parent();
-				mergeCommittees(currentCommittee, committeeName, false, function(wasSuccessful) {
-					if(!wasSuccessful) {
-						alert("Unable to separate committees");
-					} else {
-						// If the unmerge is successful then remove the merged committee from the list
-						mergedListItem.remove();
-						mergedCommittees = mergedCommittees.filter(function(name) {
-							return name != committeeName;
-						});
-						$("#committeeTableBody tr[value='" + committeeName + "']").remove();
-					}
-				});
 			}
 			
 			function removeCommitteeMemberHandler() {
@@ -1349,7 +1208,7 @@
 					$("#listContainer").append($("<li>", {
 						value: "globalRequirements"
 					}).append($("<label>", {
-						text: "Global Requirements"
+						text: "University Requirements"
 					})).append($("<button>", {
 						value: degreeName,
 						name: "modifyGlobal",
@@ -1386,13 +1245,7 @@
 								text: "Edit Course Catalog",
 								onclick: "document.cookie = 'program=" + degreeSubject + "'"
 							})));
-							$degreeOptions.append($("<li>", {
-								name: "editCommittee",
-								value: degreeSubject
-							}).append($("<a>", {
-								text: "Edit Graduate Committee",
-								style: "cursor:pointer"
-							})));
+
 						}
 						
 						for(var degreeOption in degreePrograms[degreeName][degreeSubject]) {
@@ -1411,6 +1264,10 @@
 									$("#applicableCatalogsSelect").append($subjectOption.clone());
 									$("#committeesSelect").append($subjectOption);
 									catalogNames.push(degreeSubject);
+									$("#committeeSubject").append($("<option>", {
+										value: degreeSubject,
+										text: degreeSubject
+									}));
 								}
 								degreeProgramIds.push(degreePrograms[degreeName][degreeSubject][degreeOption]);
 							}
@@ -1901,12 +1758,11 @@
 			}
 			
         </script>
-        <style>
-
-        </style>
     </head>
     <body>
         <div id="listContainer">
+			<li name="editCommittee"><a style="cursor:pointer">Edit Graduate Committees</a></li>
+			<br>
 
 		</div>
 		<div id="globalModal" class="modal">
@@ -1923,12 +1779,8 @@
 			<div class="modal-content">
 				<span onclick="closeCommittee()" class="close">&times;</span>
 				<div id="committeeContent">
-					<h2>Merged Committees</h2>
-					<ul id="mergedCommitteesList">
-					
-					</ul>
-					Committee<select id="committeesSelect"></select><input type="button" id="addCommitteeButton" value="Merge Committees"/>
 					<h2>Add Members</h2>
+					Subject<select id="committeeSubject"></select>
 					Member<select id="committeeMembers"><option value="newMember">New Member</option></select>
 					<span id="newCommitteeMemberContainer" hidden>
 						<label for="firstName">First Name:</label><input type="text" id="firstName" style="width:100px"></input>
@@ -1940,6 +1792,7 @@
 					<table id="committeeTable">
 						<tbody id="committeeTableBody">
 							<tr>
+								<th>Subject</th>
 								<th>First Name</th>
 								<th>Last Name</th>
 								<th>Title</th>
