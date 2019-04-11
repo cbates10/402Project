@@ -10,6 +10,7 @@
 		<script type="text/javascript" src="../scripts/Requirements.js"></script>
 		<script type="text/javascript" src="../scripts/DataFormatFactory.js"></script>
         <script>
+		
 			var programLevel = getCookie("programlevel");
 			var courseCatalog;
 			var catalogsLoaded = 0;
@@ -30,7 +31,7 @@
 				initializeOtherCourseForm(programLevel);
 				
 				$("#candidacyForm").click(function(event) {
-					var data = DataFormatFactory.formatData(programLevel, requirementObjects);
+					var data = DataFormatFactory.formatData(programLevel, getCookie("program"), requirementObjects, transferInstitution);
 					createForm(data).submit();
 				}); 			
 				
@@ -329,8 +330,6 @@
 			
 			function getHoursDisplayString(courseId, courseOverride) {
 				var hourString;
-				console.log("This is the course override");
-				console.log(courseOverride);
 				if(courseOverride && (courseOverride.minHours || courseOverride.maxHours)) {
 					if(courseOverride.maxHours && !courseOverride.minHours) {
 						if(courseOverride.maxHours < courseCatalog[courseId].lowHours) {
@@ -455,6 +454,7 @@
 					$minorContainer.append($minorHeader).append($progressBar).append($minorsListHeader).append($minorsList).append($applicableListHeader).append($applicableCourseList);
 					$("#minorsContainer").append($minorContainer);
 					requirement.setRequirementType(requirementType.MINOR);
+					requirement.setName(minors.name);
 					processRequirements(minors[i], $minorsList, $progressBar, null, requirement, true, $applicableCourseList);
 					
 					requirementObjects.push(requirement);
@@ -475,6 +475,7 @@
 					$certificateEntry.append($("<li>", {
 						text: certificate.name
 					}));
+					requirement.setName(certificate.name);
 					
 					var $courseList = $("<ul>", {
 						class: "certificateCourseList"
@@ -586,7 +587,7 @@
 				}
 				if(degreeObject.hours600) {
 					if(degreeObject.hours600.maximum) {
-						requirement.set600MaxLevelHours(degreeObject.hours600.maximum.hours. getHourType(degreeObject.hours600.maximum.type), function() { alert("Maximum 600 level hours exceeded"); });
+						requirement.set600MaxLevelHours(degreeObject.hours600.maximum.hours, getHourType(degreeObject.hours600.maximum.type), function() { alert("Maximum 600 level hours exceeded"); });
 					}
 					if(degreeObject.hours600.minimum) {
 						if(getHourType(degreeObject.hours600.minimum.type) === hourType.VARIABLE) {
