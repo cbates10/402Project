@@ -146,9 +146,10 @@
 </head>
 
 <body>
+    <header>
+        <img src="../routes/logo.png" width="145" height="100" alt="logo" />
+    </header>
     <div class="container">
-        <hr />
-        <br>
         <h2>Add Course</h2>
         <form action="../scripts/addCourse.php" id="addCourse" method="POST"> Prefix:
             <!--<input type="text" name="prefix">-->
@@ -172,10 +173,10 @@
             <select id="courseList">
 
             </select>
-            <input type="submit" value="Remove Course">
+            <input type="submit"  value="Remove Course">
         </form>
         <h2>Edit Existing Courses</h2>
-        <table align="center">
+        <table align="center" class="page-wrap">
             <tbody id="catalogTable">
                 <tr>
                     <th>Prefix</th>
@@ -188,5 +189,8 @@
         </table>
     </div>
 </body>
+<footer class="site-footer">
+    <img src="../routes/botlogo.png" width="245" height="80" alt="logo" class="center" />
+</footer>
 
 </html>
