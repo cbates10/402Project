@@ -1,45 +1,27 @@
 body {
-    background-color: #58595B;
+    height: 100%;
+    margin: 0;
 }
-.container {
-    height: 1000px;
-    background-color: white;
-    background-image:
-    linear-gradient(
-    to right,
-    #58595B,
-    #58595B 15%,
-    #ffffff 15%,
-    #ffffff 85%,
-    #58595B 85%
-    );
+
+header {
+    background-color: #FF8202;
+    margin: 0px;
+    padding: 0px;
 }
-input[type=submit] {
-    padding:5px 15px;
-    background:#ccc;
-    border:0 none;
-    font-size: 15px;
-    cursor:pointer;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
-    text-align:center;
+
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    /* Height of the footer */
+    background: #8B8C90;
+    border-top: solid;
+    border-color: #FF8202;
+    border-width: 5px;
 }
-.deg{
-    text-align: center;
-}
-form {
-    font-size: 20px;
-    color: #58595B;
-    text-align:center;
-    width: 550px;
-    height: 350px;
-    border: 2px solid #58595B;
-    padding: 10px 0;
-    margin: 50px auto;
-}
-hr {
-    display: block;
-    height: 1 px;
-    border: 0;
-    border-top: 9px solid #FF8200;
+
+.center{
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
