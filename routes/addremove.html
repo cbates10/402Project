@@ -12,130 +12,129 @@
                 
                 $(document).ready(function(){
                                   
-                                  $.ajax({
-                                         type: "POST",
-                                         url:"../scripts/courseCatalog.php",
-                                         data: { catalogName: getCookie("program") },
-                                         dataType: "json",
-                                         success: function(json) {
-                                         courseHandler(json);
-                                         }
-                                         });
-                                  $("#addCourse input[type='submit']").click(function(event){
-                                                                             event.preventDefault();
-                                                                             console.log($("#prefix option:selected").val());
-                                                                             console.log($("input[name='courseNumber']").val());
-                                                                             console.log($("input[name='courseName']").val());
-                                                                             console.log($("input[name='courseHours']").val());
-                                                                             $.ajax({
-                                                                                    type: "POST",
-                                                                                    url:"../scripts/addCourse.php",
-                                                                                    data: {coursePrefix: $("#prefix option:selected").val(), courseNumber: $("input[name='courseNumber']").val(), courseName: $("input[name='courseName']").val(), courseHoursLow: $("input[name='courseHoursLow']").val(), courseHoursHigh: $("input[name='courseHoursHigh']").val()},
-                                                                                    dataType: "html",
-                                                                                    success: function(html) {
-                                                                                    alert(html);
-                                                                                    }
-                                                                                    });
-                                                                             })
-                                  $("#removeCourse input[type='submit']").click(function(event){
-                                                                                event.preventDefault();
-                                                                                $.ajax({
-                                                                                       type: "POST",
-                                                                                       url:"../scripts/removeCourse.php",
-                                                                                       data: {idCourses: $("#courseList option:selected").val()},
-                                                                                       dataType: "html",
-                                                                                       success: function(html) {
-                                                                                       
-                                                                                       if(html == "success"){
-                                                                                       alert("course removed");
-                                                                                       } else{
-                                                                                       alert(html);
-                                                                                       }
-                                                                                       }
-                                                                                       });
-                                                                                })
+					$.ajax({
+						type: "POST",
+						url:"../scripts/courseCatalog.php",
+						data: { catalogName: getCookie("program") },
+						dataType: "json",
+						success: function(json) {
+							courseHandler(json);
+						}
+					});
+				 
+					$("#addCourse input[type='submit']").click(function(event){
+						event.preventDefault();
+						console.log($("#prefix option:selected").val());
+						console.log($("input[name='courseNumber']").val());
+						console.log($("input[name='courseName']").val());
+						console.log($("input[name='courseHours']").val());
+						$.ajax({
+							type: "POST",
+							url:"../scripts/addCourse.php",
+							data: {coursePrefix: $("#prefix option:selected").val(), courseNumber: $("input[name='courseNumber']").val(), courseName: $("input[name='courseName']").val(), courseHoursLow: $("input[name='courseHoursLow']").val(), courseHoursHigh: $("input[name='courseHoursHigh']").val()},
+							dataType: "html",
+							success: function(html) {
+								alert(html);
+							}
+						});
+					});
+					
+					$("#removeCourse input[type='submit']").click(function(event){
+						event.preventDefault();
+						$.ajax({
+							type: "POST",
+							url:"../scripts/removeCourse.php",
+							data: {idCourses: $("#courseList option:selected").val()},
+							dataType: "html",
+							success: function(html) {
+							   
+								if(html == "success"){
+									alert("course removed");
+								}else{
+									alert(html);
+								}
+							}
+						});
+					});		   
+				});
                                   
                                   
-                                  });
-                                  
-                                  
-                                  function courseHandler(json){
-                                      courseCatalog = json;
-                                      
-                                      var $catalogTable = $("#catalogTable");
-                                      for(var i in courseCatalog){
-                                          $("#courseList").append($("<option>", {
-                                                                    value: i,
-                                                                    text: courseCatalog[i].prefix + " " + courseCatalog[i].number
-                                                                    }));
-                                                                    
-                                                                    var $tableRow = $("<tr>", {
-                                                                                      value: i
-                                                                                      });
-                                                                                      $tableRow.append($("<td>", {
-                                                                                                         class: "editable-col",
-                                                                                                         contenteditable: true,
-                                                                                                         colindex: 0,
-                                                                                                         oldVal: courseCatalog[i].prefix,
-                                                                                                         value: "coursePrefix",
-                                                                                                         text: courseCatalog[i].prefix
-                                                                                                         })).append($("<td>", {
-                                                                                                                      class: "editable-col",
-                                                                                                                      contenteditable: true,
-                                                                                                                      colindex: 1,
-                                                                                                                      oldVal: courseCatalog[i].number,
-                                                                                                                      value: "courseNumber",
-                                                                                                                      text: courseCatalog[i].number
-                                                                                                                      })).append($("<td>", {
-                                                                                                                                   class: "editable-col",
-                                                                                                                                   contenteditable: true,
-                                                                                                                                   colindex: 2,
-                                                                                                                                   oldVal: courseCatalog[i].name,
-                                                                                                                                   value: "courseName",
-                                                                                                                                   text: courseCatalog[i].name
-                                                                                                                                   })).append($("<td>", {
-                                                                                                                                                class: "editable-col",
-                                                                                                                                                contenteditable: true,
-                                                                                                                                                colindex: 3,
-                                                                                                                                                oldVal: courseCatalog[i].lowHours,
-                                                                                                                                                value: "courseHoursLow",
-                                                                                                                                                text: courseCatalog[i].lowHours
-                                                                                                                                                })).append($("<td>", {
-                                                                                                                                                             class: "editable-col",
-                                                                                                                                                             contenteditable: true,
-                                                                                                                                                             colindex: 4,
-                                                                                                                                                             oldVal: courseCatalog[i].highHours,
-                                                                                                                                                             value: "courseHoursHigh",
-                                                                                                                                                             text: courseCatalog[i].highHours
-                                                                                                                                                             }));
-                                                                                                                                                             $catalogTable.append($tableRow);
-                                      }
-                                      
-                                      $('td.editable-col').on('focusout', function() {
-                                                              data = {};
-                                                              data["val"] = $(this).text();
-                                                              data["idCourses"] = $(this).parent().attr("value");
-                                                              data["field"] = $(this).attr("value");
-                                                              if($(this).attr('oldVal') === data['val']) {
-                                                              return false;
-                                                              }
-                                                              
-                                                              $.ajax({
-                                                                     
-                                                                     type: "POST",
-                                                                     url: "../scripts/editCourse.php",
-                                                                     data: data,
-                                                                     dataType: "html",
-                                                                     success: function(response)
-                                                                     {
-                                                                     console.log(response);
-                                                                     }
-                                                                     });
-                                                              })
-                                  }
+				function courseHandler(json){
+					courseCatalog = json;
+							  
+					var $catalogTable = $("#catalogTable");
+					for(var i in courseCatalog){
+						$("#courseList").append($("<option>", {
+							value: i,
+							text: courseCatalog[i].prefix + " " + courseCatalog[i].number
+						}));
+															
+						var $tableRow = $("<tr>", {
+							value: i
+						});
+						$tableRow.append($("<td>", {
+							class: "editable-col",
+							contenteditable: true,
+							colindex: 0,
+							oldVal: courseCatalog[i].prefix,
+							value: "coursePrefix",
+							text: courseCatalog[i].prefix
+						})).append($("<td>", {
+							class: "editable-col",
+							contenteditable: true,
+							colindex: 1,
+							oldVal: courseCatalog[i].number,
+							value: "courseNumber",
+							text: courseCatalog[i].number
+						})).append($("<td>", {
+							class: "editable-col",
+							contenteditable: true,
+							colindex: 2,
+							oldVal: courseCatalog[i].name,
+							value: "courseName",
+							text: courseCatalog[i].name
+					   })).append($("<td>", {
+							class: "editable-col",
+							contenteditable: true,
+							colindex: 3,
+							oldVal: courseCatalog[i].lowHours,
+							value: "courseHoursLow",
+							text: courseCatalog[i].lowHours
+						})).append($("<td>", {
+							class: "editable-col",
+							contenteditable: true,
+							colindex: 4,
+							oldVal: courseCatalog[i].highHours,
+							value: "courseHoursHigh",
+							text: courseCatalog[i].highHours
+						}));
+						$catalogTable.append($tableRow);
+					}
+							  
+					$('td.editable-col').on('focusout', function() {
+						data = {};
+						data["val"] = $(this).text();
+						data["idCourses"] = $(this).parent().attr("value");
+						data["field"] = $(this).attr("value");
+						if($(this).attr('oldVal') === data['val']) {
+							return false;
+						}
+													  
+						$.ajax({ 
+							type: "POST",
+							url: "../scripts/editCourse.php",
+							data: data,
+							dataType: "html",
+							success: function(response)
+							{
+								console.log(response);
+							}
+						});
+					})
+				}
             </script>
             
-            </head>
+    </head>
     <body>
         <div class="container">
         <hr/>
@@ -149,14 +148,14 @@
             </select><br> Course Number:
             <input type="number" name="courseNumber"> <br> Name:
                 
-                <input type="text" name="courseName"> <br> Low Hours:
+            <input type="text" name="courseName"> <br> Low Hours:
                     
-                    <input type="number" name="courseHoursLow"> <br> High Hours:
+            <input type="number" name="courseHoursLow"> <br> High Hours:
                        
-                        <input type="number" name="courseHoursHigh">
-                            <br>
-                            <input type="submit" value="Add Course">
-                                </form>
+            <input type="number" name="courseHoursHigh">
+			<br>
+			<input type="submit" value="Add Course">
+		</form>
         
         <h2>Remove Course</h2>
         <form action="../scripts/removeCourse.php" id="removeCourse" method="POST">
