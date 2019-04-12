@@ -1,86 +1,90 @@
 <!DOCTYPE html>
 <html>
-    <link rel="stylesheet" type="text/css" href = ../styles/index.css>
-        <head>
-            <meta charset="utf8">
-                <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-                <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-                <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
-                <script>
-                    $(document).ready(function(){
-                                      
-                                      $("#loginForm input[type='submit']").click(function(event) {
-                                                                                 event.preventDefault();
-                                                                                 var selection = $("input[name='userType']:checked").val();
-                                                                                 if(selection == "student") {
-                                                                                 // If the user is a student then do not submit to server. Instead set cookies
-                                                                                 document.cookie = "firstName=" + $("#firstName").val();
-                                                                                 document.cookie = "lastName=" + $("#lastName").val();
-                                                                                 document.cookie = "middleName=" + $("#middleName").val();
-                                                                                 document.cookie = "email=" + $("#email").val();
-                                                                                 document.cookie = "studentID=" + $("#studentID").val();
-                                                                                 window.location.href = "degrees.html";
-                                                                                 } else if(selection == "staff") {
-                                                                                 $.ajax({
-                                                                                        type: "POST",
-                                                                                        url: "../scripts/authenticateUser.php",
-                                                                                        data: {username: $("input[name='username']").val(), password: $("input[name='password']").val() },
-                                                                                        dataType: "html",
-                                                                                        success: function(html) {
-                                                                                        if(html === "success") {
-                                                                                        window.location.href = "admin.html";
-                                                                                        } else {
-                                                                                        alert("Login unsuccessful. Invalid username or password");
-                                                                                        }
-                                                                                        }
-                                                                                        });
-                                                                                 }
-                                                                                 });
-                                      
-                                      $("input[name='userType']").change(function(){
-                                                                         if($(this).val() == "student") {
-                                                                         $("#staffInfo").hide();
-                                                                         $("#studentInfo").show();
-                                                                         } else if($(this).val() == "staff") {
-                                                                         $("#studentInfo").hide();
-                                                                         $("#staffInfo").show();
-                                                                         }
-                                                                         });
-                                      });
-                    </script>
-                </head>
-        <body>
-            <div class="container">
-                <hr/>
-                <div id = "box">
-                    <h2>Min H. Kao Department of Electrical Engineering and Computer Science </h2>
-                    <h1>EECS Graduate Forms Central</h1>
-                </div>
-                <form id="loginForm" action="../scripts/authenticateUser.php" method="POST">
-                    <h3>I am a...</h3>
-                    <input type="radio" name="userType" value="student">Student</input>
-                    <br>
-                    <div id="studentInfo" hidden>
-                        <label for="firstName">First Name</label><input id="firstName" type="text" name="firstName" required></input>
-                        <br>
-                        <label for="middeName">Middle Name</label><input id="middleName" type="text" name="middleName" required></input>
-                        <br>
-                        <label for="lastName">Last Name</label><input id="lastName" type="text" name="lastName" required></input>
-                        <br>
-                        <label for="studentID">Student ID</label><input id="studentID" type="text" name="studentID" required></input>
-                        <br>
-                        <label for="email">Email </label><input id="email" type="email" name="email" required></input>
-                    </div>
-                    <br>
-                    <input type="radio" name="userType" value="staff">Staff Member</input>
-                    <div id="staffInfo" hidden>
-                        <label for="username">Username</label><input id="username" type="text" name="username" required></input>
-                        <br>
-                        <label for="password">Password</label><input id="password" type="password" name="password" required></input>
-                    </div>
-                    <br>
-                    <input type="submit"></input>
-                </form>
+<link rel="stylesheet" type="text/css" href=../styles/index.css> <head>
+<meta charset="utf8">
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+<script>
+    $(document).ready(function() {
+
+        $("#loginForm input[type='submit']").click(function(event) {
+            event.preventDefault();
+            var selection = $("input[name='userType']:checked").val();
+            if (selection == "student") {
+                // If the user is a student then do not submit to server. Instead set cookies
+                document.cookie = "firstName=" + $("#firstName").val();
+                document.cookie = "lastName=" + $("#lastName").val();
+                document.cookie = "middleName=" + $("#middleName").val();
+                document.cookie = "email=" + $("#email").val();
+                document.cookie = "studentID=" + $("#studentID").val();
+                window.location.href = "degrees.html";
+            } else if (selection == "staff") {
+                $.ajax({
+                    type: "POST",
+                    url: "../scripts/authenticateUser.php",
+                    data: {
+                        username: $("input[name='username']").val(),
+                        password: $("input[name='password']").val()
+                    },
+                    dataType: "html",
+                    success: function(html) {
+                        if (html === "success") {
+                            window.location.href = "admin.html";
+                        } else {
+                            alert("Login unsuccessful. Invalid username or password");
+                        }
+                    }
+                });
+            }
+        });
+
+        $("input[name='userType']").change(function() {
+            if ($(this).val() == "student") {
+                $("#staffInfo").hide();
+                $("#studentInfo").show();
+            } else if ($(this).val() == "staff") {
+                $("#studentInfo").hide();
+                $("#staffInfo").show();
+            }
+        });
+    });
+</script>
+</head>
+
+<body>
+    <div class="container">
+        <hr />
+        <div id="box">
+            <h2>Min H. Kao Department of Electrical Engineering and Computer Science </h2>
+            <h1>EECS Graduate Forms Central</h1>
+        </div>
+        <form id="loginForm" action="../scripts/authenticateUser.php" method="POST">
+            <h3>I am a...</h3>
+            <input type="radio" name="userType" value="student">Student</input>
+            <br>
+            <div id="studentInfo" hidden>
+                <label for="firstName">First Name</label><input id="firstName" type="text" name="firstName" required></input>
+                <br>
+                <label for="middeName">Middle Name</label><input id="middleName" type="text" name="middleName" required></input>
+                <br>
+                <label for="lastName">Last Name</label><input id="lastName" type="text" name="lastName" required></input>
+                <br>
+                <label for="studentID">Student ID</label><input id="studentID" type="text" name="studentID" required></input>
+                <br>
+                <label for="email">Email </label><input id="email" type="email" name="email" required></input>
             </div>
-        </body>
+            <br>
+            <input type="radio" name="userType" value="staff">Staff Member</input>
+            <div id="staffInfo" hidden>
+                <label for="username">Username</label><input id="username" type="text" name="username" required></input>
+                <br>
+                <label for="password">Password</label><input id="password" type="password" name="password" required></input>
+            </div>
+            <br>
+            <input type="submit"></input>
+        </form>
+    </div>
+</body>
+
 </html>

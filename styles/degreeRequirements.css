@@ -2,7 +2,8 @@ body {
     background-color: #58595B;
 }
 
-h1,h2 {
+h1,
+h2 {
     text-align: center;
     color: white;
     margin: auto;
@@ -25,11 +26,11 @@ h1,h2 {
 }
 
 input[type=submit] {
-    padding:5px 15px;
-    background:#ccc;
-    border:0 none;
+    padding: 5px 15px;
+    background: #ccc;
+    border: 0 none;
     font-size: 15px;
-    cursor:pointer;
+    cursor: pointer;
     -webkit-border-radius: 5px;
     border-radius: 5px;
 }
@@ -41,7 +42,9 @@ hr {
     border-top: 9px solid #FF8200;
 }
 
-input[type=text],input[type=email], input[type=password]{
+input[type=text],
+input[type=email],
+input[type=password] {
     width: 30%;
     box-sizing: border-box;
     border: 2px solid #58595B;
@@ -65,33 +68,31 @@ label {
     height: 1000px;
     background-color: white;
     background-image:
-    linear-gradient(
-    to right,
-    #58595B,
-    #58595B 15%,
-    #ffffff 15%,
-    #ffffff 85%,
-    #58595B 85%
-    );
+        linear-gradient(to right,
+        #58595B,
+        #58595B 15%,
+        #ffffff 15%,
+        #ffffff 85%,
+        #58595B 85%);
 }
 
 #box {
     background: #FF8200;
-    width:950px;
-    height:140px;
+    width: 950px;
+    height: 140px;
     margin: 0 auto;
-    
+
 }
 
 #hourbar {
     background: #FFffff;
-    width:70%;
-    height:140px;
+    width: 70%;
+    height: 140px;
     margin: 0 auto;
-    
+
 }
 
-h5{
+h5 {
     text-align: left;
     color: black;
     margin: auto;
@@ -100,30 +101,34 @@ h5{
     font-size: 25px;
     font: Gotham;
 }
+
 #progressBarContainer {
     background: #FFffff;
-    width:70%;
-    height:30px;
+    width: 70%;
+    height: 30px;
     margin-left: 0%;
-    
+
 }
-#Coursebox{
+
+#Coursebox {
     background: #FFFFFF;
     width: 70%;
-    height:140px;
+    height: 140px;
     margin: 0 auto;
     border: 2px solid black;
 }
-#centerbox{
+
+#centerbox {
     margin-left: 45%;
     margin-top: 10px;
 }
-#candidacyForm{
+
+#candidacyForm {
     height: 80px;
     border-radius: 8px;
 }
-#addCourse
-{
+
+#addCourse {
     height: 50px;
     border-radius: 8px;
 }

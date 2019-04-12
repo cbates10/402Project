@@ -2,7 +2,8 @@ body {
     background-color: #58595B;
 }
 
-h1,h2 {
+h1,
+h2 {
     text-align: center;
     color: white;
     margin: auto;
@@ -14,13 +15,14 @@ h1,h2 {
 form {
     font-size: 20px;
     color: #58595B;
-    text-align:center;
+    text-align: center;
     width: 550px;
     height: 350px;
     border: 2px solid #58595B;
     padding: 10px 0;
     margin: 50px auto;
 }
+
 .button {
     background-color: #ffffff;
     border: none;
@@ -35,11 +37,11 @@ form {
 }
 
 input[type=submit] {
-    padding:5px 15px;
-    background:#ccc;
-    border:0 none;
+    padding: 5px 15px;
+    background: #ccc;
+    border: 0 none;
     font-size: 15px;
-    cursor:pointer;
+    cursor: pointer;
     -webkit-border-radius: 5px;
     border-radius: 5px;
 }
@@ -51,7 +53,9 @@ hr {
     border-top: 9px solid #FF8200;
 }
 
-input[type=text],input[type=email], input[type=password]{
+input[type=text],
+input[type=email],
+input[type=password] {
     width: 30%;
     box-sizing: border-box;
     border: 2px solid #58595B;
@@ -75,19 +79,17 @@ label {
     height: 1000px;
     background-color: white;
     background-image:
-    linear-gradient(
-    to right,
-    #58595B,
-    #58595B 15%,
-    #ffffff 15%,
-    #ffffff 85%,
-    #58595B 85%
-    );
+        linear-gradient(to right,
+        #58595B,
+        #58595B 15%,
+        #ffffff 15%,
+        #ffffff 85%,
+        #58595B 85%);
 }
 
 #box {
     background: #FF8200;
-    width:950px;
-    height:140px;
+    width: 950px;
+    height: 140px;
     margin: 0 auto;
 }
