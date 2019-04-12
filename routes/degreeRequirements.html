@@ -21,12 +21,17 @@
 			var extraCourseCounter = 1; // This counter is used to assign catalog ids to outside department and transfer courses
 			var courseObserver = new CourseObserver();
 			var transferInstitution;
+			var $committeeMembersSubjectSelects = {};
+			var selectedCommittee = [];
 			
             $(document).ready(function(){
 				
 				displayUserInfo();
 				if(programLevel === "PhD") {
 					$("#appliedToMastersContainer").show();
+					initializePhDCommittee();
+				} else {
+					initializeMastersCommittee();
 				}
 				initializeOtherCourseForm(programLevel);
 				
@@ -45,7 +50,12 @@
 						requirementsHandler(json);
 					}
 				});
-
+				
+				$("#committeeSubjects").change(function() {
+					$("#membersSelect").detach();
+					$committeeMembersSubjectSelects[$(this).val()].insertAfter($(this));
+				});
+				
 				$("#catalogList").change(function() {
 					$("#courseList").detach();
 					$catalogs[$(this).val()].insertAfter("#catalogList");
@@ -57,6 +67,26 @@
 					} else {
 						$("#hours").removeAttr("max");
 						$("#hours").removeAttr("min");
+					}
+				});
+				
+				$("#addCommitteeMember").click(function() {
+					var $selectedOption = $("#membersSelect option:selected");
+					var firstName = $selectedOption.attr("firstName");
+					var lastName = $selectedOption.attr("lastName");
+					var id = $selectedOption.attr("id");
+					if(!selectedCommittee.includes(id)) {
+						selectedCommittee.push(id);
+						var $closeButton = $("<button>", {
+							class: "removeButton",
+							text: "X"
+						});
+						$closeButton.click(removeCommitteeEventHandler);
+						var $listItem = $("<li>", {
+							id: id,
+							text: firstName + lastName
+						}).append($closeButton);
+						$("#committeeList").append($listItem);
 					}
 				});
 				
@@ -189,6 +219,15 @@
 					case "fixed":
 						return hourType.FIXED;
 				}
+			}
+			
+			function removeCommitteeEventHandler() {
+				var $listItem = $(this).parent();
+				var committeeId = $listItem.attr("id");
+				selectedCommittee = selectedCommittee.filter(function(id) {
+					id != committeeId;
+				});
+				$listItem.detach();
 			}
 			
 			function removeCourseEventHandler() {
@@ -735,6 +774,67 @@
 					}
 				}
 			}
+			
+			function initializeMastersCommittee() {
+				$("#committeeNumber").text("3");
+				initializeCommitteeMembers();
+			}
+			
+			function initializePhDCommittee() {
+				$("#committeeNumber").text("5");
+				initializeCommitteeMembers();
+			}
+			
+			function loadAllCommitteeMembers(callback) {
+				$.ajax({
+					type: "GET",
+					url: "../scripts/getAllCommitteeMembers.php",
+					dataType: "json",
+					success: function(json) {
+						console.log(json);
+						callback(json);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback({});
+					}
+				});
+			}
+			
+			function initializeCommitteeMembers() {
+				loadAllCommitteeMembers(function(members) {
+					var addedCommitteeSubjects = [];
+					var addedCommitteeMembersBySubject = {};
+					for(var index in members) {
+						if(members[index].subject) {
+							if(!addedCommitteeSubjects.includes(members[index].subject)) {
+								addedCommitteeSubjects.push(members[index].subject);
+								if(!addedCommitteeMembersBySubject[members[index].subject]) {
+									addedCommitteeMembersBySubject[members[index].subject] = [];
+									$committeeMembersSubjectSelects[members[index].subject] = $("<select>", { id: "membersSelect" } );
+								}
+								$("#committeeSubjects").append($("<option>", {
+									value: members[index].subject,
+									text: members[index].subject
+								}));
+								console.log(members[index].id);
+								if(!addedCommitteeMembersBySubject[members[index].subject].includes(members[index].id)) {
+									addedCommitteeMembersBySubject[members[index].subject].push(members[index].id);
+									var $memberOption = $("<option>", {
+										id: members[index].id, 
+										value: members[index].firstName + " " + members[index].lastName,
+										text: members[index].firstName + " " + members[index].lastName,
+										firstName: members[index].firstName,
+										lastName: members[index].lastName
+									});
+									$committeeMembersSubjectSelects[members[index].subject].append($memberOption)
+								}
+							}
+						}
+					}
+					$committeeMembersSubjectSelects[$("#committeeSubjects option:selected").val()].insertAfter($("#committeeSubjects"));
+				});
+			}
         </script>
     </head>
     <body>
@@ -798,6 +898,14 @@
 			</table>
 		</div>
 		<button id="candidacyForm" type="button" disabled>Admission To Candidacy</button>
+		<div id="committeeContainer">
+			<h2>Committee Selection</h2>
+			<label for="committeeNumber">Required Number of Committee Members: </label><span id="committeeNumber"></span>
+			<ul id="committeeList">
+				
+			</ul>
+			<select id="committeeSubjects"></select><button id="addCommitteeMember">Add Member</button>
+		</div>
 		<div id="certificateContainer" hidden>
 			<h2>Certificates</h2>
 			<ul id="certificateList">
