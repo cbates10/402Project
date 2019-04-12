@@ -43,6 +43,7 @@
 							type: "radio",
 							value: degreeLevel,
 							name: "degreeLevel",
+							hidden: true
 						})).append($("<label>", {
 							text: degreeLevel
 						})));
@@ -55,7 +56,8 @@
 								type: "radio",
 								value: degreeSubject,
 								name: "degreeSubject",
-								required: true
+								required: true,
+								hidden: true
 							})).append($("<label>", {
 								text: degreeSubject
 							})));
