@@ -84,7 +84,7 @@
 						$closeButton.click(removeCommitteeEventHandler);
 						var $listItem = $("<li>", {
 							id: id,
-							text: firstName + lastName
+							text: firstName + " " + lastName
 						}).append($closeButton);
 						$("#committeeList").append($listItem);
 					}
@@ -818,17 +818,17 @@
 									text: members[index].subject
 								}));
 								console.log(members[index].id);
-								if(!addedCommitteeMembersBySubject[members[index].subject].includes(members[index].id)) {
-									addedCommitteeMembersBySubject[members[index].subject].push(members[index].id);
-									var $memberOption = $("<option>", {
-										id: members[index].id, 
-										value: members[index].firstName + " " + members[index].lastName,
-										text: members[index].firstName + " " + members[index].lastName,
-										firstName: members[index].firstName,
-										lastName: members[index].lastName
-									});
-									$committeeMembersSubjectSelects[members[index].subject].append($memberOption)
-								}
+							}
+							if(!addedCommitteeMembersBySubject[members[index].subject].includes(members[index].id)) {
+								addedCommitteeMembersBySubject[members[index].subject].push(members[index].id);
+								var $memberOption = $("<option>", {
+									id: members[index].id, 
+									value: members[index].firstName + " " + members[index].lastName,
+									text: members[index].firstName + " " + members[index].lastName,
+									firstName: members[index].firstName,
+									lastName: members[index].lastName
+								});
+								$committeeMembersSubjectSelects[members[index].subject].append($memberOption);
 							}
 						}
 					}
