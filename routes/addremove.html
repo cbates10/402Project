@@ -146,17 +146,19 @@
 </head>
 
 <body>
-    <header>
+
+    <div class="container">
+        <header>
         <img src="../routes/logo.png" width="145" height="100" alt="logo" />
     </header>
-    <div class="container">
         <h2>Add Course</h2>
         <form action="../scripts/addCourse.php" id="addCourse" method="POST"> Prefix:
             <!--<input type="text" name="prefix">-->
             <select id="prefix" name="coursePrefix" form="addCourse">
                 <option value="COSC">COSC</option>
                 <option value="EECS">EECS</option>
-            </select><br> Course Number:
+            </select>
+            <label for= "courseNumber">Course Number</label>
             <input type="number" name="courseNumber"> <br> Name:
 
             <input type="text" name="courseName"> <br> Low Hours:
@@ -189,7 +191,7 @@
         </table>
     </div>
 </body>
-<footer class="site-footer">
+            <footer class="footer">
     <img src="../routes/botlogo.png" width="245" height="80" alt="logo" class="center" />
 </footer>
 
