@@ -152,21 +152,21 @@
         <img src="../routes/logo.png" width="145" height="100" alt="logo" />
     </header>
         <h2>Add Course</h2>
-        <form action="../scripts/addCourse.php" id="addCourse" method="POST"> Prefix:
+        <form action="../scripts/addCourse.php" id="addCourse" method="POST"> <label for= "courseName">Name</label>
             <!--<input type="text" name="prefix">-->
             <select id="prefix" name="coursePrefix" form="addCourse">
                 <option value="COSC">COSC</option>
                 <option value="EECS">EECS</option>
             </select>
             <label for= "courseNumber">Course Number</label>
-            <input type="number" name="courseNumber"> <br> Name:
+            <input type="number" name="courseNumber"> <label for= "courseName">Name</label>
 
-            <input type="text" name="courseName"> <br> Low Hours:
+            <input type="text" name="courseName"> <label for= "courseHoursLow">Low Hours</label>
 
-            <input type="number" name="courseHoursLow"> <br> High Hours:
+            <input type="number" name="courseHoursLow"> <label for= "courseHoursHigh">High Hours</label>
 
             <input type="number" name="courseHoursHigh">
-            <br>
+            
             <input type="submit" value="Add Course">
         </form>
 
