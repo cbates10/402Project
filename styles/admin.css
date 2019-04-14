@@ -22,3 +22,8 @@ footer {
     border-color: #FF8202;
     border-width: 5px;
 }
+.center{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
