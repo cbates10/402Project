@@ -1,0 +1,24 @@
+html {height: 100%;}
+
+body {
+    height: auto;
+    margin: 0;
+    background : url("bkg.jpg");
+    background-position:right bottom;
+    background-repeat: no-repeat;
+}
+header {
+    background-color: #FF8202;
+    margin: 0px;
+    padding: 0px;
+    text-align:left;
+}
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: #8B8C90;
+    border-top: solid;
+    border-color: #FF8202;
+    border-width: 5px;
+}
