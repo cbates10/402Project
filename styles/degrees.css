@@ -51,6 +51,9 @@ label{
 .container{
     flex: 1 auto;
     flex-grow: 1;
+        background : url("bkg.jpg");
+    background-position:right bottom;
+    background-repeat: no-repeat;
 }
 
 .center{

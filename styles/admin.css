@@ -4,10 +4,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    margin: 0;
-    background : url("bkg.jpg");
-    background-position:right bottom;
-    background-repeat: no-repeat;
+    margin: 0
 }
 header {
     background-color: #FF8202;
@@ -24,9 +21,12 @@ footer {
     border-color: #FF8202;
     border-width: 5px;
 }
-.modal{
-    flex: 1 auto;
+.box{
+        flex: 1 auto;
     flex-grow: 1;
+    background : url("bkg.jpg");
+    background-position:right bottom;
+    background-repeat: no-repeat;
     
 }
 .center{
