@@ -3,7 +3,20 @@
 Project goal: implement a proof-of-concept for a better system for keeping track of graduate student requirements. This system will allow students to correctly understand degree program requirements and correctly fill out graduate school forms. The ideal final product is a system similar in functionality to the undergraduate DARs but expanded to incorporate the extra nuances of graduate school at UT.
 
 ## The Following is a Technical Report of EECS Graduate Student Forms Central, click on a list item to be taken to the section detailing the project implementation.
+- ## [Server Setup](#setup)
 - ## [Database Design](#database) 
+- ## [Student Page](#student-page)
+
+# Setup
+
+The environment used throughout the development is as follows:
+- MySQL Server 5.5 https://dev.mysql.com/downloads/mysql/5.5.html
+- XAMMP (PHP enabled) https://www.apachefriends.org/index.html
+- PDFtoolkit Server https://www.pdflabs.com/tools/pdftk-server/
+
+Any PHP enabled webserver can be used to host the website; however, the proceeding environment setup will describe how the application was configured with XAMMP. Firstly, the MySQL server should be running and open to connections. A MySQL dump file can be found in the resources of this project. This dump file can be used to populate the database. The specification for what database the server uses can be found in *DatabaseInfo.php*. Install XAMMP and ensure PHP is enabled (the setup wizard enables PHP by default). The htdocs folder in XAMMP is where the repository should be placed. With the repository in htdocs the web application can simply be visited at localhost/402Project. 
+### PDFtoolkit Server
+In order for the PDF form automatic population to function properly PDFtoolkit Server should be installed and added to the Path. 
 
 # Database 
 
@@ -37,3 +50,17 @@ This relation defines the relationship that Objects can have with itself. Take f
 ### GlobalRequirements Entity
 Also thought of as University requirements, this table allows for global requirements to be enforced for each different type of Object. For example the global requirement for PhD may enforce a minimum grade of B. Whenever information is retrieved from the database for a PhD then the global requirement relation can be queried to see if an objects individual requirements conforms with the global requirements. 
 ### HoursbyLevel Entity 
+This table handles the hour restrictions for specific course levels such as 400, 500, and 600 level hours. Originally designed to support just these three hour restrictions, this table was later extended to support PhD exclusive, transfer, and outside department hours. Fields of note in the relation are *type* and *cap*. The *cap* field can be either "maximum" or "minimum" and as the name implies these are used to distinguish a maximum hour restriction from a minimum restriction. The *type* field was added later in development to accomodate both *fixed* and *variable* hours. *Fixed* is intended to signify that an hour requirement does not change when the number of hours applied to a degree exceed the maximum. As an example between the differences between *fixed* and *variable* consider a program with a required hour count of 30 hours. With a *fixed* 400-level hour minimum of 10 hours, even if 40 hours are applied to the degree then the hour minimum would still be maintained at 10 hours. On the other hand a *variable* 400-level hour minimum could be applied instead. The hour minimum would be 10 hours up until the required 30 hours is met. Any more hours applied will increase the hours minimum to be 1/3 of the total hours applied above the minimum hour requirement. 
+### GraduateFaculty Entity
+For forms such as the Admission to Candidacy Form there are committee members that must be selected. The approved members come from the GraduateFaculty relation. The *GraduateFaculty* entity is related to the *CommitteeTitles* and *CommitteeMapping* relations. Members of the graduate faculty can be appointed to different titles for different subjects. This is where the *CommitteeMapping* relation comes into play. A member may be mapped to a specific subject with an approved title that comes form the *CommitteeTitles* relation. In this way faculty may be approved to be ChairPersons on graduate committees or simply serve only as members. 
+# Student Page
+The core script for the student page is Requirements.php. This script will return all the information associated with a degree program's requirements. This also includes all requirements for any objects that are mapped to the degree program (such as Minors or Certificates). An example of how the object returned to the client by Requirements.php is given below.
+![Image of Requirements Object](./resources/RequirementsOutcome.png)
+The returned object contains array fields for 
+- Catalogs (Contains the names of all catalogs applicable to the degree)
+- Certificate (Array of all certificates and their requirements)
+- Form (Array of all forms and their requirements)
+- Minor (Array of all minors and their requirements)
+
+Each entry in the Certificate, Form, and Minor arrays corresponds to an individual certificate, form, or minor. The structure of the entries in these arrays is the same as the structure shown for the Degree Program. When all this information is retrieved from the server then the webpage processes and displays the information. The design for requirement processing is illustrated below.
+![Image of Student Page Logic](./resources/StudentPageLogic.png)
