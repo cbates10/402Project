@@ -10,7 +10,7 @@ header {
     background-color: #FF8202;
     margin: 0px;
     padding: 0px;
-    text-align:left;
+    height: 110px;
 }
 footer {
     flex-shrink: 0;
@@ -20,6 +20,9 @@ footer {
     border-top: solid;
     border-color: #FF8202;
     border-width: 5px;
+}
+.top{
+    position:absolute;
 }
 .marg{
     flex: 1 auto;
@@ -46,4 +49,37 @@ footer {
     margin-right: auto;
     
 }
-
+input[type=text],
+input[type=number],
+select {
+    width: 80px;
+    padding: 10px 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font: verdana;
+    font-size: 20;
+}
+input[type=button],input[type=submit], button{
+    -moz-box-shadow: inset 0px 39px 0px -24px #e67a73;
+    -webkit-box-shadow: inset 0px 39px 0px -24px #FF8202;
+    box-shadow: inset 0px 39px 0px -24px #FF8202;
+    background-color: #FF8202;
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    border-radius: 7px;
+    border: 2px solid #ffffff;
+    cursor: pointer;
+    color: #ffffff;
+    font-family: Arial;
+    font-size: 15px;
+    padding: 14px 21px;
+    text-decoration: none;
+    text-shadow: 0px 1px 0px #b23e35;
+    margin-left: auto;
+    margin-right: auto;
+}

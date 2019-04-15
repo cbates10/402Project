@@ -42,7 +42,7 @@
             }).append($("<input>", {
                 type: "radio",
                 value: degreeLevel,
-                name: "degreeLevel",
+                name: "degreeLevel", hidden: true
             })).append($("<label>", {
                 text: degreeLevel
             })));
@@ -55,7 +55,7 @@
                     type: "radio",
                     value: degreeSubject,
                     name: "degreeSubject",
-				required: true,
+                    required: true, hidden:true
                 })).append($("<label>", {
                     text: degreeSubject
                 })));
@@ -87,12 +87,12 @@
 
 <body>
     <div class="container">
-            <header>
-        <img src="../routes/logo.png" width="145" height="100" alt="logo" />
-    </header>
+        <header>
+            <img src="../routes/logo.png" width="145" height="100" alt="logo" class="top" />
+        </header>
         <form id="programForm" class="center" action="../scripts/setProgram.php" method="POST">
-            <div class="deg" >
-                <ul id="degreePrograms" >
+            <div class="deg">
+                <ul id="degreePrograms">
 
                 </ul>
             </div>
@@ -101,9 +101,9 @@
 
 
     </div>
-        <footer>
-    <img src="../routes/botlogo.png" width="245" height="80" alt="botlogo" class="center"/>
-</footer>
+    <footer>
+        <img src="../routes/botlogo.png" width="245" height="80" alt="botlogo" class="center" />
+    </footer>
 </body>
 
 </html>

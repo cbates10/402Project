@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <link rel="stylesheet" type="text/css" href="../styles/popup.css">
-    <link rel="stylesheet" type="text/css" href="../styles/admin.css">
+<link rel="stylesheet" type="text/css" href="../styles/admin.css">
 
 <head>
     <meta charset="utf8">
@@ -1849,192 +1849,191 @@
         }
     </script>
 </head>
-
 <body>
     <header>
-        <img src="../routes/logo.png" width="145" height="100" alt="logo"/>
+        <img src="../routes/logo.png" width="145" height="100" alt="logo" />
     </header>
     <div class="marg">
-    <div class="box">
-    <div id="listContainer">
-        <li name="editCommittee"><a style="cursor:pointer">Edit Graduate Committees</a></li>
-        <br>
+        <div class="box">
+            <div id="listContainer">
+                <li name="editCommittee"><a style="cursor:pointer">Edit Graduate Committees</a></li>
+                <br>
 
-    </div>
-    <div id="globalModal" class="modal">
-        <div class="modal-content">
-            <span onclick="closeGlobal()" class="close">&times;</span>
-            <div id="globalContent">
-                <label for="globalGrade">Minimum Grade: </label><input type="text" id="globalGrade" size="2" maxlength="2" pattern="([ABCDF]{1}[-+]{0,1}){0,1}">
-                <label for="globalGPA">Minimum GPA: </label><input type="number" id="globalGPA" step="0.01" style="width:50px">
-                <input id="saveGlobal" type="submit" value="Save"></input>
+            </div>
+            <div id="globalModal" class="modal">
+                <div class="modal-content">
+                    <span onclick="closeGlobal()" class="close">&times;</span>
+                    <div id="globalContent">
+                        <label for="globalGrade">Minimum Grade: </label><input type="text" id="globalGrade" size="2" maxlength="2" pattern="([ABCDF]{1}[-+]{0,1}){0,1}">
+                        <label for="globalGPA">Minimum GPA: </label><input type="number" id="globalGPA" step="0.01" style="width:50px">
+                        <input id="saveGlobal" type="submit" value="Save"></input>
+                    </div>
+                </div>
+            </div>
+            <div id="committeeModal" class="modal">
+                <div class="modal-content">
+                    <span onclick="closeCommittee()" class="close">&times;</span>
+                    <div id="committeeContent">
+                        <h2>Add Members</h2>
+                        Subject<select id="committeeSubject"></select>
+                        Member<select id="committeeMembers">
+                            <option value="newMember">New Member</option>
+                        </select>
+                        <span id="newCommitteeMemberContainer" hidden>
+                            <label for="firstName">First Name:</label><input type="text" id="firstName" style="width:100px"></input>
+                            <label for="lastName">Last Name:</label><input type="text" id="lastName" style="width:100px"></input>
+                        </span>
+                        Title<select id="committeeTitle" style="width:100px"></select>
+                        <input type="button" id="addNewCommitteeMemberButton" value="Add"></input>
+                        <h2>Committee</h2>
+                        <table id="committeeTable">
+                            <tbody id="committeeTableBody">
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Title</th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="addNewItemModal" class="modal">
+                <div class="modal-content">
+                    <span onclick="closeAddItem()" class="close">&times;</span>
+                    <div id="addNewItemContent">
+                        <label for="newItemCategories">Category :</label>
+                        <select id="newItemCategories">
+
+                        </select>
+                        <br>
+                        <label for="objectSubect" id="objectSubjectLabel">Subject :</label>
+                        <span id="newObjectSubjectSpan" hidden>
+                            <label for="newObjectSubject">Subject Name :</label>
+                            <input type="text" id="newObjectSubject"></input>
+                        </span>
+                        <br>
+                        <label for="newItemName">Name: </label>
+                        <input type="text" id="newItemName"></input>
+                        <br>
+                        <input type="button" id="addNewItemButton" value="Add"></input>
+                    </div>
+                </div>
+            </div>
+            <div id="myModal" class="modal">
+                <div class="modal-content">
+                    <span onclick="closepopup()" class="close">&times;</span>
+                    <div id="popupform">
+                        Required Hours: <input type="number" id="requiredHrs" style="width:50px">
+                        <br>
+                        400 Hours Minimum: <input type="number" id="400HrsMin" style="width:50px">
+                        <label for="400HrsMinOptionFixed">Fixed</label><input type="radio" id="400HrsMinOptionFixed" name="400HrsMinOption" value="fixed">
+                        <label for="400HrsMinOptionVariable">Variable</label><input type="radio" id="400HrsMinOptionVariable" name="400HrsMinOption" value="variable">
+                        <br>
+                        400 Hours Maximum: <input type="number" id="400HrsMax" style="width:50px">
+                        <label for="400HrsMaxOptionFixed">Fixed</label><input type="radio" id="400HrsMaxOptionFixed" name="400HrsMaxOption" value="fixed">
+                        <label for="400HrsMaxOptionVariable">Variable</label><input type="radio" id="400HrsMaxOptionVariable" name="400HrsMaxOption" value="variable">
+                        <br>
+                        500 Hours Minimum: <input type="number" id="500HrsMin" style="width:50px">
+                        <label for="500HrsMinOptionFixed">Fixed</label><input type="radio" id="500HrsMinOptionFixed" name="500HrsMinOption" value="fixed">
+                        <label for="500HrsMinOptionVariable">Variable</label><input type="radio" id="500HrsMinOptionVariable" name="500HrsMinOption" value="variable">
+                        <br>
+                        500 Hours Maximum: <input type="number" id="500HrsMax" style="width:50px">
+                        <label for="500HrsMaxOptionFixed">Fixed</label><input type="radio" id="500HrsMaxOptionFixed" name="500HrsMaxOption" value="fixed">
+                        <label for="500HrsMaxOptionVariable">Variable</label><input type="radio" id="500HrsMaxOptionVariable" name="500HrsMaxOption" value="variable">
+                        <br>
+                        600 Hours Minimum: <input type="number" id="600HrsMin" style="width:50px">
+                        <label for="600HrsMinOptionFixed">Fixed</label><input type="radio" id="600HrsMinOptionFixed" name="600HrsMinOption" value="fixed">
+                        <label for="600HrsMinOptionVariable">Variable</label><input type="radio" id="600HrsMinOptionVariable" name="600HrsMinOption" value="variable">
+                        <br>
+                        600 Hours Maximum: <input type="number" id="600HrsMax" style="width:50px">
+                        <label for="600HrsMaxOptionFixed">Fixed</label><input type="radio" id="600HrsMaxOptionFixed" name="600HrsMaxOption" value="fixed">
+                        <label for="600HrsMaxOptionVariable">Variable</label><input type="radio" id="600HrsMaxOptionVariable" name="600HrsMaxOption" value="variable">
+                        <br>
+                        Transfer Hours Maximum: <input type="number" id="trhrs" style="width:50px">
+                        <label for="TransferHrsMaxOptionFixed">Fixed</label><input type="radio" id="TransferHrsMaxOptionFixed" name="TransferHrsMaxOption" value="fixed">
+                        <label for="TransferHrsMaxOptionVariable">Variable</label><input type="radio" id="TransferHrsMaxOptionVariable" name="TransferHrsMaxOption" value="variable">
+                        <br>
+                        Outside Hours Maximum: <input type="number" id="ohrs" style="width:50px">
+                        <label for="OutsideHrsMaxOptionFixed">Fixed</label><input type="radio" id="OutsideHrsMaxOptionFixed" name="OutsideHrsMaxOption" value="fixed">
+                        <label for="OutsideHrsMaxOptionVariable">Variable</label><input type="radio" id="OutsideHrsMaxOptionVariable" name="OutsideHrsMaxOption" value="variable">
+                        <br>
+                        <span id="PhDOptions" hidden>
+                            Graduate Only Hours Minimum: <input type="number" id="PhDonly" style="width:50px">
+                            <label for="PhDHrsMinOptionFixed">Fixed</label><input type="radio" id="PhDHrsMinOptionFixed" name="PhDHrsMinOption" value="fixed">
+                            <label for="PhDHrsMinOptionVariable">Variable</label><input type="radio" id="PhDHrsMinOptionVariable" name="PhDHrsMinOption" value="variable">
+                            <br>
+                        </span>
+                        Minimum Grade: <input type="text" id="grade" style="width:50px">
+                        <br>
+                        Minimum GPA: <input type="number" id="minimumGPA" step="0.01" style="width:50px">
+                    </div>
+                    <div id="applicableCatalogs">
+                        <h2>Applicable Catalogs</h2>
+                        <ul id="applicableCatalogsList">
+
+                        </ul>
+                        Catalog: <select id="applicableCatalogsSelect"></select><input type="button" id="addCatalogButton" value="Add Catalog" />
+                    </div>
+                    <div id="restrictedCatalog">
+                        <h2>Additional Creditable Courses</h2>
+                        <input id="allCoursesRadio" type="radio" name="restrictedOptions" value="allCourses"><label for="allCoursesRadio">Entire Catalog Applies</label><br>
+                        <input id="requiredOnlyRadio" type="radio" name="restrictedOptions" value="requiredOnlyCourses"><label for="requiredOnlyRadio">Required Courses Only</label><br>
+                        <input id="restictedCoursesRadio" type="radio" name="restrictedOptions" value="restrictedCourses"><label for="restrictedCoursesRadio">Specify Catalog Courses</label><br>
+                        <div id="restrictedCatalogOptions" hidden>
+                            <ul id="restrictedCourseList">
+
+                            </ul>
+                            Catalog: <select id="catalogListRestricted"></select><label for="classList" id="classListLabelRestricted">Class:</label><input type="button" id="addClassButtonRestricted" value="Add Class" />
+                        </div>
+                    </div>
+                    <div id="requiredClasses">
+                        <h2>Required Courses</h2>
+                        <ul id="classsublist">
+
+                        </ul>
+                        Catalog: <select id="catalogList"></select><label for="classList" id="classListLabel">Class:</label><input type="button" id="addClassButton" value="Add Class" />
+                    </div>
+                    <div id="overridesContainer">
+                        <h2>Course Overrides</h2>
+                        <ul id="courseOverrideList">
+
+                        </ul>
+
+                        Catalog: <select id="catalogListOverrides"></select><label for="classList" id="classListLabelOverrides">Class:</label><input type="button" id="addClassButtonOverrides" value="Add Class" />
+                    </div>
+                    <div id="additionalOptionsContainer" hidden>
+                        <div id="minorContainer">
+                            <h2>Applicable Minors</h2>
+                            <ul id="minorList">
+
+                            </ul>
+                            Subject: <select id="minorSubjectList"></select><label for="minorSelect" id="minorSelectLabel">Minor:</label><input type="button" id="addMinorButton" value="Add Minor" />
+                        </div>
+                        <div id="certificateContainer">
+                            <h2>Applicable Certificates</h2>
+                            <ul id="certificateList">
+
+                            </ul>
+                            Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Certificate:</label><input type="button" id="addCertificateButton" value="Add Certificate" />
+                        </div>
+                        <div id="formContainer">
+                            <h2>Applicable Forms</h2>
+                            <ul id="formList">
+
+                            </ul>
+                            Subject: <select id="formSubjectList"></select><label for="formSelect" id="formSelectLabel">Form:</label><input type="button" id="addFormButton" value="Add Form" />
+                        </div>
+                        <br>
+                    </div>
+                    <input id="saveForm" type="submit" value="Save"></input>
+                    <input id="deleteForm" type="button" value="Delete Program"></input>
+                </div>
             </div>
         </div>
     </div>
-    <div id="committeeModal" class="modal">
-        <div class="modal-content">
-            <span onclick="closeCommittee()" class="close">&times;</span>
-            <div id="committeeContent">
-                <h2>Add Members</h2>
-                Subject<select id="committeeSubject"></select>
-                Member<select id="committeeMembers">
-                    <option value="newMember">New Member</option>
-                </select>
-                <span id="newCommitteeMemberContainer" hidden>
-                    <label for="firstName">First Name:</label><input type="text" id="firstName" style="width:100px"></input>
-                    <label for="lastName">Last Name:</label><input type="text" id="lastName" style="width:100px"></input>
-                </span>
-                Title<select id="committeeTitle" style="width:100px"></select>
-                <input type="button" id="addNewCommitteeMemberButton" value="Add"></input>
-                <h2>Committee</h2>
-                <table id="committeeTable">
-                    <tbody id="committeeTableBody">
-                        <tr>
-                            <th>Subject</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Title</th>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <div id="addNewItemModal" class="modal">
-        <div class="modal-content">
-            <span onclick="closeAddItem()" class="close">&times;</span>
-            <div id="addNewItemContent">
-                <label for="newItemCategories">Category :</label>
-                <select id="newItemCategories">
-
-                </select>
-                <br>
-                <label for="objectSubect" id="objectSubjectLabel">Subject :</label>
-                <span id="newObjectSubjectSpan" hidden>
-                    <label for="newObjectSubject">Subject Name :</label>
-                    <input type="text" id="newObjectSubject"></input>
-                </span>
-                <br>
-                <label for="newItemName">Name: </label>
-                <input type="text" id="newItemName"></input>
-                <br>
-                <input type="button" id="addNewItemButton" value="Add"></input>
-            </div>
-        </div>
-    </div>
-    <div id="myModal" class="modal">
-        <div class="modal-content">
-            <span onclick="closepopup()" class="close">&times;</span>
-            <div id="popupform">
-                Required Hours: <input type="number" id="requiredHrs" style="width:50px">
-                <br>
-                400 Hours Minimum: <input type="number" id="400HrsMin" style="width:50px">
-                <label for="400HrsMinOptionFixed">Fixed</label><input type="radio" id="400HrsMinOptionFixed" name="400HrsMinOption" value="fixed">
-                <label for="400HrsMinOptionVariable">Variable</label><input type="radio" id="400HrsMinOptionVariable" name="400HrsMinOption" value="variable">
-                <br>
-                400 Hours Maximum: <input type="number" id="400HrsMax" style="width:50px">
-                <label for="400HrsMaxOptionFixed">Fixed</label><input type="radio" id="400HrsMaxOptionFixed" name="400HrsMaxOption" value="fixed">
-                <label for="400HrsMaxOptionVariable">Variable</label><input type="radio" id="400HrsMaxOptionVariable" name="400HrsMaxOption" value="variable">
-                <br>
-                500 Hours Minimum: <input type="number" id="500HrsMin" style="width:50px">
-                <label for="500HrsMinOptionFixed">Fixed</label><input type="radio" id="500HrsMinOptionFixed" name="500HrsMinOption" value="fixed">
-                <label for="500HrsMinOptionVariable">Variable</label><input type="radio" id="500HrsMinOptionVariable" name="500HrsMinOption" value="variable">
-                <br>
-                500 Hours Maximum: <input type="number" id="500HrsMax" style="width:50px">
-                <label for="500HrsMaxOptionFixed">Fixed</label><input type="radio" id="500HrsMaxOptionFixed" name="500HrsMaxOption" value="fixed">
-                <label for="500HrsMaxOptionVariable">Variable</label><input type="radio" id="500HrsMaxOptionVariable" name="500HrsMaxOption" value="variable">
-                <br>
-                600 Hours Minimum: <input type="number" id="600HrsMin" style="width:50px">
-                <label for="600HrsMinOptionFixed">Fixed</label><input type="radio" id="600HrsMinOptionFixed" name="600HrsMinOption" value="fixed">
-                <label for="600HrsMinOptionVariable">Variable</label><input type="radio" id="600HrsMinOptionVariable" name="600HrsMinOption" value="variable">
-                <br>
-                600 Hours Maximum: <input type="number" id="600HrsMax" style="width:50px">
-                <label for="600HrsMaxOptionFixed">Fixed</label><input type="radio" id="600HrsMaxOptionFixed" name="600HrsMaxOption" value="fixed">
-                <label for="600HrsMaxOptionVariable">Variable</label><input type="radio" id="600HrsMaxOptionVariable" name="600HrsMaxOption" value="variable">
-                <br>
-                Transfer Hours Maximum: <input type="number" id="trhrs" style="width:50px">
-                <label for="TransferHrsMaxOptionFixed">Fixed</label><input type="radio" id="TransferHrsMaxOptionFixed" name="TransferHrsMaxOption" value="fixed">
-                <label for="TransferHrsMaxOptionVariable">Variable</label><input type="radio" id="TransferHrsMaxOptionVariable" name="TransferHrsMaxOption" value="variable">
-                <br>
-                Outside Hours Maximum: <input type="number" id="ohrs" style="width:50px">
-                <label for="OutsideHrsMaxOptionFixed">Fixed</label><input type="radio" id="OutsideHrsMaxOptionFixed" name="OutsideHrsMaxOption" value="fixed">
-                <label for="OutsideHrsMaxOptionVariable">Variable</label><input type="radio" id="OutsideHrsMaxOptionVariable" name="OutsideHrsMaxOption" value="variable">
-                <br>
-                <span id="PhDOptions" hidden>
-                    Graduate Only Hours Minimum: <input type="number" id="PhDonly" style="width:50px">
-                    <label for="PhDHrsMinOptionFixed">Fixed</label><input type="radio" id="PhDHrsMinOptionFixed" name="PhDHrsMinOption" value="fixed">
-                    <label for="PhDHrsMinOptionVariable">Variable</label><input type="radio" id="PhDHrsMinOptionVariable" name="PhDHrsMinOption" value="variable">
-                    <br>
-                </span>
-                Minimum Grade: <input type="text" id="grade" style="width:50px">
-                <br>
-                Minimum GPA: <input type="number" id="minimumGPA" step="0.01" style="width:50px">
-            </div>
-            <div id="applicableCatalogs">
-                <h2>Applicable Catalogs</h2>
-                <ul id="applicableCatalogsList">
-
-                </ul>
-                Catalog: <select id="applicableCatalogsSelect"></select><input type="button" id="addCatalogButton" value="Add Catalog" />
-            </div>
-            <div id="restrictedCatalog">
-                <h2>Additional Creditable Courses</h2>
-                <input id="allCoursesRadio" type="radio" name="restrictedOptions" value="allCourses"><label for="allCoursesRadio">Entire Catalog Applies</label><br>
-                <input id="requiredOnlyRadio" type="radio" name="restrictedOptions" value="requiredOnlyCourses"><label for="requiredOnlyRadio">Required Courses Only</label><br>
-                <input id="restictedCoursesRadio" type="radio" name="restrictedOptions" value="restrictedCourses"><label for="restrictedCoursesRadio">Specify Catalog Courses</label><br>
-                <div id="restrictedCatalogOptions" hidden>
-                    <ul id="restrictedCourseList">
-
-                    </ul>
-                    Catalog: <select id="catalogListRestricted"></select><label for="classList" id="classListLabelRestricted">Class:</label><input type="button" id="addClassButtonRestricted" value="Add Class" />
-                </div>
-            </div>
-            <div id="requiredClasses">
-                <h2>Required Courses</h2>
-                <ul id="classsublist">
-
-                </ul>
-                Catalog: <select id="catalogList"></select><label for="classList" id="classListLabel">Class:</label><input type="button" id="addClassButton" value="Add Class" />
-            </div>
-            <div id="overridesContainer">
-                <h2>Course Overrides</h2>
-                <ul id="courseOverrideList">
-
-                </ul>
-
-                Catalog: <select id="catalogListOverrides"></select><label for="classList" id="classListLabelOverrides">Class:</label><input type="button" id="addClassButtonOverrides" value="Add Class" />
-            </div>
-            <div id="additionalOptionsContainer" hidden>
-                <div id="minorContainer">
-                    <h2>Applicable Minors</h2>
-                    <ul id="minorList">
-
-                    </ul>
-                    Subject: <select id="minorSubjectList"></select><label for="minorSelect" id="minorSelectLabel">Minor:</label><input type="button" id="addMinorButton" value="Add Minor" />
-                </div>
-                <div id="certificateContainer">
-                    <h2>Applicable Certificates</h2>
-                    <ul id="certificateList">
-
-                    </ul>
-                    Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Certificate:</label><input type="button" id="addCertificateButton" value="Add Certificate" />
-                </div>
-                <div id="formContainer">
-                    <h2>Applicable Forms</h2>
-                    <ul id="formList">
-
-                    </ul>
-                    Subject: <select id="formSubjectList"></select><label for="formSelect" id="formSelectLabel">Form:</label><input type="button" id="addFormButton" value="Add Form" />
-                </div>
-                <br>
-            </div>
-            <input id="saveForm" type="submit" value="Save"></input>
-            <input id="deleteForm" type="button" value="Delete Program"></input>
-        </div>
-    </div>
-</div>
-</div>
-<footer>
+    <footer>
         <img src="../routes/botlogo.png" width="245" height="80" alt="logo" class="center" />
     </footer>
 </body>

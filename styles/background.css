@@ -11,13 +11,19 @@ header {
     background-color: #FF8202;
     margin: 0px;
     padding: 0px;
+    height: 110px;
+    text-align: center;
 }
 h1{
     font-family: verdana;
-    align-content: center;
     color: white;
-    display: inline-block;
+    margin-top: 30px;
 }
+
+.top{
+    position:absolute;
+}
+
 footer {
     flex-shrink: 0;
     width: 100%;

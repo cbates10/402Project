@@ -10,15 +10,27 @@ body {
 header {
     background-color: #FF8202;
     margin: 0px;
+        height: 110px;
     padding: 0px;
 }
-
+#special{
+    padding-top: 10px;
+    width=100%;
+    background-color: #FF8202;
+    margin: 0px;
+        height: 110px;
+}
 .pro{
     flex: 1 auto;
     flex-grow: 1;
     background : url("bkg.jpg");
     background-position:right bottom;
     background-repeat: no-repeat;
+}
+
+.top{
+    position:absolute;
+
 }
 
 footer {
