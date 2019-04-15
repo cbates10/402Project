@@ -1,7 +1,9 @@
 html {height: 100%;}
 
 body {
-    height: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     margin: 0;
     background : url("bkg.jpg");
     background-position:right bottom;
@@ -14,16 +16,22 @@ header {
     text-align:left;
 }
 footer {
-    position: absolute;
-    bottom: 0;
+    flex-shrink: 0;
     width: 100%;
+    height: 100px;
     background: #8B8C90;
     border-top: solid;
     border-color: #FF8202;
     border-width: 5px;
 }
+.modal{
+    flex: 1 auto;
+    flex-grow: 1;
+    
+}
 .center{
     display: block;
     margin-left: auto;
     margin-right: auto;
+    
 }
