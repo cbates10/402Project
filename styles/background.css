@@ -13,10 +13,10 @@ header {
     padding: 0px;
 }
 h1{
-    text-align:center;
-    font-family: verdana
+    font-family: verdana;
+    align-content: center;
     color: white;
-    
+    display: inline-block;
 }
 footer {
     flex-shrink: 0;

@@ -21,20 +21,20 @@ footer {
     border-color: #FF8202;
     border-width: 5px;
 }
-.box{
-        flex: 1 auto;
+.marg{
+    flex: 1 auto;
     flex-grow: 1;
     background : url("bkg.jpg");
     background-position:right bottom;
     background-repeat: no-repeat;
     
 }
-.marg{
-    
+
+.box{
     font-size: 20px;
     color: #58595B;
     text-align: center;
-    width: auto ;
+    width: 43%;
     height: auto;
     border: 2px solid #58595B;
     margin: 10px auto;
