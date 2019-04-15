@@ -12,17 +12,17 @@
         <script>
 		
 			var programLevel = getCookie("programlevel");
-			var courseCatalog;
-			var catalogsLoaded = 0;
-			var $catalogs = [];
-			var requirements;
-			var requirementObjects = [];
-			var selectedCourses = [];
+			var courseCatalog; // This will store information for all courses in each catalog, it is keyed off the course id
+			var catalogsLoaded = 0; // Used to keep track of catalogs loaded, ensures courses requirements are not processed without the course information itself
+			var $catalogs = []; // Select objects keyed off the catalog name. For example the $catalogs["Computer Science"] will contain a select list of all courses for computer science
+			var requirements; // Contains all requirement information for the degree program and any attached objects (such as minors and certificates) 
+			var requirementObjects = []; // Array of all requirements objects, this corresponds to the class in Requirements.js
+			var selectedCourses = []; // Used to keep track of what courses have been added to required courses, that way duplicate courses cannot be added
 			var extraCourseCounter = 1; // This counter is used to assign catalog ids to outside department and transfer courses
-			var courseObserver = new CourseObserver();
-			var transferInstitution;
-			var $committeeMembersSubjectSelects = {};
-			var selectedCommittee = [];
+			var courseObserver = new CourseObserver(); // Observer that all requirement objects are subscribed to
+			var transferInstitution; // The name of the transfer institution if set
+			var $committeeMembersSubjectSelects = {}; // Separates faculty members by subject. For example $catalogs["Computer Science"] will contain a select of computer science faculty 
+			var selectedCommittee = []; // Contains the Ids of selected committee members, so one member cannot be added multiple times
 			
             $(document).ready(function(){
 				
