@@ -44,6 +44,7 @@
                 value: degreeLevel,
                 name: "degreeLevel", hidden: true
             })).append($("<label>", {
+				class: "degreeLevel",
                 text: degreeLevel
             })));
             /* Create nested list under each degree level with the subjects offered, e.g., computer science */
@@ -57,6 +58,7 @@
                     name: "degreeSubject",
                     required: true, hidden:true
                 })).append($("<label>", {
+					class: "degreeSubject",
                     text: degreeSubject
                 })));
 
@@ -73,6 +75,7 @@
                         objectid: degreePrograms[degreeLevel][degreeSubject][degreeOption],
                         required: true
                     })).append($("<label>", {
+						class: "degreeOption",
                         text: degreeOption
                     })));
                 }

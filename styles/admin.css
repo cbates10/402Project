@@ -33,10 +33,14 @@ footer {
     
 }
 
+li {
+	list-style: none;
+}
+
 .box{
     font-size: 20px;
     color: #58595B;
-    text-align: center;
+    text-align: left;
     width: 43%;
     height: auto;
     border: 2px solid #58595B;

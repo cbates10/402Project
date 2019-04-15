@@ -54,10 +54,23 @@ select {
     font-size: 20;
 }
 
+.degreeLevel {
+	font-size: 25px;
+	font-weight: bold;
+}
+
+.degreeSubject {
+	font-size: 20px;
+	font-weight: bold;
+}
+
+ul {
+	list-style: none;
+}
+
 label {
-    display: block;
     width: 100%;
-    text-align: center;
+    text-align: left;
 }
 
 .container {
