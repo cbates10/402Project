@@ -490,1364 +490,1322 @@
         });
 
         function saveCatalogs(objectId, callback) {
-            $.ajax({
-                type: "POST",
-                url: "../scripts/saveCatalogs.php",
-                data: {
-                    removedCatalogs: removedCatalogs,
-                    addedCatalogs: addedCatalogs,
-                    objectId: objectId
-                },
-                //dataType: "json",
-                success: function(json) {
-                    console.log(json);
-                    callback(true);
-                },
-                error: function(xhr, ajaxOptions, thrownError) {
-                    console.log(thrownError);
-                    callback(false);
-                }
-            });
-        }
-
-        function saveRequiredCourses(objectId, callback) {
-            console.log("Calling save required");
-            $.ajax({
-                type: "POST",
-                url: "../scripts/saveRequiredCourses.php",
-                data: {
-                    removedRequiredCourses: removedRequiredCourses,
-                    addedRequiredCourses: addedRequiredCourses,
-                    objectId: objectId
-                },
-                //dataType: "json",
-                success: function(json) {
-                    console.log(json);
-                    callback(true);
-                },
-                error: function(xhr, ajaxOptions, thrownError) {
-                    console.log(thrownError);
-                    callback(false);
-                }
-            });
-        }
-
-        function saveCourseOverrides(objectId, callback) {
-            // Iterate through the current course overrides. If the course override is new and needs to be inserted into the database then collect information
-            // in the newOverrides array, otherwise if the course is an existing override then add then collect the information in the modifiedOverrides array
-            var newOverrides = [];
-            var modifiedOverrides = [];
-            $("#courseOverrideList li").each(function(index, value) {
-                var overrideInfo = {};
-                var courseId = $(this).children("input[type='submit']").attr("id");
-                overrideInfo.courseId = courseId;
-                overrideInfo.timesCountable = $(this).children("input[id='overrideCount']").val();
-                overrideInfo.minGrade = $(this).children("input[id='overrideGrade']").val();
-                overrideInfo.minHours = $(this).children("input[id='overrideLowHours']").val();
-                overrideInfo.maxHours = $(this).children("input[id='overrideHighHours']").val();
-                if (addedCourseOverrides.includes(courseId)) {
-                    newOverrides.push(overrideInfo);
-                } else {
-                    modifiedOverrides.push(overrideInfo);
-                }
-            });
-            $.ajax({
-                type: "POST",
-                url: "../scripts/saveCourseOverrides.php",
-                data: {
-                    removedCourseOverrides: removedCourseOverrides,
-                    addedCourseOverrides: newOverrides,
-                    modifiedOverrides: modifiedOverrides,
-                    objectId: objectId
-                },
-                //dataType: "json",
-                success: function(json) {
-                    console.log(json);
-                    callback(true);
-                },
-                error: function(xhr, ajaxOptions, thrownError) {
-                    console.log(thrownError);
-                    callback(false);
-                }
-            });
-        };
-
-        // This function will save changes to objects that are mapped to an object. The intended use of this function is to change what minors, certificates, and forms are
-        // mapped to a degree program.
-        function saveObjectMapping(objectId, removedObjects, addedObjects, callback) {
-            console.log(removedObjects);
-            console.log(addedObjects);
-            $.ajax({
-                type: "POST",
-                url: "../scripts/saveObjectMapping.php",
-                data: {
-                    removedIds: removedObjects,
-                    addedIds: addedObjects,
-                    objectId: objectId
-                },
-                //dataType: "json",
-                success: function(json) {
-                    console.log(json);
-                    callback(true);
-                },
-                error: function(xhr, ajaxOptions, thrownError) {
-                    console.log(thrownError);
-                    callback(false);
-                }
-            });
-        }
-
-        function saveRestrictedCourses(objectId, callback) {
-            var restrictedCourseValue = $("input[name='restrictedOptions']:checked").val();
-            var restrictedCourseIds;
-            var removeCourseIds;
-            console.log(restrictedCourseValue);
-            if (restrictedCourseValue == "allCourses") {
-                restrictedCourseIds = Object.keys(catalogs);
-                removeCourseIds = applicableCourseIds.concat(removedRestrictedCourses);
-            } else if (restrictedCourseValue == "requiredOnlyCourses") {
-                console.log("Option is required only");
-                restrictedCourseIds = [];
-                console.log(applicableCourseIds);
-                removeCourseIds = applicableCourseIds.concat(removedRestrictedCourses);
-                console.log(removeCourseIds);
-            } else {
-                restrictedCourseIds = addedRestrictedCourses;
-                removeCourseIds = removedRestrictedCourses;
-            }
-            $.ajax({
-                type: "POST",
-                url: "../scripts/saveRestrictedCourses.php",
-                data: {
-                    removedCourses: removeCourseIds,
-                    addedCourses: restrictedCourseIds,
-                    objectId: objectId
-                },
-                //dataType: "json",
-                success: function(json) {
-                    console.log(json);
-                    callback(true);
-                },
-                error: function(xhr, ajaxOptions, thrownError) {
-                    console.log(thrownError);
-                    callback(false);
-                }
-            });
-        }
-
-        function saveHours(objectId, callback) {
-            var addData = [];
-            var modifyData = [];
-            var modifyDataObjectSpecific = [];
-            var removeData = [];
-            var hoursForm = {};
-            //var catalogFormChange = {Hrs400Min: false, Hrs400Max: false, Hrs500Min: false, Hrs500Max: false, Hrs600Min: false, Hrs600Max:false}
-            hoursForm.Hrs400MinObj = {
-                hour: 400,
-                cap: 'minimum',
-                val: $("#400HrsMin").val(),
-                type: $("input[name='400HrsMinOption']:checked").val()
-            }
-            hoursForm.Hrs400MaxObj = {
-                hour: 400,
-                cap: 'maximum',
-                val: $("#400HrsMax").val(),
-                type: $("input[name='400HrsMaxOption']:checked").val()
-            }
-            hoursForm.Hrs500MinObj = {
-                hour: 500,
-                cap: 'minimum',
-                val: $("#500HrsMin").val(),
-                type: $("input[name='500HrsMinOption']:checked").val()
-            }
-            hoursForm.Hrs500MaxObj = {
-                hour: 500,
-                cap: 'maximum',
-                val: $("#500HrsMax").val(),
-                type: $("input[name='500HrsMaxOption']:checked").val()
-            }
-            hoursForm.Hrs600MinObj = {
-                hour: 600,
-                cap: 'minimum',
-                val: $("#600HrsMin").val(),
-                type: $("input[name='600HrsMinOption']:checked").val()
-            }
-            hoursForm.Hrs600MaxObj = {
-                hour: 600,
-                cap: 'maximum',
-                val: $("#600HrsMax").val(),
-                type: $("input[name='600HrsMaxOption']:checked").val()
-            }
-            hoursForm.HrsTransferMaxObj = {
-                hour: "Transfer",
-                cap: 'maximum',
-                val: $("#trhrs").val(),
-                type: $("input[name='TransferHrsMaxOption']:checked").val()
-            }
-            hoursForm.HrsOutsideMaxObj = {
-                hour: "Outside",
-                cap: 'maximum',
-                val: $("#ohrs").val(),
-                type: $("input[name='OutsideHrsMaxOption']:checked").val()
-            }
-            hoursForm.HrsPhDMinObj = {
-                hour: "PhDOnly",
-                cap: 'minimum',
-                val: $("#PhDonly").val(),
-                type: $("input[name='PhDHrsMinOption']:checked").val()
-            }
-
-            // Check to see if an hour type is not provided for any hour field with a value
-            if (hoursForm.Hrs400MinObj.val != "" && !hoursForm.Hrs400MinObj.type) {
-                alert("Fixed or Variable option must be selected for 400 Min Hours");
-            }
-            if (hoursForm.Hrs400MaxObj.val != "" && !hoursForm.Hrs400MaxObj.type) {
-                alert("Fixed or Variable option must be selected for 400 Max Hours");
-            }
-            if (hoursForm.Hrs500MinObj.val != "" && !hoursForm.Hrs500MinObj.type) {
-                alert("Fixed or Variable option must be selected for 500 Min Hours");
-            }
-            if (hoursForm.Hrs500MaxObj.val != "" && !hoursForm.Hrs500MaxObj.type) {
-                alert("Fixed or Variable option must be selected for 500 Max Hours");
-            }
-            if (hoursForm.Hrs600MinObj.val != "" && !hoursForm.Hrs600MinObj.type) {
-                alert("Fixed or Variable option must be selected for 600 Min Hours");
-            }
-            if (hoursForm.Hrs600MaxObj.val != "" && !hoursForm.Hrs600MaxObj.type) {
-                alert("Fixed or Variable option must be selected for 600 Max Hours");
-            }
-            if (hoursForm.HrsTransferMaxObj.val != "" && !hoursForm.HrsTransferMaxObj.type) {
-                alert("Fixed or Variable option must be selected for Transfer Max Hours");
-            }
-            if (hoursForm.HrsOutsideMaxObj.val != "" && !hoursForm.HrsOutsideMaxObj.type) {
-                alert("Fixed or Variable option must be selected for Outside Max Hours");
-            }
-            if (hoursForm.HrsPhDMinObj.val != "" && !hoursForm.HrsPhDMinObj.type) {
-                alert("Fixed or Variable option must be selected for Graduate Only Min Hours");
-            }
-
-            // If the old value is defined then check to see if the database value needs to be modified or deleted
-
-            checkHourUpdate($("#400HrsMin"), hoursForm.Hrs400MinObj, modifyData, removeData, addData);
-            checkHourUpdate($("#400HrsMax"), hoursForm.Hrs400MaxObj, modifyData, removeData, addData);
-            checkHourUpdate($("#500HrsMin"), hoursForm.Hrs500MinObj, modifyData, removeData, addData);
-            checkHourUpdate($("#500HrsMax"), hoursForm.Hrs500MaxObj, modifyData, removeData, addData);
-            checkHourUpdate($("#600HrsMin"), hoursForm.Hrs600MinObj, modifyData, removeData, addData);
-            checkHourUpdate($("#600HrsMax"), hoursForm.Hrs600MaxObj, modifyData, removeData, addData);
-            checkHourUpdate($("#trhrs"), hoursForm.HrsTransferMaxObj, modifyData, removeData, addData);
-            checkHourUpdate($("#ohrs"), hoursForm.HrsOutsideMaxObj, modifyData, removeData, addData);
-            checkHourUpdate($("#PhDonly"), hoursForm.HrsPhDMinObj, modifyData, removeData, addData);
-
-            console.log(modifyData);
-            console.log(removeData);
-            console.log(addData);
-            if (addData.length > 0 || removeData.length > 0 || modifyData.length > 0) {
-                $.ajax({
-                    type: "POST",
-                    url: "../scripts/saveHours.php",
-                    data: {
-                        removedHours: removeData,
-                        addedHours: addData,
-                        modifiedHours: modifyData,
-                        objectId: objectId
-                    },
-                    //dataType: "json",
-                    success: function(json) {
-                        console.log(json);
-                        callback(true);
-                    },
-                    error: function(xhr, ajaxOptions, thrownError) {
-                        console.log(thrownError);
-                        callback(false);
-                    }
-                });
-            }
-        }
-
-        function saveObjectInformation(objectId, callback) {
-            var requiredHrs = $("#requiredHrs").val();
-            var minGrade = $("#grade").val();
-            var minGPA = $("#minimumGPA").val();
-            oldValueGrade = $("#grade").attr("oldvalue");
-            oldValueGPA = $("#minimumGPA").attr("oldvalue");
-            oldValueRequired = $("#requiredHrs").attr("oldvalue");
-            if (oldValueGrade != minGrade || oldValueGPA != minGPA || oldValueRequired != requiredHrs) {
-                $.ajax({
-                    type: "POST",
-                    url: "../scripts/saveObjectInfo.php",
-                    data: {
-                        requiredHours: requiredHrs,
-                        minGrade: minGrade,
-                        minGPA: minGPA,
-                        objectId: objectId
-                    },
-                    //dataType: "json",
-                    success: function(json) {
-                        console.log(json);
-                        callback(true);
-                    },
-                    error: function(xhr, ajaxOptions, thrownError) {
-                        console.log(thrownError);
-                        callback(false);
-                    }
-                });
-            }
-        }
-
-        // This function will push the hourObject onto either the modifyData, removeData, or addData array depending on the values that
-        // are changed when compared to the oldValue and oldType
-        function checkHourUpdate($entry, hourObject, modifyData, removeData, addData) {
-            var oldValue = $entry.attr("oldvalue");
-            $entry.attr("oldvalue", hourObject.val);
-            var oldType = $entry.attr("oldtype");
-            $entry.attr("oldtype", hourObject.type);
-            if (oldValue) {
-                if (hourObject.val != "" && hourObject.val != oldValue) {
-                    modifyData.push(hourObject);
-                } else if (hourObject.val == "" && oldValue != "") {
-                    removeData.push(hourObject);
-                } else if (hourObject.type != oldType) {
-                    modifyData.push(hourObject);
-                }
-            } else { // Otherwise check to see if an hour value is inputted and needs to be added to the database
-                if (hourObject.val != "") {
-                    addData.push(hourObject);
-                }
-            }
-        }
-
-        function addCommitteeTitleToSelect(id, title) {
-            var $option = $("<option>", {
-                id: id,
-                value: title,
-                text: title
-            });
-            $("#committeeTitle").append($option);
-        }
-
-        function addCommitteeMemberToSelect(id, firstName, lastName, title, titleId, subject) {
-            $("#committeeMembers").append($("<option>", {
-                id: id,
-                firstName: firstName,
-                lastName: lastName,
-                text: firstName + " " + lastName
-            }));
-        }
-
-        function addCommitteeMemberToTable(id, firstName, lastName, title, titleId, subject) {
-            var $row = $("<tr>", {
-                value: subject,
-                name: "tableEntry"
-            });
-            $row.append($("<td>", {
-                id: "memberSubject",
-                text: subject
-            })).append($("<td>", {
-                id: "memberFirstName",
-                text: firstName
-            })).append($("<td>", {
-                id: "memberLastName",
-                text: lastName
-            })).append($("<td>", {
-                id: "memberTitle",
-                text: title
-            }));
-            var $closeButton = $("<button>", {
-                id: id,
-                committee: subject,
-                name: "removeMemberButton",
-                title: titleId,
-                text: "X"
-            });
-            $closeButton.click(removeCommitteeMemberHandler);
-            $row.append($closeButton);
-            $("#committeeTableBody").append($row);
-        }
-
-        function swapRequired(catalogName) {
-            $("#classListLabel + select").detach();
-            if (catalogName) {
-                $catalogs[catalogName].clone().insertAfter($("#classListLabel"));
-            }
-        }
-
-        function swapOverride(catalogName) {
-            $("#classListLabelOverrides + select").detach();
-            if (catalogName) {
-                $catalogs[catalogName].clone().insertAfter($("#classListLabelOverrides"));
-            }
-        }
-
-        function swapRestricted(catalogName) {
-            $("#classListLabelRestricted + select").detach();
-            if (catalogName) {
-                $catalogs[catalogName].clone().insertAfter($("#classListLabelRestricted"));
-            }
-        }
-
-        function addNewCatalog(catalogArray, catalogName) {
-            processCatalog(catalogArray, catalogName);
-            if (Object.keys($catalogs).length === 1 || !$("#catalogList option:selected").val()) {
-                $catalogs[catalogName].clone().insertAfter($("#classListLabel"));
-                $catalogs[catalogName].clone().insertAfter($("#classListLabelOverrides"));
-                $catalogs[catalogName].clone().insertAfter($("#classListLabelRestricted"));
-            }
-            var $removeButton = $("<input>", {
-                id: catalogName,
-                type: "submit",
-                name: "removeCatalogButton",
-                value: "Remove"
-            });
-            $removeButton.click(removeCatalogHandler);
-            $("#applicableCatalogsList").append($("<li>", {
-                text: catalogName
-            }).append($removeButton));
-            $("#catalogList, #catalogListOverrides, #catalogListRestricted").append($("<option>", {
-                value: catalogName,
-                text: catalogName
-            }));
-        }
-
-        function loadAllCommitteeMembers(callback) {
-            $.ajax({
-                type: "GET",
-                url: "../scripts/getAllCommitteeMembers.php",
-                dataType: "json",
-                success: function(json) {
-                    console.log(json);
-                    callback(json);
-                },
-                error: function(xhr, ajaxOptions, thrownError) {
-                    console.log(thrownError);
-                    callback({});
-                }
-            });
-        }
-
-        function loadCommitteeTitles(callback) {
-            $.ajax({
-                type: "GET",
-                url: "../scripts/getCommitteeTitles.php",
-                dataType: "json",
-                success: function(json) {
-                    callback(json);
-                },
-                error: function(xhr, ajaxOptions, thrownError) {
-                    console.log(thrownError);
-                    callback({});
-                }
-            });
-        }
-
-        function editCommitteeHandler() {
-
-            // Load in the titles that a committee member may have
-            loadCommitteeTitles(function(titles) {
-                for (var id in titles) {
-                    addCommitteeTitleToSelect(id, titles[id]);
-                }
-            });
-
-            // Load in every committee member regardless of whether this member is on the committee
-            loadAllCommitteeMembers(function(members) {
-                var loadedMembers = [];
-                for (var index in members) {
-                    if (!loadedMembers.includes(members[index].firstName + " " + members[index].lastName)) {
-                        addCommitteeMemberToSelect(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].subject);
-                        loadedMembers.push(members[index].firstName + " " + members[index].lastName);
-                    }
-                    if (members[index].title && members[index].subject) {
-                        addCommitteeMemberToTable(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].subject);
-                    }
-                }
-                if ($("#committeeMembers option:selected").val() == "newMember") {
-                    $("#newCommitteeMemberContainer").show();
-                }
-            });
-
-            var modal = document.getElementById('committeeModal');
-            modal.style.display = "block";
-        }
-
-        function closeCommittee() {
-            $("#committeeMembers").empty();
-            $("#committeeTitle").empty();
-            $("#committeeTableBody tr[name='tableEntry']").remove();
-            var modal = document.getElementById('committeeModal');
-            modal.style.display = "none";
-        }
-
-        function removeCommitteeMemberHandler() {
-            var memberId = $(this).attr("id");
-            var committee = $(this).attr("committee");
-            var title = $(this).attr("title");
-            var $button = $(this);
-            $.ajax({
-                type: "POST",
-                url: "../scripts/removeFromCommittee.php",
-                data: {
-                    id: memberId,
-                    committee: committee,
-                    title: title
-                },
-                dataType: "json",
-                success: function(json) {
-                    console.log("success");
-                    $button.parent().remove();
-                },
-                error: function(xhr, ajaxOptions, thrownError) {
-                    console.log(thrownError);
-                    alert("Unable to remove from committee");
-                    return false;
-                }
-            });
-        }
-
-        // TODO modularize these event handlers into one
-        function removeCatalogHandler() {
-            var catalogName = $(this).attr("id");
-            $(this).parent().remove();
-            selectedCatalogs = selectedCatalogs.filter(function(name) {
-                return name != catalogName;
-            });
-            if (addedCatalogs.includes(catalogName)) {
-                addedCatalogs = addedCatalogs.filter(function(name) {
-                    name != catalogName;
-                });
-            } else {
-                removedCatalogs.push(catalogName);
-            }
-            // Remove all required courses from the removed catalog
-            $("#requiredClasses li[value='" + catalogName + "']").each(function(index, value) {
-                var courseId = $(this).children("input[type='submit']").attr("id");
-                requiredCourseIds = requiredCourseIds.filter(function(id) {
-                    return id != courseId;
-                });
-                if (addedRequiredCourses.includes(courseId)) {
-                    addedRequiredCourses = addedRequiredCourses.filter(function(id) {
-                        id != courseId;
-                    });
-                } else {
-                    removedRequiredCourses.push(courseId);
-                }
-                $(this).remove();
-            });
-            // Remove all course overrides from the removed catalog
-            $("#overridesContainer li[value='" + catalogName + "']").each(function(index, value) {
-                var courseId = $(this).children("input[type='submit']").attr("id");
-                selectedOverrides = selectedOverrides.filter(function(id) {
-                    return id != courseId;
-                });
-                if (addedCourseOverrides.includes(courseId)) {
-                    addedCourseOverrides = addedCourseOverrides.filter(function(id) {
-                        id != courseId;
-                    });
-                } else {
-                    removedCourseOverrides.push(courseId);
-                }
-                $(this).remove();
-            });
-            // Remove all applicable courses from the removed catalog
-            $("#restrictedCourseList li[value='" + catalogName + "']").each(function(index, value) {
-                var courseId = $(this).children("input[type='submit']").attr("id");
-                applicableCourseIds = applicableCourseIds.filter(function(id) {
-                    return id != courseId;
-                });
-                if (addedRestrictedCourses.includes(courseId)) {
-                    addedRestrictedCourses = addedRestrictedCourses.filter(function(id) {
-                        id != courseId;
-                    });
-                } else {
-                    removedRestrictedCourses.push(courseId);
-                }
-                $(this).remove();
-            });
-            // Remove the catalog from the select options
-            var swapOverrideSelect = $("#catalogListOverrides option:selected").val() == catalogName;
-            var swapRequiredSelect = $("#catalogList option:selected").val() == catalogName;
-            var swapRestrictedSelect = $("#catalogListRestricted option:selected").val == catalogName;
-            $("#catalogListOverrides option[value='" + catalogName + "']").remove();
-            $("#catalogList option[value='" + catalogName + "']").remove();
-            $("#catalogListRestricted option[value='" + catalogName + "']").remove();
-            // If the catalog to remove was selected before the removal then the course select will need to be swapped
-            if (swapOverrideSelect) {
-                swapOverride($("#catalogListOverrides option:selected").val());
-            }
-            if (swapRequiredSelect) {
-                swapRequired($("#catalogList option:selected").val());
-            }
-            if (swapRestrictedSelect) {
-                swapRestricted($("#catalogListRestricted option:selected").val());
-            }
-        }
-
-        function removeOverrideHandler() {
-            var courseId = $(this).attr("id");
-            selectedOverrides = selectedOverrides.filter(function(id) {
-                return id != courseId;
-            });
-            if (addedCourseOverrides.includes(courseId)) {
-                addedCourseOverrides = addedCourseOverrides.filter(function(id) {
-                    id != courseId;
-                });
-            } else {
-                removedCourseOverrides.push(courseId);
-            }
-            $(this).parent().remove();
-        }
-
-        function removeRequiredHandler() {
-            var courseId = $(this).attr("id");
-            requiredCourseIds = requiredCourseIds.filter(function(id) {
-                return id != courseId;
-            });
-            if (addedRequiredCourses.includes(courseId)) {
-                addedRequiredCourses = addedRequiredCourses.filter(function(id) {
-                    id != courseId;
-                });
-            } else {
-                removedRequiredCourses.push(courseId);
-            }
-            $(this).parent().remove();
-        }
-
-        function removeRestrictedHandler() {
-            var courseId = $(this).attr("id");
-            applicableCourseIds = applicableCourseIds.filter(function(id) {
-                return id != courseId;
-            });
-            if (addedRestrictedCourses.includes(courseId)) {
-                addedRestrictedCourses = addedRestrictedCourses.filter(function(id) {
-                    id != courseId;
-                });
-            } else {
-                removedRestrictedCourses.push(courseId);
-            }
-            $(this).parent().remove();
-        }
-
-        function removeMinorHandler() {
-            var minorId = $(this).attr("id");
-            selectedMinors = selectedMinors.filter(function(id) {
-                return id != minorId;
-            });
-            if (addedMinors.includes(minorId)) {
-                addedMinors = addedMinors.filter(function(id) {
-                    id != minorId;
-                });
-            } else {
-                removedMinors.push(minorId);
-            }
-            $(this).parent().remove();
-        }
-
-        function removeCertificateHandler() {
-            var certificateId = $(this).attr("id");
-            selectedCertificates = selectedCertificates.filter(function(id) {
-                return id != certificateId;
-            });
-            if (addedCertificates.includes(certificateId)) {
-                addedCertificates = addedCertificates.filter(function(id) {
-                    id != certificateId;
-                });
-            } else {
-                removedCertificates.push(certificateId);
-            }
-            $(this).parent().remove();
-        }
-
-        function removeFormHandler() {
-            var formId = $(this).attr("id");
-            selectedForms = selectedForms.filter(function(id) {
-                return id != formId;
-            });
-            if (addedForms.includes(formId)) {
-                addedForms = addedForms.filter(function(id) {
-                    id != formId;
-                });
-            } else {
-                removedForms.push(formId);
-            }
-            $(this).parent().remove();
-        }
-
-        function degreeHandlerInit() {
-            degreeHandler(JSON.parse(this.response), true);
-
-            // Once all the degree programs are loaded add the event handler for editing committees
-            $("li[name='editCommittee']").click(editCommitteeHandler);
-            var xhr = new XMLHttpRequest();
-            xhr.addEventListener("load", nonDegreeHandlerInit);
-            xhr.open("GET", "../scripts/nondegreeObjects.php");
-            xhr.send();
-        }
-
-        function nonDegreeHandlerInit() {
-            degreeHandler(JSON.parse(this.response), false);
-            $("button[name='modifyButton']").click(function() {
-                if (degreeProgramIds.includes($(this).val())) {
-                    $("#additionalOptionsContainer").show();
-                    $("#restrictedCatalog").hide();
-                    console.log($(this).val());
-                    console.log(phdIds);
-                    if (phdIds.includes($(this).val())) {
-                        $("#PhDOptions").show();
-                    } else {
-                        $("#PhDOptions").hide();
-                    }
-                } else {
-                    $("#additionalOptionsContainer").hide();
-                    $("#restrictedCatalog").show();
-                }
-                $.ajax({
-                    type: "POST",
-                    url: "../scripts/requirements.php",
-                    data: {
-                        idObjects: $(this).val()
-                    },
-                    dataType: "json",
-                    success: function(json) {
-                        popupHandler(json);
-                    }
-                });
-            });
-
-            $("button[name='modifyGlobal']").click(function() {
-                var typeName = $(this).val();
-                $.ajax({
-                    type: "POST",
-                    url: "../scripts/globalRequirements.php",
-                    data: {
-                        typeName: $(this).val()
-                    },
-                    dataType: "json",
-                    success: function(json) {
-                        popupHandlerGlobal(json, typeName);
-                    },
-                    error: function(xhr, ajaxOptions, thrownError) {
-                        console.log(thrownError);
-                        return false;
-                    }
-                });
-            });
-            // Initialize page contents with select lists and add buttons
-            for (var index in $objectSubjects) {
-                $objectSubjects[index].change(function() {
-                    if ($(this).val() === "newSubject") {
-                        $("#newObjectSubjectSpan").show();
-                    } else {
-                        $("#newObjectSubjectSpan").hide();
-                    }
-                });
-            }
-            $objectSubjects[$("#newItemCategories option:selected").val()].insertAfter($("#objectSubjectLabel"));
-            if ($("#objectSubects option:selected").val() === "newSubject") {
-                $("#newObjectSubjectSpan").show();
-            }
-            var $addItemButton = $("<button>", {
-                name: "addNewItem",
-                text: "Add New Item"
-            });
-            $addItemButton.click(function() {
-                popupHandlerAddNewItem();
-            });
-            $("#listContainer").append($("<li>", {
-                name: "addNewItem"
-            }).append($addItemButton));
-
-        }
-
-
-        /**
-        param: programs - Array of programs to process into the list. This will be done according to the subject of the program
-        param: showEditCatalog - If true this will add the option to edit the catalog for any subjects
-        */
-        function degreeHandler(programs, showEditCatalog) {
-            var degreePrograms = programs;
-            console.log(degreePrograms);
-            var $degreeSubjects;
-            var $degreeOptions;
-
-            // Iterate through all degree programs (Masters,PhD,etc) and add to DOM
-            for (var degreeName in degreePrograms) {
-                $("#newItemCategories").append($("<option>", {
-                    value: degreeName,
-                    text: degreeName
-                }));
-                $("#listContainer").append($("<li>", {
-                    value: degreeName
-                }).append($("<label>", {
-                    text: degreeName
-                })));
-                $("#listContainer").append($("<li>", {
-                    value: "globalRequirements"
-                }).append($("<label>", {
-                    text: "University Requirements"
-                })).append($("<button>", {
-                    value: degreeName,
-                    name: "modifyGlobal",
-                    text: "Modify"
-                })));
-
-                var $subjects = $("<select>", {
-                    id: "objectSubjects"
-                });
-
-                // Create nested list under each degree program with the subject, e.g., Computer Science 
-                $degreeSubjects = $("<ul id='subjectList'>");
-                console.log(degreePrograms[degreeName]);
-                for (var degreeSubject in degreePrograms[degreeName]) {
-
-                    $degreeSubjects.append($("<li>", {
-                        text: degreeSubject
-                    }));
-                    var $subjectOption = $("<option>", {
-                        value: degreeSubject,
-                        text: degreeSubject
-                    });
-                    $subjects.append($subjectOption);
-
-                    $degreeOptions = $("<ul id='optionList'>");
-
-                    // If the catalog is set to be shown then add an item to edit the catalog. All degree program subjects have catalogs and they all
-                    // have graudate committees as well so add an item for editing the graduate committee
-                    if (showEditCatalog) {
-                        $degreeOptions.append($("<li>", {
-                            name: "catalog"
-                        }).append($("<a>", {
-                            href: "addremove.html",
-                            text: "Edit Course Catalog",
-                            onclick: "document.cookie = 'program=" + degreeSubject + "'"
-                        })));
-
-                    }
-
-                    for (var degreeOption in degreePrograms[degreeName][degreeSubject]) {
-                        $degreeOptions.append($("<li>", {
-                            value: degreeOption,
-                        }).append($("<label>", {
-                            text: degreeOption
-                        })).append($("<button>", {
-                            value: degreePrograms[degreeName][degreeSubject][degreeOption],
-                            name: "modifyButton",
-                            text: "Modify"
-                        })));
-                        // Add the ID to the degreeProgram ID list. This will be used to display additional options if the object ID is a degree program
-                        if (degreeName === "Masters" || degreeName === "PhD") {
-                            if (!catalogNames.includes(degreeSubject)) {
-                                $("#applicableCatalogsSelect").append($subjectOption.clone());
-                                $("#committeesSelect").append($subjectOption);
-                                catalogNames.push(degreeSubject);
-                                $("#committeeSubject").append($("<option>", {
-                                    value: degreeSubject,
-                                    text: degreeSubject
-                                }));
-                            }
-                            if (degreeName === "PhD") {
-                                phdIds.push(degreePrograms[degreeName][degreeSubject][degreeOption]);
-                            }
-                            degreeProgramIds.push(degreePrograms[degreeName][degreeSubject][degreeOption]);
-                        }
-                    }
-                    $degreeSubjects.append($degreeOptions);
-                }
-                $subjects.append($("<option>", {
-                    value: "newSubject",
-                    text: "New Subject"
-                }));
-                $objectSubjects[degreeName] = $subjects;
-                $("#listContainer").append($degreeSubjects);
-            }
-
-        }
-
-        function popupHandlerAddNewItem() {
-            var modal = document.getElementById('addNewItemModal');
-            modal.style.display = "block";
-        }
-
-        // This function will initialize the contents of the global requirements popup. It will display the popup and populate the min grade and GPA fields
-        function popupHandlerGlobal(globalRequirements, typeName) {
-            var modal = document.getElementById('globalModal');
-            modal.style.display = "block";
-            $("#globalGrade").val(globalRequirements.minGrade);
-            $("#globalGPA").val(globalRequirements.minGPA);
-            $("#saveGlobal").attr("typeName", typeName);
-            console.log(globalRequirements);
-        }
-
-        function resetAddedRemovedValues() {
-            removedCatalogs = [];
-            addedCatalogs = [];
-            addedRequiredCourses = [];
-            removedRequiredCourses = [];
-            addedCourseOverrides = [];
-            removedCourseOverrides = [];
-            addedMinors = [];
-            removedMinors = [];
-            addedForms = [];
-            removedForms = [];
-            addedCertificates = [];
-            removedCertificates = [];
-            addedRestrictedCourses = [];
-            removedRestrictedCourses = [];
-        }
-
-        function popupHandler(json) {
-            catalogRule = json;
-            catalogsLoaded = 0;
-            catalogs = null;
-            $catalogs = {};
-            $minorsSubjectSelect = {};
-            $certificatesSubjectSelect = {};
-            $formsSubjectSelect = {};
-            requiredCourseIds = [];
-            selectedMinors = [];
-            selectedCertificates = [];
-            selectedForms = [];
-            resetAddedRemovedValues();
-            $("#deleteForm").attr("idobjects", catalogRule["Degree Program"].id);
-            $("#saveForm").attr("idobjects", catalogRule["Degree Program"].id);
-            console.log(catalogRule);
-
-            var modal = document.getElementById('myModal');
-            modal.style.display = "block";
-            $("#requiredHrs").val(catalogRule["Degree Program"].requiredHours);
-            $("#requiredHrs").val(catalogRule["Degree Program"].requiredHours);
-            if (catalogRule["Degree Program"].hours400) {
-                if (catalogRule["Degree Program"].hours400.minimum) {
-                    $("#400HrsMin").val(catalogRule["Degree Program"].hours400.minimum.hours);
-                    $("#400HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours400.minimum.hours);
-                    $("input[name='400HrsMinOption']").val([catalogRule["Degree Program"].hours400.minimum.type]);
-                    $("#400HrsMin").attr("oldtype", catalogRule["Degree Program"].hours400.minimum.type);
-                }
-                if (catalogRule["Degree Program"].hours400.maximum) {
-                    $("#400HrsMax").val(catalogRule["Degree Program"].hours400.maximum.hours);
-                    $("#400HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours400.maximum.hours);
-                    $("input[name='400HrsMaxOption']").val([catalogRule["Degree Program"].hours400.maximum.type]);
-                    $("#400HrsMax").attr("oldtype", catalogRule["Degree Program"].hours400.maximum.type);
-                }
-            }
-            if (catalogRule["Degree Program"].hours500) {
-                if (catalogRule["Degree Program"].hours500.minimum) {
-                    $("#500HrsMin").val(catalogRule["Degree Program"].hours500.minimum.hours);
-                    $("#500HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours500.minimum.hours);
-                    $("input[name='500HrsMinOption']").val([catalogRule["Degree Program"].hours500.minimum.type]);
-                    $("#500HrsMin").attr("oldtype", catalogRule["Degree Program"].hours500.minimum.type);
-                }
-                if (catalogRule["Degree Program"].hours500.maximum) {
-                    $("#500HrsMax").val(catalogRule["Degree Program"].hours500.maximum.hours);
-                    $("#500HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours500.maximum.hours);
-                    $("input[name='500HrsMaxOption']").val([catalogRule["Degree Program"].hours500.maximum.type]);
-                    $("#500HrsMax").attr("oldtype", catalogRule["Degree Program"].hours500.maximum.type);
-                }
-            }
-            if (catalogRule["Degree Program"].hours600) {
-                if (catalogRule["Degree Program"].hours600.minimum) {
-                    $("#600HrsMin").val(catalogRule["Degree Program"].hours600.minimum.hours);
-                    $("#600HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours600.minimum.hours);
-                    $("input[name='600HrsMinOption']").val([catalogRule["Degree Program"].hours600.minimum.type]);
-                    $("#600HrsMin").attr("oldtype", catalogRule["Degree Program"].hours600.minimum.type);
-                }
-                if (catalogRule["Degree Program"].hours600.maximum) {
-                    $("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours);
-                    $("#600HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours600.maximum.hours);
-                    $("input[name='600HrsMaxOption']").val([catalogRule["Degree Program"].hours600.maximum.type]);
-                    $("#600HrsMax").attr("oldtype", catalogRule["Degree Program"].hours600.maximum.type);
-                }
-            }
-            if (catalogRule["Degree Program"].hoursTransfer) {
-                if (catalogRule["Degree Program"].hoursTransfer.maximum) {
-                    $("#trhrs").val(catalogRule["Degree Program"].hoursTransfer.maximum.hours);
-                    $("#trhrs").attr('oldvalue', catalogRule["Degree Program"].hoursTransfer.maximum.hours);
-                    $("input[name='TransferHrsMaxOption']").val([catalogRule["Degree Program"].hoursTransfer.maximum.type]);
-                    $("#trhrs").attr("oldtype", catalogRule["Degree Program"].hoursTransfer.maximum.type);
-                }
-            }
-            if (catalogRule["Degree Program"].hoursOutside) {
-                if (catalogRule["Degree Program"].hoursOutside.maximum) {
-                    $("#ohrs").val(catalogRule["Degree Program"].hoursOutside.maximum.hours);
-                    $("#ohrs").attr('oldvalue', catalogRule["Degree Program"].hoursOutside.maximum.hours);
-                    $("input[name='OutsideHrsMaxOption']").val([catalogRule["Degree Program"].hoursOutside.maximum.type]);
-                    $("#ohrs").attr("oldtype", catalogRule["Degree Program"].hoursOutside.maximum.type);
-                }
-            }
-            if (catalogRule["Degree Program"].hoursPhDOnly) {
-                if (catalogRule["Degree Program"].hoursPhDOnly.minimum) {
-                    $("#PhDonly").val(catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
-                    $("#PhDonly").attr('oldvalue', catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
-                    $("input[name='PhDHrsMinOption']").val([catalogRule["Degree Program"].hoursPhDOnly.minimum.type]);
-                    $("#PhDonly").attr("oldtype", catalogRule["Degree Program"].hoursPhDOnly.minimum.type);
-                }
-            }
-            $("#grade").val(catalogRule["Degree Program"].minGrade);
-            $("#grade").attr("oldvalue", catalogRule["Degree Program"].minGrade);
-            $("#minimumGPA").val(catalogRule["Degree Program"].minGPA);
-            $("#minimumGPA").attr("oldvalue", catalogRule["Degree Program"].minGPA);
-            // Load in all the catalogs for the program. This is done before setting information like required courses because the catalog information needs
-            // to be known in order to retireve the course information.
-            selectedCatalogs = [];
-            catalogsByName = {};
-            for (var i in catalogRule["Catalogs"]) {
-                let catalogName = catalogRule["Catalogs"][i];
-                selectedCatalogs.push(catalogName);
-                var $removeButton = $("<input>", {
-                    id: catalogName,
-                    type: "submit",
-                    name: "removeCatalogButton",
-                    value: "Remove"
-                });
-                $removeButton.click(removeCatalogHandler);
-                $("#applicableCatalogsList").append($("<li>", {
-                    text: catalogName
-                }).append($removeButton));
-                $.ajax({
-                    type: "POST",
-                    url: "../scripts/courseCatalog.php",
-                    data: {
-                        catalogName: catalogName
-                    },
-                    dataType: "json",
-                    success: function(json) {
-                        courseHandler(json, catalogName);
-                    }
-                });
-            }
-        }
-
-        function attachCourseOverrideEntry(courseId, courseOverrideInfo) {
-            var $removeButton = $("<input>", {
-                id: courseId,
-                type: "submit",
-                name: "removeOverrideButton",
-                value: "Remove"
-            });
-            $removeButton.click(removeOverrideHandler);
-            $("#courseOverrideList").append($("<li>", {
-                text: catalogs[courseId].name + " ",
-                value: getCatalogName(courseId)
-            }).append($("<label>", {
-                for: "overrideCount",
-                text: "Maximum Times Countable"
-            })).append($("<input>", {
-                id: "overrideCount",
-                type: "number",
-                value: courseOverrideInfo.maxCount,
-                style: "width:50px"
-            })).append($("<label>", {
-                for: "overrideGrade",
-                text: "Minimum Grade"
-            })).append($("<input>", {
-                id: "overrideGrade",
-                type: "text",
-                value: courseOverrideInfo.minGrade,
-                maxlength: "2",
-                pattern: "[ABCDF]{1}[-+]{0,1}",
-                style: "width:50px"
-            })).append($("<label>", {
-                for: "overrideLowHours",
-                text: "Minium Hours"
-            })).append($("<input>", {
-                id: "overrideLowHours",
-                type: "number",
-                value: courseOverrideInfo.minHours,
-                style: "width:50px"
-            })).append($("<label>", {
-                for: "overrideHighHours",
-                text: "Maximum Hours"
-            })).append($("<input>", {
-                id: "overrideHighHours",
-                type: "number",
-                value: courseOverrideInfo.maxHours,
-                style: "width:50px"
-            })).append($removeButton));
-        }
-
-        // This function will set any null entries in the override info to be the information in the catalog 
-        function processOverrides(courseId, courseOverrideInfo) {
-            if (!courseOverrideInfo.minGrade) {
-                courseOverrideInfo.minGrade = catalogRule["Degree Program"].minGrade;
-            }
-            if (!courseOverrideInfo.maxCount) {
-                courseOverrideInfo.maxCount = 1;
-            }
-            if (!courseOverrideInfo.minHours) {
-                courseOverrideInfo.minHours = catalogs[courseId].lowHours;
-            }
-            if (!courseOverrideInfo.maxHours) {
-                courseOverrideInfo.maxHours = catalogs[courseId].highHours;
-            }
-            return courseOverrideInfo;
-        }
-
-        function processCatalog(catalogArray, catalogName) {
-            console.log("Processing catalog");
-            if (!catalogs) {
-                catalogs = {};
-                catalogs = Object.assign(catalogs, catalogArray); // Make a copy since the catalogs will hold all the courses as they are loaded
-                catalogsByName[catalogName] = catalogArray;
-            } else {
-                catalogsByName[catalogName] = catalogArray;
-                for (var i in catalogArray) {
-                    catalogs[i] = catalogArray[i];
-                }
-            }
-            catalogsLoaded++;
-
-            var $courseList = $("<select>", {
-                id: "courseList"
-            });
-            for (var courseId in catalogArray) {
-                $courseList.append($("<option>", {
-                    value: courseId,
-                    text: catalogArray[courseId].prefix + " " + catalogArray[courseId].number + " : " + catalogArray[courseId].name
-                }));
-            }
-            $catalogs[catalogName] = $courseList;
-        }
-
-        function getCatalogName(courseId) {
-            for (var catalogName in catalogsByName) {
-                if (Object.keys(catalogsByName[catalogName]).includes(courseId)) {
-                    return catalogName;
-                }
-            }
-            return "";
-        }
-
-        function courseHandler(catalogArray, catalogName) {
-            console.log(catalogArray);
-            selectedOverrides = [];
-            applicableCourseIds = [];
-            requiredCourseIds = [];
-            processCatalog(catalogArray, catalogName);
-
-            // Load in options once all catalogs have been retrieved
-            if (catalogsLoaded === catalogRule["Catalogs"].length) {
-                //Iterate through catalog index with degreeID
-                for (var i in catalogRule["Degree Program"].requiredCourses) {
-                    requiredCourseIds.push(i);
-                    var $removeButton = $("<input>", {
-                        id: i,
-                        type: "submit",
-                        name: "removeClassButton",
-                        value: "Remove"
-                    });
-                    $removeButton.click(removeRequiredHandler);
-                    $("#classsublist").append($("<li>", {
-                        text: catalogs[i].name,
-                        value: getCatalogName(i)
-                    }).append($removeButton));
-                }
-
-                // Iterate through applicable courses and add to restricted applicable course list
-                for (var i of catalogRule["Degree Program"].applicableCourses) {
-                    applicableCourseIds.push(i);
-                    var $removeButton = $("<input>", {
-                        id: i,
-                        type: "submit",
-                        name: "removeRestrictedClassButton",
-                        value: "Remove"
-                    });
-                    $removeButton.click(removeRestrictedHandler);
-                    $("#restrictedCourseList").append($("<li>", {
-                        text: catalogs[i].name,
-                        value: getCatalogName(i.toString())
-                    }).append($removeButton));
-                }
-
-                // Determine the number of applicable courses. If the number equals the catalog courses then set the radio button for the
-                // entire catalog being applied. If no applicable courses are set then only the required courses option will be set. Otherwise
-                // the applicable courses that are specified will be displayed.
-                if (catalogRule["Degree Program"].applicableCourses.length == Object.keys(catalogs).length) {
-                    $("input[name='restrictedOptions']").val(["allCourses"]);
-                    $("#restrictedCatalogOptions").hide();
-                } else if (catalogRule["Degree Program"].applicableCourses.length == 0) {
-                    $("input[name='restrictedOptions']").val(["requiredOnlyCourses"]);
-                    $("#restrictedCatalogOptions").hide();
-                } else {
-                    $("input[name='restrictedOptions']").val(["restrictedCourses"]);
-                    $("#restrictedCatalogOptions").show();
-                }
-
-                //Iterate through any course overrides and display information
-                console.log(catalogRule["Degree Program"].courseOverride);
-                for (var courseId in catalogRule["Degree Program"].courseOverride) {
-                    var courseOverrideInfo = catalogRule["Degree Program"].courseOverride[courseId];
-                    courseOverrideInfo = processOverrides(courseId, courseOverrideInfo);
-                    selectedOverrides.push(courseId);
-                    attachCourseOverrideEntry(courseId, courseOverrideInfo);
-                }
-
-                // Set the contents of the required course select
-                addClassHandler();
-                // Load in the minors
-                var xhr = new XMLHttpRequest();
-                xhr.addEventListener("load", minorsHandler);
-                xhr.open("GET", "../scripts/minors.php");
-                xhr.send();
-
-                for (var minorIndex in catalogRule["Minor"]) {
-                    selectedMinors.push(catalogRule["Minor"][minorIndex].id);
-                    var $removeButton = $("<input>", {
-                        id: catalogRule["Minor"][minorIndex].id,
-                        type: "submit",
-                        name: "removeMinorButton",
-                        value: "Remove"
-                    });
-                    $removeButton.click(removeMinorHandler);
-                    $("#minorList").append($("<li>", {
-                        text: catalogRule["Minor"][minorIndex].name
-                    }).append($removeButton));
-                }
-
-                // Now load in the certificates
-                var xhr = new XMLHttpRequest();
-                xhr.addEventListener("load", certificateHandler);
-                xhr.open("GET", "../scripts/certificates.php");
-                xhr.send();
-
-                for (var certificateIndex in catalogRule["Certificate"]) {
-                    selectedCertificates.push(catalogRule["Certificate"][certificateIndex].id);
-                    var $removeButton = $("<input>", {
-                        id: catalogRule["Certificate"][certificateIndex].id,
-                        type: "submit",
-                        name: "removeCertificateButton",
-                        value: "Remove"
-                    });
-                    $removeButton.click(removeCertificateHandler);
-                    $("#certificateList").append($("<li>", {
-                        text: catalogRule["Certificate"][certificateIndex].name
-                    }).append($removeButton));
-                }
-
-                // Load in the form
-                // Now load in the certificates
-                var xhr = new XMLHttpRequest();
-                xhr.addEventListener("load", formHandler);
-                xhr.open("GET", "../scripts/forms.php");
-                xhr.send();
-
-                for (var formIndex in catalogRule["Form"]) {
-                    selectedForms.push(catalogRule["Form"][formIndex].id);
-                    var $removeButton = $("<input>", {
-                        id: catalogRule["Form"][formIndex].id,
-                        type: "submit",
-                        name: "removeFormButton",
-                        value: "Remove"
-                    });
-                    $removeButton.click(removeFormHandler);
-                    $("#formList").append($("<li>", {
-                        text: catalogRule["Form"][formIndex].name
-                    }).append($removeButton));
-                }
-            }
-        }
-
-        function addClassHandler() {
-            for (var i in catalogRule["Catalogs"]) {
-                $("#catalogList, #catalogListOverrides, #catalogListRestricted").append($("<option>", {
-                    value: catalogRule["Catalogs"][i],
-                    text: catalogRule["Catalogs"][i]
-                }));
-            }
-            $catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabel"));
-            $catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabelOverrides"));
-            $catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabelRestricted"));
-        }
-
-        function processList($globalList, $subjectList, idName, requirementList) {
-            var $selectList;
-            for (var objectId in requirementList) {
-                // If there is no select list for the given subject then add a new option to the subject select list and create a new select list for that subject
-                if (!$globalList[requirementList[objectId].subject]) {
-                    $subjectList.append($("<option>", {
-                        value: requirementList[objectId].subject,
-                        text: requirementList[objectId].subject
-                    }));
-                    $selectList = $("<select>", {
-                        id: idName
-                    });
-                    $globalList[requirementList[objectId].subject] = $selectList; // Add select list to array, key off subject
-                }
-                // Add the minor name to the select list belonging to that subject
-                $globalList[requirementList[objectId].subject].append($("<option>", {
-                    value: objectId,
-                    text: requirementList[objectId].name
-                }));
-            }
-        }
-
-        // This will populate the select lists with minor information. There are two select lists: the list for the minor subjects and the list for the minors within that subject. 
-        // The desired outcome of this code is to create select lists for each subject and add minors to those select lists when they belong to those subjects.
-        function minorsHandler() {
-            minors = JSON.parse(this.response);
-            console.log(minors);
-            var $minorSubjectList = $("#minorSubjectList");
-            // Iterate through the minor list by minor id
-            processList($minorsSubjectSelect, $minorSubjectList, "minorSelect", minors);
-            // Initialize the minor select list shown to be the list for the selected option
-            $minorsSubjectSelect[$("#minorSubjectList option:selected").val()].insertAfter($("#minorSelectLabel"));
-        }
-
-
-        function certificateHandler() {
-            certificates = JSON.parse(this.response);
-            console.log(certificates);
-            var $certificateSubjectList = $("#certificateSubjectList");
-            processList($certificatesSubjectSelect, $certificateSubjectList, "certificateSelect", certificates);
-            // Initialize the certificate select list shown to be the list for the selected option
-            $certificatesSubjectSelect[$("#certificateSubjectList option:selected").val()].insertAfter($("#certificateSelectLabel"));
-        }
-
-        function formHandler() {
-            forms = JSON.parse(this.response);
-            console.log(forms);
-            var $formSubjectList = $("#formSubjectList");
-            processList($formsSubjectSelect, $formSubjectList, "formSelect", forms);
-            // Initialize the form select list shown to be the list for the selected option
-            $formsSubjectSelect[$("#formSubjectList option:selected").val()].insertAfter($("#formSelectLabel"));
-        }
-
-        function closeAddItem() {
-            var modal = document.getElementById('addNewItemModal');
-            modal.style.display = "none";
-        }
-
-        function closeGlobal() {
-            var modal = document.getElementById('globalModal');
-            modal.style.display = "none";
-        }
-
-        function closepopup() {
-            $("#certificateList").empty();
-            $("#courseOverrideList").empty();
-            $("#minorList").empty();
-            $("#applicableCatalogsList").empty();
-            $("#classsublist").empty();
-            $("#popupform").children("input[type='number']").val("");
-            $("#popupform").children("input[type='number']").attr("oldvalue", "");
-            $("#popupform").children("input[type='radio']:checked").prop("checked", false);
-            $("#PhDOptions").children("input[type='number']").val("");
-            $("#PhDOptions").children("input[type='number']").attr("oldvalue", "");
-            $("#PhDOptions").children("input[type='radio']:checked").prop("checked", false);
-            $("#minorSelect").detach();
-            $("#minorSubjectList").empty();
-            $("#certificateSelect").detach();
-            $("#certificateSubjectList").empty();
-            $("#formSelect").detach();
-            $("#formSubjectList").empty();
-            $("[id='courseList']").remove();
-            $("#catalogList").empty();
-            $("#formList").empty();
-            $("#catalogListOverrides").empty();
-            $("#catalogListRestricted").empty();
-            $("#classsublist").empty();
-            $("#restrictedCourseList").empty();
-            var modal = document.getElementById('myModal');
-            modal.style.display = "none";
-        }
-    </script>
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveCatalogs.php",
+					data: { removedCatalogs: removedCatalogs, addedCatalogs: addedCatalogs, objectId: objectId },
+					//dataType: "json",
+					success: function(json) {
+						console.log(json);
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
+			function saveRequiredCourses(objectId, callback) {
+				console.log("Calling save required");
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveRequiredCourses.php",
+					data: { removedRequiredCourses: removedRequiredCourses, addedRequiredCourses: addedRequiredCourses, objectId: objectId },
+					//dataType: "json",
+					success: function(json) {
+						console.log(json);
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
+			function saveCourseOverrides(objectId, callback) {
+				// Iterate through the current course overrides. If the course override is new and needs to be inserted into the database then collect information
+				// in the newOverrides array, otherwise if the course is an existing override then add then collect the information in the modifiedOverrides array
+				var newOverrides = [];
+				var modifiedOverrides = [];
+				$("#courseOverrideList li").each(function(index, value) {
+					var overrideInfo = {};
+					var courseId = $(this).children("input[type='submit']").attr("id");
+					overrideInfo.courseId = courseId;
+					overrideInfo.timesCountable = $(this).children("input[id='overrideCount']").val();
+					overrideInfo.minGrade = $(this).children("input[id='overrideGrade']").val();
+					overrideInfo.minHours = $(this).children("input[id='overrideLowHours']").val();
+					overrideInfo.maxHours = $(this).children("input[id='overrideHighHours']").val();
+					if(addedCourseOverrides.includes(courseId)) {
+						newOverrides.push(overrideInfo);
+					} else {
+						modifiedOverrides.push(overrideInfo);
+					}
+				});
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveCourseOverrides.php",
+					data: { removedCourseOverrides: removedCourseOverrides, addedCourseOverrides: newOverrides, modifiedOverrides: modifiedOverrides, objectId: objectId },
+					//dataType: "json",
+					success: function(json) {
+						console.log(json);
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			};
+			
+			// This function will save changes to objects that are mapped to an object. The intended use of this function is to change what minors, certificates, and forms are
+			// mapped to a degree program.
+			function saveObjectMapping(objectId, removedObjects, addedObjects, callback) {
+				console.log(removedObjects);
+				console.log(addedObjects);
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveObjectMapping.php",
+					data: { removedIds: removedObjects, addedIds: addedObjects, objectId: objectId },
+					//dataType: "json",
+					success: function(json) {
+						console.log(json);
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
+			function saveRestrictedCourses(objectId, callback) {
+				var restrictedCourseValue = $("input[name='restrictedOptions']:checked").val();
+				var restrictedCourseIds;
+				var removeCourseIds;
+				console.log(restrictedCourseValue);
+				if(restrictedCourseValue == "allCourses") {
+					restrictedCourseIds = Object.keys(catalogs);
+					removeCourseIds = applicableCourseIds.concat(removedRestrictedCourses);
+				} else if(restrictedCourseValue == "requiredOnlyCourses") {
+					console.log("Option is required only");
+					restrictedCourseIds = [];
+					console.log(applicableCourseIds);
+					removeCourseIds = applicableCourseIds.concat(removedRestrictedCourses);
+					console.log(removeCourseIds);
+				} else {
+					restrictedCourseIds = addedRestrictedCourses;
+					removeCourseIds = removedRestrictedCourses;
+				}
+				$.ajax({
+					type: "POST",
+					url: "../scripts/saveRestrictedCourses.php",
+					data: { removedCourses: removeCourseIds, addedCourses: restrictedCourseIds, objectId: objectId },
+					//dataType: "json",
+					success: function(json) {
+						console.log(json);
+						callback(true);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback(false);
+					}
+				});
+			}
+			
+			function saveHours(objectId, callback) {
+				var addData = [];
+				var modifyData = [];
+				var modifyDataObjectSpecific = [];
+				var removeData = [];
+				var hoursForm = {};
+				//var catalogFormChange = {Hrs400Min: false, Hrs400Max: false, Hrs500Min: false, Hrs500Max: false, Hrs600Min: false, Hrs600Max:false}
+				hoursForm.Hrs400MinObj = {
+					hour: 400,
+					cap: 'minimum',
+					val: $("#400HrsMin").val(),
+					type: $("input[name='400HrsMinOption']:checked").val()
+				}
+				hoursForm.Hrs400MaxObj = {
+					hour: 400,
+					cap: 'maximum',
+					val: $("#400HrsMax").val(),
+					type: $("input[name='400HrsMaxOption']:checked").val()
+				}
+				hoursForm.Hrs500MinObj = {
+					hour: 500,
+					cap: 'minimum',
+					val: $("#500HrsMin").val(),
+					type: $("input[name='500HrsMinOption']:checked").val()
+				}
+				hoursForm.Hrs500MaxObj = {
+					hour: 500,
+					cap: 'maximum',
+					val: $("#500HrsMax").val(),
+					type: $("input[name='500HrsMaxOption']:checked").val()
+				}
+				hoursForm.Hrs600MinObj = {
+					hour: 600,
+					cap: 'minimum',
+					val: $("#600HrsMin").val(),
+					type: $("input[name='600HrsMinOption']:checked").val()
+				}
+				hoursForm.Hrs600MaxObj = {
+					hour: 600,
+					cap: 'maximum',
+					val: $("#600HrsMax").val(),
+					type: $("input[name='600HrsMaxOption']:checked").val()
+				}
+				hoursForm.HrsTransferMaxObj = {
+					hour: "Transfer",
+					cap: 'maximum',
+					val: $("#trhrs").val(),
+					type: $("input[name='TransferHrsMaxOption']:checked").val()
+				}
+				hoursForm.HrsOutsideMaxObj = {
+					hour: "Outside",
+					cap: 'maximum',
+					val: $("#ohrs").val(),
+					type: $("input[name='OutsideHrsMaxOption']:checked").val()
+				}
+				hoursForm.HrsPhDMinObj = {
+					hour: "PhDOnly",
+					cap: 'minimum',
+					val: $("#PhDonly").val(),
+					type: $("input[name='PhDHrsMinOption']:checked").val()
+				}
+
+				// Check to see if an hour type is not provided for any hour field with a value
+				if(hoursForm.Hrs400MinObj.val != "" && !hoursForm.Hrs400MinObj.type){
+					alert("Fixed or Variable option must be selected for 400 Min Hours");
+				}
+				if(hoursForm.Hrs400MaxObj.val != "" && !hoursForm.Hrs400MaxObj.type){
+					alert("Fixed or Variable option must be selected for 400 Max Hours");
+				}
+				if(hoursForm.Hrs500MinObj.val != "" && !hoursForm.Hrs500MinObj.type){
+					alert("Fixed or Variable option must be selected for 500 Min Hours");
+				}
+				if(hoursForm.Hrs500MaxObj.val != "" && !hoursForm.Hrs500MaxObj.type){
+					alert("Fixed or Variable option must be selected for 500 Max Hours");
+				}
+				if(hoursForm.Hrs600MinObj.val != "" && !hoursForm.Hrs600MinObj.type){
+					alert("Fixed or Variable option must be selected for 600 Min Hours");
+				}
+				if(hoursForm.Hrs600MaxObj.val != "" && !hoursForm.Hrs600MaxObj.type){
+					alert("Fixed or Variable option must be selected for 600 Max Hours");
+				}
+				if(hoursForm.HrsTransferMaxObj.val != "" && !hoursForm.HrsTransferMaxObj.type){
+					alert("Fixed or Variable option must be selected for Transfer Max Hours");
+				}
+				if(hoursForm.HrsOutsideMaxObj.val != "" && !hoursForm.HrsOutsideMaxObj.type){
+					alert("Fixed or Variable option must be selected for Outside Max Hours");
+				}
+				if(hoursForm.HrsPhDMinObj.val != "" && !hoursForm.HrsPhDMinObj.type){
+					alert("Fixed or Variable option must be selected for Graduate Only Min Hours");
+				}
+				
+				// If the old value is defined then check to see if the database value needs to be modified or deleted
+
+				checkHourUpdate($("#400HrsMin"), hoursForm.Hrs400MinObj, modifyData, removeData, addData);
+				checkHourUpdate($("#400HrsMax"), hoursForm.Hrs400MaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#500HrsMin"), hoursForm.Hrs500MinObj, modifyData, removeData, addData);
+				checkHourUpdate($("#500HrsMax"), hoursForm.Hrs500MaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#600HrsMin"), hoursForm.Hrs600MinObj, modifyData, removeData, addData);
+				checkHourUpdate($("#600HrsMax"), hoursForm.Hrs600MaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#trhrs"), hoursForm.HrsTransferMaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#ohrs"), hoursForm.HrsOutsideMaxObj, modifyData, removeData, addData);
+				checkHourUpdate($("#PhDonly"), hoursForm.HrsPhDMinObj, modifyData, removeData, addData);
+
+				console.log(modifyData);
+				console.log(removeData);
+				console.log(addData);
+				if(addData.length > 0 || removeData.length > 0 || modifyData.length > 0) {
+					$.ajax({
+						type: "POST",
+						url: "../scripts/saveHours.php",
+						data: { removedHours: removeData, addedHours: addData, modifiedHours: modifyData, objectId: objectId },
+						//dataType: "json",
+						success: function(json) {
+							console.log(json);
+							callback(true);
+						},
+						error: function(xhr, ajaxOptions, thrownError) {
+							console.log(thrownError);
+							callback(false);
+						}
+					});
+				}
+			}
+			
+			function saveObjectInformation(objectId, callback) {
+				var requiredHrs = $("#requiredHrs").val();
+				var minGrade = $("#grade").val();
+				var minGPA = $("#minimumGPA").val();
+				oldValueGrade = $("#grade").attr("oldvalue");
+				oldValueGPA = $("#minimumGPA").attr("oldvalue");
+				oldValueRequired = $("#requiredHrs").attr("oldvalue");
+				if(oldValueGrade != minGrade || oldValueGPA != minGPA || oldValueRequired != requiredHrs) {
+					$.ajax({
+						type: "POST",
+						url: "../scripts/saveObjectInfo.php",
+						data: { requiredHours: requiredHrs, minGrade: minGrade, minGPA: minGPA, objectId: objectId },
+						//dataType: "json",
+						success: function(json) {
+							console.log(json);
+							callback(true);
+						},
+						error: function(xhr, ajaxOptions, thrownError) {
+							console.log(thrownError);
+							callback(false);
+						}
+					});
+				}
+			}
+			
+			// This function will push the hourObject onto either the modifyData, removeData, or addData array depending on the values that
+			// are changed when compared to the oldValue and oldType
+			function checkHourUpdate($entry, hourObject, modifyData, removeData, addData) {
+				var oldValue = $entry.attr("oldvalue");
+				$entry.attr("oldvalue", hourObject.val);
+				var oldType = $entry.attr("oldtype");
+				$entry.attr("oldtype", hourObject.type);
+				if(oldValue) {
+					if(hourObject.val != "" && hourObject.val != oldValue) {
+						modifyData.push(hourObject);
+					} else if(hourObject.val == "" && oldValue != "") {
+						removeData.push(hourObject);
+					} else if(hourObject.type != oldType) {
+						modifyData.push(hourObject);
+					}
+				} else { // Otherwise check to see if an hour value is inputted and needs to be added to the database
+					if(hourObject.val != "") {
+						addData.push(hourObject);
+					}
+				}
+			}
+			
+			function addCommitteeTitleToSelect(id, title) {
+				var $option = $("<option>", {
+					id: id,
+					value: title,
+					text: title
+				});
+				$("#committeeTitle").append($option);
+			}
+			
+			function addCommitteeMemberToSelect(id, firstName, lastName, title, titleId, subject) {
+				$("#committeeMembers").append($("<option>", {
+					id: id,
+					firstName: firstName,
+					lastName: lastName,
+					text: firstName + " " + lastName
+				}));
+			}
+			
+			function addCommitteeMemberToTable(id, firstName, lastName, title, titleId, subject) {
+				var $row = $("<tr>", {
+					value: subject,
+					name: "tableEntry"
+				});
+				$row.append($("<td>", {
+					id: "memberSubject",
+					text: subject
+				})).append($("<td>", {
+					id: "memberFirstName",
+					text: firstName
+				})).append($("<td>", {
+					id: "memberLastName",
+					text: lastName
+				})).append($("<td>", {
+					id: "memberTitle",
+					text: title
+				}));
+				var $closeButton = $("<button>", {
+					id: id,
+					committee: subject,
+					name: "removeMemberButton",
+					title: titleId,
+					text: "X"
+				});
+				$closeButton.click(removeCommitteeMemberHandler);
+				$row.append($closeButton);
+				$("#committeeTableBody").append($row);
+			}
+			
+			function swapRequired(catalogName) {
+				$("#classListLabel + select").detach();
+				if(catalogName) {
+					$catalogs[catalogName].clone().insertAfter($("#classListLabel"));
+				}
+			}
+			
+			function swapOverride(catalogName) {
+				$("#classListLabelOverrides + select").detach();
+				if(catalogName) {
+					$catalogs[catalogName].clone().insertAfter($("#classListLabelOverrides"));
+				}
+			}
+			
+			function swapRestricted(catalogName) {
+				$("#classListLabelRestricted + select").detach();
+				if(catalogName) {
+					$catalogs[catalogName].clone().insertAfter($("#classListLabelRestricted"));
+				}
+			}
+				
+			function addNewCatalog(catalogArray, catalogName) {
+				processCatalog(catalogArray, catalogName);
+				if(Object.keys($catalogs).length === 1 || !$("#catalogList option:selected").val()) {
+					$catalogs[catalogName].clone().insertAfter($("#classListLabel"));
+					$catalogs[catalogName].clone().insertAfter($("#classListLabelOverrides"));
+					$catalogs[catalogName].clone().insertAfter($("#classListLabelRestricted"));
+				}
+				var $removeButton = $("<input>",{
+					id: catalogName,
+					type: "submit",
+					name: "removeCatalogButton",
+					value: "Remove"
+				});
+				$removeButton.click(removeCatalogHandler);
+				$("#applicableCatalogsList").append($("<li>",{
+					text: catalogName
+				}).append($removeButton));
+				$("#catalogList, #catalogListOverrides, #catalogListRestricted").append($("<option>",{
+					value: catalogName,
+					text: catalogName
+				}));
+			}
+			
+			function loadAllCommitteeMembers(callback) {
+				$.ajax({
+					type: "GET",
+					url: "../scripts/getAllCommitteeMembers.php",
+					dataType: "json",
+					success: function(json) {
+						console.log(json);
+						callback(json);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback({});
+					}
+				});
+			}
+			
+			function loadCommitteeTitles(callback) {
+				$.ajax({
+					type: "GET",
+					url: "../scripts/getCommitteeTitles.php",
+					dataType: "json",
+					success: function(json) {
+						callback(json);
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						callback({});
+					}
+				});
+			}
+			
+			function editCommitteeHandler() {
+				
+				// Load in the titles that a committee member may have
+				loadCommitteeTitles(function(titles) {
+					for(var id in titles) {
+						addCommitteeTitleToSelect(id, titles[id]);
+					}
+				});
+				
+				// Load in every committee member regardless of whether this member is on the committee
+				loadAllCommitteeMembers(function(members) {
+					var loadedMembers = [];
+					for(var index in members) {
+						if(!loadedMembers.includes(members[index].firstName + " " + members[index].lastName)) {
+							addCommitteeMemberToSelect(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].subject);	
+							loadedMembers.push(members[index].firstName + " " + members[index].lastName);
+						}
+						if(members[index].title && members[index].subject) {
+							addCommitteeMemberToTable(members[index].id, members[index].firstName, members[index].lastName, members[index].title, members[index].titleId, members[index].subject);	
+						}						
+					}
+					if($("#committeeMembers option:selected").val() == "newMember") {
+						$("#newCommitteeMemberContainer").show();
+					}
+				});
+				
+				var modal = document.getElementById('committeeModal');
+				modal.style.display = "block";
+			}
+			
+			function closeCommittee() {
+				$("#committeeMembers").empty();
+				$("#committeeTitle").empty();
+				$("#committeeTableBody tr[name='tableEntry']").remove();
+				var modal = document.getElementById('committeeModal');
+				modal.style.display = "none";
+			}
+			
+			function removeCommitteeMemberHandler() {
+				var memberId = $(this).attr("id");
+				var committee = $(this).attr("committee");
+				var title = $(this).attr("title");
+				var $button = $(this);
+				$.ajax({
+					type: "POST",
+					url: "../scripts/removeFromCommittee.php",
+					data: { id: memberId, committee: committee, title: title },
+					dataType: "json",
+					success: function(json) {
+						console.log("success");
+						$button.parent().remove();
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						console.log(thrownError);
+						alert("Unable to remove from committee");
+						return false;
+					}
+				});
+			}
+			
+			// TODO modularize these event handlers into one
+			function removeCatalogHandler() {
+				var catalogName = $(this).attr("id");
+				$(this).parent().remove();
+				selectedCatalogs = selectedCatalogs.filter(function(name) {
+					return name != catalogName;
+				});
+				if(addedCatalogs.includes(catalogName)) {
+					addedCatalogs = addedCatalogs.filter(function(name) {
+						name != catalogName;
+					});
+				} else {
+					removedCatalogs.push(catalogName);
+				}
+				// Remove all required courses from the removed catalog
+				$("#requiredClasses li[value='" + catalogName + "']").each(function(index, value) {
+					var courseId = $(this).children("input[type='submit']").attr("id");
+					requiredCourseIds = requiredCourseIds.filter(function(id){ 
+						return id != courseId;
+					});
+					if(addedRequiredCourses.includes(courseId)) {
+						addedRequiredCourses = addedRequiredCourses.filter(function(id) {
+							id != courseId;
+						});
+					} else {
+						removedRequiredCourses.push(courseId);
+					}
+					$(this).remove();
+				});
+				// Remove all course overrides from the removed catalog
+				$("#overridesContainer li[value='" + catalogName + "']").each(function(index, value) {
+					var courseId = $(this).children("input[type='submit']").attr("id");
+					selectedOverrides = selectedOverrides.filter(function(id){
+						return id != courseId;
+					});
+					if(addedCourseOverrides.includes(courseId)) {
+						addedCourseOverrides = addedCourseOverrides.filter(function(id) {
+							id != courseId;
+						});
+					} else {
+						removedCourseOverrides.push(courseId);
+					}
+					$(this).remove();
+				});
+				// Remove all applicable courses from the removed catalog
+				$("#restrictedCourseList li[value='" + catalogName + "']").each(function(index, value) {
+					var courseId = $(this).children("input[type='submit']").attr("id");
+					applicableCourseIds = applicableCourseIds.filter(function(id){
+						return id != courseId;
+					});
+					if(addedRestrictedCourses.includes(courseId)) {
+						addedRestrictedCourses = addedRestrictedCourses.filter(function(id) {
+							id != courseId;
+						});
+					} else {
+						removedRestrictedCourses.push(courseId);
+					}
+					$(this).remove();
+				});
+				// Remove the catalog from the select options
+				var swapOverrideSelect = $("#catalogListOverrides option:selected").val() == catalogName;
+				var swapRequiredSelect = $("#catalogList option:selected").val() == catalogName;
+				var swapRestrictedSelect = $("#catalogListRestricted option:selected").val == catalogName;
+				$("#catalogListOverrides option[value='" + catalogName + "']").remove();
+				$("#catalogList option[value='" + catalogName + "']").remove();
+				$("#catalogListRestricted option[value='" + catalogName + "']").remove();
+				// If the catalog to remove was selected before the removal then the course select will need to be swapped
+				if(swapOverrideSelect) {
+					swapOverride($("#catalogListOverrides option:selected").val());
+				}
+				if(swapRequiredSelect) {
+					swapRequired($("#catalogList option:selected").val());
+				}
+				if(swapRestrictedSelect) {
+					swapRestricted($("#catalogListRestricted option:selected").val());
+				}
+			}
+			
+			function removeOverrideHandler() {
+				var courseId = $(this).attr("id");
+				selectedOverrides = selectedOverrides.filter(function(id) {
+					return id != courseId;
+				});
+				if(addedCourseOverrides.includes(courseId)) {
+					addedCourseOverrides = addedCourseOverrides.filter(function(id) {
+						id != courseId;
+					});
+				} else {
+					removedCourseOverrides.push(courseId);
+				}
+				$(this).parent().remove();
+			}
+			
+			function removeRequiredHandler() {
+				var courseId = $(this).attr("id");
+				requiredCourseIds = requiredCourseIds.filter(function(id) {
+					return id != courseId;
+				});
+				if(addedRequiredCourses.includes(courseId)) {
+					addedRequiredCourses = addedRequiredCourses.filter(function(id) {
+						id != courseId;
+					});
+				} else {
+					removedRequiredCourses.push(courseId);
+				}
+				$(this).parent().remove();
+			}
+			
+			function removeRestrictedHandler() {
+				var courseId = $(this).attr("id");
+				applicableCourseIds = applicableCourseIds.filter(function(id) {
+					return id != courseId;
+				});
+				if(addedRestrictedCourses.includes(courseId)) {
+					addedRestrictedCourses = addedRestrictedCourses.filter(function(id) {
+						id != courseId;
+					});
+				} else {
+					removedRestrictedCourses.push(courseId);
+				}
+				$(this).parent().remove();
+			}
+			
+			function removeMinorHandler() {
+				var minorId = $(this).attr("id");
+				selectedMinors = selectedMinors.filter(function(id) {
+					return id != minorId;
+				});
+				if(addedMinors.includes(minorId)) {
+					addedMinors = addedMinors.filter(function(id) {
+						id != minorId;
+					});
+				} else {
+					removedMinors.push(minorId);
+				}
+				$(this).parent().remove();
+			}
+			
+			function removeCertificateHandler() {
+				var certificateId = $(this).attr("id");
+				selectedCertificates = selectedCertificates.filter(function(id) {
+					return id != certificateId;
+				});
+				if(addedCertificates.includes(certificateId)) {
+					addedCertificates = addedCertificates.filter(function(id) {
+						id != certificateId;
+					});
+				} else {
+					removedCertificates.push(certificateId);
+				}
+				$(this).parent().remove();
+			}
+			
+			function removeFormHandler() {
+				var formId = $(this).attr("id");
+				selectedForms = selectedForms.filter(function(id) {
+					return id != formId;
+				});
+				if(addedForms.includes(formId)) {
+					addedForms = addedForms.filter(function(id) {
+						id != formId;
+					});
+				} else {
+					removedForms.push(formId);
+				}
+				$(this).parent().remove();
+			}
+			
+			function degreeHandlerInit() {
+				degreeHandler(JSON.parse(this.response), true);
+				
+				// Once all the degree programs are loaded add the event handler for editing committees
+				$("li[name='editCommittee']").click(editCommitteeHandler);
+				var xhr = new XMLHttpRequest();
+				xhr.addEventListener("load", nonDegreeHandlerInit);
+				xhr.open("GET", "../scripts/nondegreeObjects.php");
+				xhr.send();
+			}
+			
+			function nonDegreeHandlerInit() {
+				degreeHandler(JSON.parse(this.response), false);
+				$("button[name='modifyButton']").click(function(){
+					if(degreeProgramIds.includes($(this).val())) {
+						$("#additionalOptionsContainer").show();
+						$("#restrictedCatalog").hide();
+						console.log($(this).val());
+						console.log(phdIds);
+						if(phdIds.includes($(this).val())) {
+							$("#PhDOptions").show();
+						} else {
+							$("#PhDOptions").hide();
+						}
+					} else {
+						$("#additionalOptionsContainer").hide();
+						$("#restrictedCatalog").show();
+					}
+					$.ajax({
+						type: "POST",
+						url: "../scripts/requirements.php",
+						data: { idObjects: $(this).val()},
+						dataType: "json",
+						success: function(json) {
+							popupHandler(json);
+						}
+					});
+				});
+				
+				$("button[name='modifyGlobal']").click(function(){
+					var typeName = $(this).val();
+					$.ajax({
+						type: "POST",
+						url: "../scripts/globalRequirements.php",
+						data: { typeName: $(this).val()},
+						dataType: "json",
+						success: function(json) {
+							popupHandlerGlobal(json, typeName);
+						},
+						error: function(xhr, ajaxOptions, thrownError) {
+							console.log(thrownError);
+							return false;
+						}
+					});
+				});
+				// Initialize page contents with select lists and add buttons
+				for(var index in $objectSubjects) {
+					$objectSubjects[index].change(function(){
+						if($(this).val() === "newSubject") {
+							$("#newObjectSubjectSpan").show();
+						} else {
+							$("#newObjectSubjectSpan").hide();
+						}
+					});
+				}
+				$objectSubjects[$("#newItemCategories option:selected").val()].insertAfter($("#objectSubjectLabel"));
+				if($("#objectSubects option:selected").val() === "newSubject") {
+					$("#newObjectSubjectSpan").show();
+				}
+				var $addItemButton = $("<button>", {
+					name: "addNewItem",
+					text: "Add New Item"
+				});
+				$addItemButton.click(function() {
+					popupHandlerAddNewItem();
+				});
+				$("#listContainer").append($("<li>", {
+					name: "addNewItem"
+				}).append($addItemButton));
+				
+			}
+			
+			
+			/**
+			param: programs - Array of programs to process into the list. This will be done according to the subject of the program
+			param: showEditCatalog - If true this will add the option to edit the catalog for any subjects
+			*/
+			function degreeHandler(programs, showEditCatalog) {
+				var degreePrograms = programs;
+				console.log(degreePrograms);
+				var $degreeSubjects;
+				var $degreeOptions;
+
+				// Iterate through all degree programs (Masters,PhD,etc) and add to DOM
+				for(var degreeName in degreePrograms) {
+					$("#newItemCategories").append($("<option>", {
+						value: degreeName,
+						text: degreeName
+					}));
+					$("#listContainer").append($("<li>", {
+						value: degreeName
+					}).append($("<label>", {
+						text: degreeName
+					})));
+					$("#listContainer").append($("<li>", {
+						value: "globalRequirements"
+					}).append($("<label>", {
+						text: "University Requirements"
+					})).append($("<button>", {
+						value: degreeName,
+						name: "modifyGlobal",
+						text: "Modify"
+					})));
+					
+					var $subjects = $("<select>", {
+						id: "objectSubjects"
+					});
+
+					// Create nested list under each degree program with the subject, e.g., Computer Science 
+					$degreeSubjects = $("<ul id='subjectList'>");
+					console.log(degreePrograms[degreeName]);
+					for(var degreeSubject in degreePrograms[degreeName]) {
+					
+						$degreeSubjects.append($("<li>", {
+							text: degreeSubject
+						}));
+						var $subjectOption = $("<option>", {
+							value: degreeSubject,
+							text: degreeSubject
+						});
+						$subjects.append($subjectOption);
+						
+						$degreeOptions = $("<ul id='optionList'>");
+						
+						// If the catalog is set to be shown then add an item to edit the catalog. All degree program subjects have catalogs and they all
+						// have graudate committees as well so add an item for editing the graduate committee
+						if(showEditCatalog) {
+							$degreeOptions.append($("<li>", {
+								name: "catalog"
+							}).append($("<a>", {
+								href: "addremove.html",
+								text: "Edit Course Catalog",
+								onclick: "document.cookie = 'program=" + degreeSubject + "'"
+							})));
+
+						}
+						
+						for(var degreeOption in degreePrograms[degreeName][degreeSubject]) {
+							$degreeOptions.append($("<li>", {
+								value: degreeOption,
+							}).append($("<label>", {
+								text: degreeOption
+							})).append($("<button>", {
+								value: degreePrograms[degreeName][degreeSubject][degreeOption],
+								name: "modifyButton",
+								text: "Modify"	
+							})));
+							// Add the ID to the degreeProgram ID list. This will be used to display additional options if the object ID is a degree program
+							if(degreeName === "Masters" || degreeName === "PhD") {
+								if(!catalogNames.includes(degreeSubject)) {
+									$("#applicableCatalogsSelect").append($subjectOption.clone());
+									$("#committeesSelect").append($subjectOption);
+									catalogNames.push(degreeSubject);
+									$("#committeeSubject").append($("<option>", {
+										value: degreeSubject,
+										text: degreeSubject
+									}));
+								}
+								if(degreeName === "PhD") {
+									phdIds.push(degreePrograms[degreeName][degreeSubject][degreeOption]);
+								}
+								degreeProgramIds.push(degreePrograms[degreeName][degreeSubject][degreeOption]);
+							}
+						} 
+						$degreeSubjects.append($degreeOptions);
+					}
+					$subjects.append($("<option>", {
+						value: "newSubject",
+						text: "New Subject"
+					}));
+					$objectSubjects[degreeName] = $subjects;
+					$("#listContainer").append($degreeSubjects);
+				}
+				
+			}
+
+			function popupHandlerAddNewItem() {
+				var modal = document.getElementById('addNewItemModal');
+				modal.style.display = "block";
+			}
+			
+			// This function will initialize the contents of the global requirements popup. It will display the popup and populate the min grade and GPA fields
+			function popupHandlerGlobal(globalRequirements, typeName) {
+				var modal = document.getElementById('globalModal');
+				modal.style.display = "block";
+				$("#globalGrade").val(globalRequirements.minGrade);
+				$("#globalGPA").val(globalRequirements.minGPA);
+				$("#saveGlobal").attr("typeName", typeName);
+				console.log(globalRequirements);
+			}
+			
+			function resetAddedRemovedValues() {
+				removedCatalogs = [];
+				addedCatalogs = [];
+				addedRequiredCourses = [];
+				removedRequiredCourses = [];
+				addedCourseOverrides = [];
+				removedCourseOverrides = [];
+				addedMinors = [];
+				removedMinors = [];
+				addedForms = [];
+				removedForms = [];
+				addedCertificates = [];
+				removedCertificates = [];
+				addedRestrictedCourses = [];
+				removedRestrictedCourses = [];
+			}
+			
+			function popupHandler(json){
+				catalogRule = json;
+				catalogsLoaded = 0;
+				catalogs = null;
+				$catalogs = {};
+				$minorsSubjectSelect = {};
+				$certificatesSubjectSelect = {};
+				$formsSubjectSelect = {};
+				requiredCourseIds = [];
+				selectedMinors = [];
+				selectedCertificates = [];
+				selectedForms = [];
+				resetAddedRemovedValues();
+				$("#deleteForm").attr("idobjects", catalogRule["Degree Program"].id);
+				$("#saveForm").attr("idobjects", catalogRule["Degree Program"].id);
+				console.log(catalogRule);
+
+				var modal = document.getElementById('myModal');
+				modal.style.display = "block";
+				$("#requiredHrs").val(catalogRule["Degree Program"].requiredHours);
+				$("#requiredHrs").val(catalogRule["Degree Program"].requiredHours);
+				if(catalogRule["Degree Program"].hours400) {
+					if(catalogRule["Degree Program"].hours400.minimum) {
+						$("#400HrsMin").val(catalogRule["Degree Program"].hours400.minimum.hours);
+						$("#400HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours400.minimum.hours);
+						$("input[name='400HrsMinOption']").val([catalogRule["Degree Program"].hours400.minimum.type]);
+						$("#400HrsMin").attr("oldtype", catalogRule["Degree Program"].hours400.minimum.type);
+					}
+					if(catalogRule["Degree Program"].hours400.maximum) {
+						$("#400HrsMax").val(catalogRule["Degree Program"].hours400.maximum.hours);
+						$("#400HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours400.maximum.hours);
+						$("input[name='400HrsMaxOption']").val([catalogRule["Degree Program"].hours400.maximum.type]);
+						$("#400HrsMax").attr("oldtype", catalogRule["Degree Program"].hours400.maximum.type);
+					}
+				}
+				if(catalogRule["Degree Program"].hours500) {
+					if(catalogRule["Degree Program"].hours500.minimum) {
+						$("#500HrsMin").val(catalogRule["Degree Program"].hours500.minimum.hours);
+						$("#500HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours500.minimum.hours);
+						$("input[name='500HrsMinOption']").val([catalogRule["Degree Program"].hours500.minimum.type]);
+						$("#500HrsMin").attr("oldtype", catalogRule["Degree Program"].hours500.minimum.type);
+					}if(catalogRule["Degree Program"].hours500.maximum) {
+						$("#500HrsMax").val(catalogRule["Degree Program"].hours500.maximum.hours);
+						$("#500HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours500.maximum.hours);
+						$("input[name='500HrsMaxOption']").val([catalogRule["Degree Program"].hours500.maximum.type]);
+						$("#500HrsMax").attr("oldtype", catalogRule["Degree Program"].hours500.maximum.type);
+					}
+				}
+				if(catalogRule["Degree Program"].hours600) {
+					if(catalogRule["Degree Program"].hours600.minimum) {
+						$("#600HrsMin").val(catalogRule["Degree Program"].hours600.minimum.hours);
+						$("#600HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours600.minimum.hours);
+						$("input[name='600HrsMinOption']").val([catalogRule["Degree Program"].hours600.minimum.type]);
+						$("#600HrsMin").attr("oldtype", catalogRule["Degree Program"].hours600.minimum.type);
+					}
+					if(catalogRule["Degree Program"].hours600.maximum) {
+						$("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours);
+						$("#600HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours600.maximum.hours);
+						$("input[name='600HrsMaxOption']").val([catalogRule["Degree Program"].hours600.maximum.type]);
+						$("#600HrsMax").attr("oldtype", catalogRule["Degree Program"].hours600.maximum.type);
+					}
+				}
+				if(catalogRule["Degree Program"].hoursTransfer) {
+					if(catalogRule["Degree Program"].hoursTransfer.maximum) {                     
+						$("#trhrs").val(catalogRule["Degree Program"].hoursTransfer.maximum.hours);
+						$("#trhrs").attr('oldvalue',catalogRule["Degree Program"].hoursTransfer.maximum.hours);
+						$("input[name='TransferHrsMaxOption']").val([catalogRule["Degree Program"].hoursTransfer.maximum.type]);
+						$("#trhrs").attr("oldtype", catalogRule["Degree Program"].hoursTransfer.maximum.type);
+					}
+				}
+				if(catalogRule["Degree Program"].hoursOutside) {
+					if(catalogRule["Degree Program"].hoursOutside.maximum) {                     
+						$("#ohrs").val(catalogRule["Degree Program"].hoursOutside.maximum.hours);
+						$("#ohrs").attr('oldvalue',catalogRule["Degree Program"].hoursOutside.maximum.hours);
+						$("input[name='OutsideHrsMaxOption']").val([catalogRule["Degree Program"].hoursOutside.maximum.type]);
+						$("#ohrs").attr("oldtype", catalogRule["Degree Program"].hoursOutside.maximum.type);
+					}
+				}
+				if(catalogRule["Degree Program"].hoursPhDOnly) {
+					if(catalogRule["Degree Program"].hoursPhDOnly.minimum) {                     
+						$("#PhDonly").val(catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
+						$("#PhDonly").attr('oldvalue',catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
+						$("input[name='PhDHrsMinOption']").val([catalogRule["Degree Program"].hoursPhDOnly.minimum.type]);
+						$("#PhDonly").attr("oldtype", catalogRule["Degree Program"].hoursPhDOnly.minimum.type);
+					}
+				}
+				$("#grade").val(catalogRule["Degree Program"].minGrade);
+				$("#grade").attr("oldvalue", catalogRule["Degree Program"].minGrade);
+				$("#minimumGPA").val(catalogRule["Degree Program"].minGPA);
+				$("#minimumGPA").attr("oldvalue", catalogRule["Degree Program"].minGPA);
+				// Load in all the catalogs for the program. This is done before setting information like required courses because the catalog information needs
+				// to be known in order to retireve the course information.
+				selectedCatalogs = [];
+				catalogsByName = {};
+				for(var i in catalogRule["Catalogs"]){
+					let catalogName = catalogRule["Catalogs"][i];
+					selectedCatalogs.push(catalogName);
+					var $removeButton = $("<input>",{
+						id: catalogName,
+						type: "submit",
+						name: "removeCatalogButton",
+						value: "Remove"
+					});
+					$removeButton.click(removeCatalogHandler);
+					$("#applicableCatalogsList").append($("<li>",{
+						text: catalogName
+					}).append($removeButton));
+					$.ajax({
+						type: "POST",
+						url: "../scripts/courseCatalog.php",
+						data: {catalogName: catalogName},
+						dataType: "json",
+						success: function(json) {
+							courseHandler(json, catalogName);
+						}
+					});
+				}
+			}
+
+			function attachCourseOverrideEntry(courseId, courseOverrideInfo) {
+				var $removeButton = $("<input>",{
+					id: courseId,
+					type: "submit",
+					name: "removeOverrideButton",
+					value: "Remove"
+				});
+				$removeButton.click(removeOverrideHandler);
+				$("#courseOverrideList").append($("<li>", {
+					text: catalogs[courseId].name + " ",
+					value: getCatalogName(courseId)
+				}).append($("<label>", {
+					for: "overrideCount",
+					text: "Maximum Times Countable"
+				})).append($("<input>", {
+					id: "overrideCount",
+					type: "number",
+					value: courseOverrideInfo.maxCount,
+					style: "width:50px"
+				})).append($("<label>", {
+					for: "overrideGrade",
+					text: "Minimum Grade"
+				})).append($("<input>", {
+					id: "overrideGrade",
+					type: "text",
+					value: courseOverrideInfo.minGrade,
+					maxlength: "2",
+					pattern: "[ABCDF]{1}[-+]{0,1}",
+					style: "width:50px"
+				})).append($("<label>", {
+					for: "overrideLowHours",
+					text: "Minium Hours"
+				})).append($("<input>", {
+					id: "overrideLowHours",
+					type: "number",
+					value: courseOverrideInfo.minHours,
+					style: "width:50px"
+				})).append($("<label>", {
+					for: "overrideHighHours",
+					text: "Maximum Hours"
+				})).append($("<input>", {
+					id: "overrideHighHours",
+					type: "number",
+					value: courseOverrideInfo.maxHours,
+					style: "width:50px"
+				})).append($removeButton));
+			}
+			
+			// This function will set any null entries in the override info to be the information in the catalog 
+			function processOverrides(courseId, courseOverrideInfo) {
+				if(!courseOverrideInfo.minGrade) {
+					courseOverrideInfo.minGrade = catalogRule["Degree Program"].minGrade;
+				}
+				if(!courseOverrideInfo.maxCount) {
+					courseOverrideInfo.maxCount = 1;
+				}
+				if(!courseOverrideInfo.minHours) {
+					courseOverrideInfo.minHours = catalogs[courseId].lowHours;
+				}
+				if(!courseOverrideInfo.maxHours) {
+					courseOverrideInfo.maxHours = catalogs[courseId].highHours;
+				}
+				return courseOverrideInfo;
+			}
+			
+			function processCatalog(catalogArray, catalogName) {
+				console.log("Processing catalog");
+				if(!catalogs) {
+					catalogs = {};
+					catalogs = Object.assign(catalogs, catalogArray); // Make a copy since the catalogs will hold all the courses as they are loaded
+					catalogsByName[catalogName] = catalogArray;
+				} else {
+					catalogsByName[catalogName] = catalogArray;
+				 	for(var i in catalogArray) {
+						catalogs[i] = catalogArray[i];
+					}
+				}
+				catalogsLoaded++;
+			
+				var $courseList = $("<select>", {
+					id: "courseList"
+				});
+				for(var courseId in catalogArray) {
+					$courseList.append($("<option>",{
+						value: courseId,
+						text: catalogArray[courseId].prefix + " " + catalogArray[courseId].number + " : " +  catalogArray[courseId].name
+					}));
+				}
+				$catalogs[catalogName] = $courseList;
+			}
+			
+			function getCatalogName(courseId) {
+				for(var catalogName in catalogsByName) {
+					if(Object.keys(catalogsByName[catalogName]).includes(courseId)) {
+						return catalogName;
+					}
+				}
+				return "";
+			}
+			
+			function courseHandler(catalogArray, catalogName){
+				console.log(catalogArray);
+				selectedOverrides = [];
+				applicableCourseIds = [];
+				requiredCourseIds = [];
+				processCatalog(catalogArray, catalogName);
+			
+				// Load in options once all catalogs have been retrieved
+				if(catalogsLoaded === catalogRule["Catalogs"].length) {
+					//Iterate through catalog index with degreeID
+					for(var i in catalogRule["Degree Program"].requiredCourses){
+						requiredCourseIds.push(i);
+						var $removeButton = $("<input>",{
+							id: i,
+							type: "submit",
+							name: "removeClassButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeRequiredHandler);
+						$("#classsublist").append($("<li>",{
+							text: catalogs[i].name,
+							value: getCatalogName(i)
+						}).append($removeButton));
+					}
+					
+					// Iterate through applicable courses and add to restricted applicable course list
+					for(var i of catalogRule["Degree Program"].applicableCourses) {
+						applicableCourseIds.push(i);
+						var $removeButton = $("<input>",{
+							id: i,
+							type: "submit",
+							name: "removeRestrictedClassButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeRestrictedHandler);
+						$("#restrictedCourseList").append($("<li>",{
+							text: catalogs[i].name,
+							value: getCatalogName(i.toString())
+						}).append($removeButton));
+					}
+
+					// Determine the number of applicable courses. If the number equals the catalog courses then set the radio button for the
+					// entire catalog being applied. If no applicable courses are set then only the required courses option will be set. Otherwise
+					// the applicable courses that are specified will be displayed.
+					if(catalogRule["Degree Program"].applicableCourses.length == Object.keys(catalogs).length) {
+						$("input[name='restrictedOptions']").val(["allCourses"]);
+						$("#restrictedCatalogOptions").hide();
+					} else if(catalogRule["Degree Program"].applicableCourses.length == 0) {
+						$("input[name='restrictedOptions']").val(["requiredOnlyCourses"]);
+						$("#restrictedCatalogOptions").hide();
+					} else {
+						$("input[name='restrictedOptions']").val(["restrictedCourses"]);
+						$("#restrictedCatalogOptions").show();
+					}
+					
+					//Iterate through any course overrides and display information
+					console.log(catalogRule["Degree Program"].courseOverride);
+					for(var courseId in catalogRule["Degree Program"].courseOverride) {
+						var courseOverrideInfo = catalogRule["Degree Program"].courseOverride[courseId];
+						courseOverrideInfo = processOverrides(courseId, courseOverrideInfo);
+						selectedOverrides.push(courseId);
+						attachCourseOverrideEntry(courseId, courseOverrideInfo);
+					}					
+
+					// Set the contents of the required course select
+					addClassHandler();
+					// Load in the minors
+					var xhr = new XMLHttpRequest();
+					xhr.addEventListener("load", minorsHandler);
+					xhr.open("GET", "../scripts/minors.php");
+					xhr.send();
+				
+					for(var minorIndex in catalogRule["Minor"]) {
+						selectedMinors.push(catalogRule["Minor"][minorIndex].id);
+						var $removeButton = $("<input>", {
+							id: catalogRule["Minor"][minorIndex].id,
+							type: "submit",
+							name: "removeMinorButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeMinorHandler);
+						$("#minorList").append($("<li>",{
+							text: catalogRule["Minor"][minorIndex].name
+						}).append($removeButton));
+					}
+					
+					// Now load in the certificates
+					var xhr = new XMLHttpRequest();
+					xhr.addEventListener("load", certificateHandler);
+					xhr.open("GET", "../scripts/certificates.php");
+					xhr.send();
+					
+					for(var certificateIndex in catalogRule["Certificate"]) {
+						selectedCertificates.push(catalogRule["Certificate"][certificateIndex].id);
+						var $removeButton = $("<input>", {
+							id: catalogRule["Certificate"][certificateIndex].id,
+							type: "submit",
+							name: "removeCertificateButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeCertificateHandler);
+						$("#certificateList").append($("<li>",{
+							text: catalogRule["Certificate"][certificateIndex].name
+						}).append($removeButton));
+					}
+					
+					// Load in the form
+					// Now load in the certificates
+					var xhr = new XMLHttpRequest();
+					xhr.addEventListener("load", formHandler);
+					xhr.open("GET", "../scripts/forms.php");
+					xhr.send();
+					
+					for(var formIndex in catalogRule["Form"]) {
+						selectedForms.push(catalogRule["Form"][formIndex].id);
+						var $removeButton = $("<input>", {
+							id: catalogRule["Form"][formIndex].id,
+							type: "submit",
+							name: "removeFormButton",
+							value: "Remove"
+						});
+						$removeButton.click(removeFormHandler);
+						$("#formList").append($("<li>",{
+							text: catalogRule["Form"][formIndex].name
+						}).append($removeButton));
+					}
+				}
+			}
+
+			function addClassHandler(){
+				for(var i in catalogRule["Catalogs"]){
+					$("#catalogList, #catalogListOverrides, #catalogListRestricted").append($("<option>",{
+						value: catalogRule["Catalogs"][i],
+						text: catalogRule["Catalogs"][i]
+					}));
+				}
+				$catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabel"));
+				$catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabelOverrides"));
+				$catalogs[catalogRule["Catalogs"][0]].clone().insertAfter($("#classListLabelRestricted"));
+			}
+			
+			function processList($globalList, $subjectList, idName, requirementList) {
+				var $selectList;
+				for(var objectId in requirementList) {
+					// If there is no select list for the given subject then add a new option to the subject select list and create a new select list for that subject
+					if(!$globalList[requirementList[objectId].subject]) {
+						$subjectList.append($("<option>", {
+							value: requirementList[objectId].subject,
+							text: requirementList[objectId].subject
+						}));
+						$selectList = $("<select>", {
+							id: idName
+						});
+						$globalList[requirementList[objectId].subject] = $selectList; // Add select list to array, key off subject
+					}
+					// Add the minor name to the select list belonging to that subject
+					$globalList[requirementList[objectId].subject].append($("<option>", {
+						value: objectId,
+						text: requirementList[objectId].name
+					}));
+				}
+			}
+			
+			// This will populate the select lists with minor information. There are two select lists: the list for the minor subjects and the list for the minors within that subject. 
+			// The desired outcome of this code is to create select lists for each subject and add minors to those select lists when they belong to those subjects.
+			function minorsHandler() {
+				minors = JSON.parse(this.response);
+				console.log(minors);
+				var $minorSubjectList = $("#minorSubjectList");
+				// Iterate through the minor list by minor id
+				processList($minorsSubjectSelect, $minorSubjectList, "minorSelect", minors);
+				// Initialize the minor select list shown to be the list for the selected option
+				$minorsSubjectSelect[$("#minorSubjectList option:selected").val()].insertAfter($("#minorSelectLabel"));
+			}
+			
+			
+			function certificateHandler() {
+				certificates = JSON.parse(this.response);
+				console.log(certificates);
+				var $certificateSubjectList = $("#certificateSubjectList");
+				processList($certificatesSubjectSelect, $certificateSubjectList, "certificateSelect", certificates);
+				// Initialize the certificate select list shown to be the list for the selected option
+				$certificatesSubjectSelect[$("#certificateSubjectList option:selected").val()].insertAfter($("#certificateSelectLabel")); 
+			}
+			
+			function formHandler() {
+				forms = JSON.parse(this.response);
+				console.log(forms);
+				var $formSubjectList = $("#formSubjectList");
+				processList($formsSubjectSelect, $formSubjectList, "formSelect", forms);
+				// Initialize the form select list shown to be the list for the selected option
+				$formsSubjectSelect[$("#formSubjectList option:selected").val()].insertAfter($("#formSelectLabel")); 
+			}
+			
+			function closeAddItem() {
+				var modal = document.getElementById('addNewItemModal');
+				modal.style.display = "none";	
+			}
+			
+			function closeGlobal() {
+				var modal = document.getElementById('globalModal');
+				modal.style.display = "none";
+			}
+			
+			function closepopup(){
+				$("#certificateList").empty();
+				$("#courseOverrideList").empty();
+				$("#minorList").empty();
+				$("#applicableCatalogsList").empty();
+				$("#classsublist").empty();
+				$("#popupform").children("input[type='number']").val("");
+				$("#popupform").children("input[type='number']").attr("oldvalue", "");
+				$("#popupform").children("input[type='radio']:checked").prop("checked", false);
+				$("#PhDOptions").children("input[type='number']").val("");
+				$("#PhDOptions").children("input[type='number']").attr("oldvalue", "");
+				$("#PhDOptions").children("input[type='radio']:checked").prop("checked", false);
+				$("#minorSelect").detach();
+				$("#minorSubjectList").empty();
+				$("#certificateSelect").detach();
+				$("#certificateSubjectList").empty();
+				$("#formSelect").detach();
+				$("#formSubjectList").empty();
+				$("[id='courseList']").remove();
+				$("#catalogList").empty();
+				$("#formList").empty();
+				$("#catalogListOverrides").empty();
+				$("#catalogListRestricted").empty();
+				$("#classsublist").empty();
+				$("#restrictedCourseList").empty();
+				var modal = document.getElementById('myModal');
+				modal.style.display = "none";	
+			}
+        </script>
 </head>
 <body>
     <header>

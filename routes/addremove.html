@@ -151,12 +151,14 @@
         <header>
         <img src="../routes/logo.png" width="145" height="100" alt="logo" />
     </header>
+
         <h2>Add Course</h2>
         <form action="../scripts/addCourse.php" id="addCourse" method="POST"> <label for="courseName">Name</label>
             <!--<input type="text" name="prefix">-->
             <select id="prefix" name="coursePrefix" form="addCourse">
                 <option value="COSC">COSC</option>
                 <option value="EECS">EECS</option>
+				
             </select>
             <label for="courseNumber">Course Number</label>
             <input type="number" name="courseNumber"> <label for="courseName">Name</label>
@@ -169,6 +171,7 @@
 
             <input type="submit" value="Add Course">
         </form>
+
 
         <h2>Remove Course</h2>
         <form action="../scripts/removeCourse.php" id="removeCourse" method="POST">

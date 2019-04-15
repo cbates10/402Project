@@ -1,8 +1,23 @@
 <?php
 
+/**
+ * This script is used to retrieve all the requirements for a database object.
+ *
+ * Given an object Id this script will retrieve all information regarding any requirements assigned to the program as
+ * well as the requirements for any objects that may be mapped to the object. For example if a minor is mapped to a degree 
+ * program then the requirements for the minor will be included as well.
+ */
+
 include 'DatabaseInfo.php';
 
-
+/**
+ * Method used to compare letter grades.
+ * @param $grade1, the first grade to be compared against
+ * @param $grade2, the second grade to be compared against
+ *
+ * $grade1 and $grade2 will be compared. The input parameters are assumed to be strings that match the regular expression 
+ * [A-Z]{1}[-+]{0,1}. The return value is the same as strcmp, i.e., 1 if $grade1 is less than $grade2, 0 if the same, -1 if greater than
+ */
 function compareGrades($grade1, $grade2) {
 	$grade1Length = strlen($grade1);
 	$grade2Length = strlen($grade2);
@@ -41,7 +56,7 @@ if($mysqli->connect_errno) {
 
 $degreeOption = $_POST["idObjects"];
 
-/* Get the global requirements for the object types */
+/* Retrieve global requirement information. This will be used to override any degree requirements that are below the global requirements */
 $sqlGlobalRequirements = "SELECT type, minGrade, minGPA FROM globalrequirements NATURAL JOIN types";
 
 $result = $mysqli->query($sqlGlobalRequirements);
@@ -56,7 +71,7 @@ if($result->num_rows > 0) {
 	}
 }
 
-/* Build the array for all objects to retrieve for the degree program */
+/* Build the array for all objects to retrieve for the degree program, retrieve all object ids that are mapped to the given Id*/
 $sqlObjects = "SELECT idObjects, type, name FROM objectmapping NATURAL JOIN objects NATURAL JOIN types WHERE idObjectDegree = ? UNION SELECT idObjects, type, name FROM objects NATURAL JOIN types WHERE idObjects = ?";
 $stmtObjects = $mysqli->prepare($sqlObjects);
 if(!$stmtObjects) {
@@ -72,7 +87,7 @@ if(false === $rc) {
 $stmtObjects->bind_result($idObjects, $type, $name);
 
 $objects = array();
-
+/* These object Ids are pushed onto an array that will be iterated over later when retrieving all requirements */
 while($stmtObjects->fetch()) {
 	$object = new stdClass();
 	$object->idObjects = $idObjects;
@@ -83,48 +98,56 @@ while($stmtObjects->fetch()) {
 $stmtObjects->close();
 
 /* SQL statements */
+/* statement for required courses */
 $sqlCourses = "SELECT idCourses FROM requiredcourses WHERE idObjects = ?";
 $stmtCourses = $mysqli->prepare($sqlCourses);
 if(!$stmtCourses) {
 	die("Could not prepare statement $mysqli->error");
 }
 
+/* statement for substitutable courses for required courses */
 $sqlSubCourses = "SELECT idCourses, idSubCourse FROM substitutablecourses WHERE idObjects = ?";
 $stmtSubCourses = $mysqli->prepare($sqlSubCourses);
 if(!$stmtSubCourses) {
 	die("Could not prepare statement $mysqli->error");
 }
 
+/* statement to retrieve required hours, minimum grade, and minimum GPA */
 $sqlHours = "SELECT requiredHours, minGrade, minGPA FROM objects WHERE idObjects = ?";
 $stmtHours = $mysqli->prepare($sqlHours);
 if(!$stmtHours) {
 	die("Could not prepare statement $mysqli->error");
 }
 
+/* statement to retrieve all hour restrictions by level, such as 400, 500, 600 level hours */
 $sqlHoursByLevel = "SELECT hours, type, cap, hourLevel FROM hoursbylevel WHERE idObjects = ?";
 $stmtHoursByLevel = $mysqli->prepare($sqlHoursByLevel);
 if(!$stmtHoursByLevel) {
 	die("Could not prepare statement $mysqli->error");
 }
 
+/* statement to retrieve course override information */
 $sqlCourseOverride = "SELECT idCourses, maxCount, minGrade, minHours, maxHours FROM coursemappingoverride WHERE idObjects = ?";
 $stmtCourseOverride = $mysqli->prepare($sqlCourseOverride);
 if(!$stmtCourseOverride) {
 	die("Could not prepare statement $myslqi->error");
 }
 
+/* statment to retrieve applicable courses for an object. these courses are used to restrict the catalog courses that are applied to an object */
 $sqlApplicableCourses = "SELECT idCourses FROM restrictedobjectcourses WHERE idObjects = ?";
 $stmtApplicableCourses = $mysqli->prepare($sqlApplicableCourses);
 if(!$stmtApplicableCourses) {
 	die("Could not prepare statement $myslqi->error");
 }
 
+/* statement to retrieve all catalogs mapped to a specific object */
 $sqlCatalogs = "SELECT catalogName FROM objectcatalogs NATURAL JOIN catalognames WHERE idObjects = ?";
 $stmtCatalogs = $mysqli->prepare($sqlCatalogs);
 if(!$stmtCatalogs) {
 	die("Could not prepare statement $mysqli->error");
 }
 
+/* statement to retrieve the number of required courses needed to fufill the required course restriction */
 $sqlNumberRequired = "SELECT numCourses FROM numberofrequiredcourses WHERE idObjects = ?";
 $stmtNumberRequired = $mysqli->prepare($sqlNumberRequired);
 if(!$stmtNumberRequired) {
@@ -165,6 +188,7 @@ while($stmtCatalogs->fetch()) {
 	array_push($requirements["Catalogs"], $catalogName);
 }
 
+/* Iterate over all object ids for the requested object as well as any objects mapped to the requested object */
 for($x = 0; $x < count($objects); $x++) {
 	if(!$stmtCourses->bind_param("i", $objects[$x]->idObjects)) {
 		die("Could not bind parameters $stmtCourses->error");
@@ -180,6 +204,7 @@ for($x = 0; $x < count($objects); $x++) {
 
 	$objectRequirements->requiredCourses = array();
 
+	/* Process required courses into the object */
 	while($stmtCourses->fetch()) {
 		$objectRequirements->requiredCourses[$requiredCourse] = array();
 	}
@@ -194,6 +219,7 @@ for($x = 0; $x < count($objects); $x++) {
 	}
 	$stmtSubCourses->bind_result($requiredCourse, $substitutableCourse);
 
+	/* Attack substitutable courses to any required courses. All required course ids are set as an array and any substitutable courses are pushed onto that array */
 	while($stmtSubCourses->fetch()) {
 		array_push($objectRequirements->requiredCourses[$requiredCourse], $substitutableCourse);
 	}
@@ -207,6 +233,7 @@ for($x = 0; $x < count($objects); $x++) {
 	if(false === $rc) {
 		die("Could not execute statement $stmtHours->error");
 	}
+	/* Retrieve required hours, minimum GPA, and minimum Grade, this information will be checked against global requirements and will be overriden if the requirements are below the global requirements */
 	$stmtHours->bind_result($requiredHours, $minGrade, $minGPA);
 
 	if($stmtHours->fetch()) {
@@ -264,7 +291,8 @@ for($x = 0; $x < count($objects); $x++) {
 		die("Could not execute statement $stmtHoursByLevel->error");
 	}
 	$stmtHoursByLevel->bind_result($requiredHours, $hoursType, $hoursCap, $hourLevel);
-
+	
+	/* Retrieve hours by level (such as 400 level). An object is set for each hour level and minimum and maximum fields are set if there is a requirement for these hour levels in the database */
 	while($stmtHoursByLevel->fetch()) {
 		$hourLevel = "hours" . $hourLevel;
 		if(!property_exists($objectRequirements, $hourLevel)) {
@@ -288,6 +316,7 @@ for($x = 0; $x < count($objects); $x++) {
 	}
 	$stmtCourseOverride->bind_result($idCourse, $maxCount, $minGrade, $minHours, $maxHours);
 	
+	/* Course override information is retrieved */
 	$objectRequirements->courseOverride = array();
 	while($stmtCourseOverride->fetch()) {
 		$courseOverride = new stdClass();
@@ -308,6 +337,7 @@ for($x = 0; $x < count($objects); $x++) {
 	}
 	$stmtApplicableCourses->bind_result($idCourse);
 	
+	/* Process applicable course information */
 	$objectRequirements->applicableCourses = array();
 	while($stmtApplicableCourses->fetch()) {
 		array_push($objectRequirements->applicableCourses, $idCourse);
@@ -322,7 +352,7 @@ for($x = 0; $x < count($objects); $x++) {
 		die("Could not execute statement $stmtNumberRequired->error");
 	}
 	$stmtNumberRequired->bind_result($countRequired);
-	
+	/* Process the number of required courses */
 	if($stmtNumberRequired->fetch()) {
 		$objectRequirements->countRequiredCourses = $countRequired;
 	}
