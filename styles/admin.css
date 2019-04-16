@@ -33,6 +33,16 @@ footer {
     
 }
 
+#listContainer>li {
+	font-size: 25px;
+	font-weight: bold;
+}
+
+#subjectList>li {
+	font-size: 20px;
+	font-weight: bold;
+}
+
 li {
 	list-style: none;
 }
@@ -54,10 +64,10 @@ li {
     
 }
 input[type=text],
-input[type=number],
-select {
+input[type=number] {
+	height: 30px;
     width: 80px;
-    padding: 10px 10px;
+    padding: 4px 4px;
     margin-top: 10px;
     margin-bottom: 10px;
     margin-left: auto;
@@ -68,6 +78,27 @@ select {
     font: verdana;
     font-size: 20;
 }
+
+#certificateContainer, #formContainer, #minorContainer, #overridesContainer, #requiredClasses, #restrictedCatalogs, #applicableCatalogs {
+	border: 2px solid black;
+	border-radius: 5px;
+	padding: 7px;
+}
+
+select {
+	height: 30px;
+    padding: 4px 4px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font: verdana;
+    font-size: 20;
+}
+
 input[type=button],input[type=submit], button{
     -moz-box-shadow: inset 0px 39px 0px -24px #e67a73;
     -webkit-box-shadow: inset 0px 39px 0px -24px #FF8202;
@@ -81,7 +112,7 @@ input[type=button],input[type=submit], button{
     color: #ffffff;
     font-family: Arial;
     font-size: 15px;
-    padding: 14px 21px;
+    padding: 10px 20px;
     text-decoration: none;
     text-shadow: 0px 1px 0px #b23e35;
     margin-left: auto;
