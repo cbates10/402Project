@@ -4,7 +4,7 @@ class DataFormatFactory {
 		$.ajax({
 			type: "POST",
 			url: "../scripts/getCommitteeMembersBySubject.php",
-			data: { committeeName: subject },
+			data: { subject: subject },
 			dataType: "json",
 			async: false,
 			success: function(json) {
@@ -17,7 +17,8 @@ class DataFormatFactory {
 		});
 	}
 	
-	static formatData(programLevel, subject, requirements, transferInstitution) {
+	static formatData(programLevel, subject, requirements, transferInstitution, committeeMembers) {
+		this.committeeMembers = committeeMembers;
 		this.transferInstitution = transferInstitution;
 		this.requirements = requirements;
 		this.subject = subject;
@@ -27,6 +28,13 @@ class DataFormatFactory {
 		} else if(programLevel === "PhD") {
 			return this.formatPhDData();
 		}
+	}
+	
+	static formatCommitteeMembers(data) {
+		for(var i = 0; i < this.committeeMembers.length; i++) {
+			data["Committee" + (i + 1)] = this.committeeMembers[i];
+		}
+		return data;
 	}
 	
 	static formatMajorData(data, counter, fieldPrefix, courseEntry) {
@@ -63,7 +71,6 @@ class DataFormatFactory {
 	}
 	
 	static formatFlagLegend(data) {
-		console.log(this.violatedRules);
 		if(this.violatedRules.length > 0) {
 			data["FlagLegend"] = "The Following Hour Rules Are Violated On This Form: ";
 			data["FlagLegend1"] = this.violatedRules[0] + " ";
@@ -79,6 +86,7 @@ class DataFormatFactory {
 		var courseCounter = 1;
 		var transferCounter = 1;
 		data = this.formatCookieInformation(data);
+		data = this.formatCommitteeMembers(data);
 		var degreeProgram = this.requirements.find(function(requirement) {
 			return requirement.getRequirementType() == requirementType.DEGREE;
 		});
@@ -110,25 +118,13 @@ class DataFormatFactory {
 		this.getCommitteeMembers(this.subject, function(members) {
 			var chairMembers = [];
 			var directorMembers = [];
-			var committeeMembers = [];
 			for(var index in members) {
+				console.log(members[index].title);
 				if(members[index].title == "Director") {
 					directorMembers.push(members[index].firstName + " " + members[index].lastName);
-					committeeMembers.push(members[index].firstName + " " + members[index].lastName);
-				} else if(members[index].title == "Member") {
-					committeeMembers.push(members[index].firstName + " " + members[index].lastName);
 				} else if(members[index].title == "Chairperson") {
 					chairMembers.push(members[index].firstName + " " + members[index].lastName);
 				}
-			}
-			if(committeeMembers.length < 3) {
-				data["Committee1"] = committeeMembers[Math.floor(Math.random() * committeeMembers.length)];
-				data["Committee2"] = committeeMembers[Math.floor(Math.random() * committeeMembers.length)];
-				data["Committee3"] = committeeMembers[Math.floor(Math.random() * committeeMembers.length)];
-			} else {
-				data["Committee1"] = committeeMembers[0];
-				data["Committee2"] = committeeMembers[1];
-				data["Committee3"] = committeeMembers[2];
 			}
 			if(directorMembers.length > 0) {
 				data["GraduateProgramDirector"] = directorMembers[0];
@@ -149,6 +145,7 @@ class DataFormatFactory {
 		var courseCounter = 1;
 		var courseCounterPhD = 1;
 		data = this.formatCookieInformation(data);
+		data = this.formatCommitteeMembers(data);
 		var degreeProgram = this.requirements.find(function(requirement) {
 			return requirement.getRequirementType() == requirementType.DEGREE;
 		});
@@ -166,29 +163,12 @@ class DataFormatFactory {
 		this.getCommitteeMembers(this.subject, function(members) {
 			var chairMembers = [];
 			var directorMembers = [];
-			var committeeMembers = [];
 			for(var index in members) {
 				if(members[index].title == "Director") {
 					directorMembers.push(members[index].firstName + " " + members[index].lastName);
-					committeeMembers.push(members[index].firstName + " " + members[index].lastName);
-				} else if(members[index].title == "Member") {
-					committeeMembers.push(members[index].firstName + " " + members[index].lastName);
-				} else if(members[index].title == "Chairperson") {
+				}  else if(members[index].title == "Chairperson") {
 					chairMembers.push(members[index].firstName + " " + members[index].lastName);
 				}
-			}
-			if(committeeMembers.length < 5) {
-				data["Committee1"] = committeeMembers[Math.floor(Math.random() * committeeMembers.length)];
-				data["Committee2"] = committeeMembers[Math.floor(Math.random() * committeeMembers.length)];
-				data["Committee3"] = committeeMembers[Math.floor(Math.random() * committeeMembers.length)];
-				data["Committee4"] = committeeMembers[Math.floor(Math.random() * committeeMembers.length)];
-				data["Committee5"] = committeeMembers[Math.floor(Math.random() * committeeMembers.length)];
-			} else {
-				data["Committee1"] = committeeMembers[0];
-				data["Committee2"] = committeeMembers[1];
-				data["Committee3"] = committeeMembers[2];
-				data["Committee4"] = committeeMembers[3];
-				data["Committee5"] = committeeMembers[4];
 			}
 			if(directorMembers.length > 0) {
 				data["GraduateProgramDirector"] = directorMembers[0];

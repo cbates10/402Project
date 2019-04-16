@@ -44,8 +44,11 @@
 			initializeOtherCourseForm(programLevel);
 			
 			$("#candidacyForm").click(function(event) {
-				
-				var data = DataFormatFactory.formatData(programLevel, getCookie("program"), requirementObjects, transferInstitution);
+				var committeeMembers = [];
+				$("#committeeList li").each(function(index, value) {
+					committeeMembers.push($(this).attr("firstName") + " " + $(this).attr("lastName"));
+				});
+				var data = DataFormatFactory.formatData(programLevel, getCookie("program"), requirementObjects, transferInstitution, committeeMembers);
 				createForm(data).submit();
 			}); 			
 			
@@ -93,6 +96,8 @@
 					$closeButton.click(removeCommitteeEventHandler);
 					var $listItem = $("<li>", {
 						id: id,
+						firstName: firstName,
+						lastName: lastName,
 						text: firstName + " " + lastName
 					}).append($closeButton);
 					$("#committeeList").append($listItem);
@@ -503,7 +508,7 @@
 				$minorContainer.append($minorHeader).append($progressBar).append($minorsListHeader).append($minorsList).append($applicableListHeader).append($applicableCourseList);
 				$("#minorsContainer").append($minorContainer);
 				requirement.setRequirementType(requirementType.MINOR);
-				requirement.setName(minors.name);
+				requirement.setName(minors[i].name);
 				processRequirements(minors[i], $minorsList, $progressBar, null, requirement, true, $applicableCourseList);
 				
 				requirementObjects.push(requirement);

@@ -939,7 +939,11 @@
 			}
 			
 			function closeCommittee() {
-				$("#committeeMembers").empty();
+				$("#committeeMembers option").each(function(index, value) {
+					if($(this).val() != "newMember") {
+						$(this).remove();
+					}
+				});
 				$("#committeeTitle").empty();
 				$("#committeeTableBody tr[name='tableEntry']").remove();
 				var modal = document.getElementById('committeeModal');
