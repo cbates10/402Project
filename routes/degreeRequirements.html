@@ -37,6 +37,7 @@
 			displayUserInfo();
 			if(programLevel === "PhD") {
 				$("#appliedToMastersContainer").show();
+				$("#appliedToMastersContainer").show();
 				initializePhDCommittee();
 			} else {
 				initializeMastersCommittee();
@@ -293,6 +294,7 @@
 			$(this).val(hours);
 			$(this).next("#hourDisplayContainer").children("#currentHours").text(hours);
 			if(max) {
+				$(this).next("#hourDisplayContainer").children("#totalHours").text("/" + max);
 				$(this).attr("max", max);
 			}
 		}
