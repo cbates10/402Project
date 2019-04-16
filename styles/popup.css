@@ -26,6 +26,15 @@ body {font-family: Arial, Helvetica, sans-serif;}
 	overflow-y: scroll;
 	}
 
+	.modal-content-flexible {
+	background-color: #fefefe;
+	margin: auto;
+	padding: 20px;
+	width: 50%;
+	overflow-y: hidden;
+	border: 1px solid #888;
+	}
+		
 	/* The Close Button */
 	.close {
 	color: #aaaaaa;

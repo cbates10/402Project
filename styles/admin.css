@@ -79,8 +79,9 @@ input[type=number] {
     font-size: 20;
 }
 
-#certificateContainer, #formContainer, #minorContainer, #overridesContainer, #requiredClasses, #restrictedCatalogs, #applicableCatalogs {
-	border: 2px solid black;
+#certificateContainer, #formContainer, #minorContainer, #overridesContainer, #requiredClasses, #restrictedCatalogs, #applicableCatalogs, #popupform, #restrictedCatalog {
+	border-style: inset;
+	
 	border-radius: 5px;
 	padding: 7px;
 }
