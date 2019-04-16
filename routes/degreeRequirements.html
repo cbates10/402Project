@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <link rel="stylesheet" type="text/css" href="../styles/degreeRequirements.css">
 
 <head>
 	<meta charset="utf8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
 	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
@@ -11,6 +14,9 @@
 	<script type="text/javascript" src="../scripts/CourseObserver.js"></script>
 	<script type="text/javascript" src="../scripts/Requirements.js"></script>
 	<script type="text/javascript" src="../scripts/DataFormatFactory.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 	<script>
 	
 		var programLevel = getCookie("programlevel");
@@ -38,6 +44,7 @@
 			initializeOtherCourseForm(programLevel);
 			
 			$("#candidacyForm").click(function(event) {
+				
 				var data = DataFormatFactory.formatData(programLevel, getCookie("program"), requirementObjects, transferInstitution);
 				createForm(data).submit();
 			}); 			
@@ -279,6 +286,7 @@
 		// This is used to update progress bar values. Progress bar is set to the new value and if a new max value is indicated it will adjust the max value of the progress bar. Assumes max is never 0
 		function degreeHoursEvent(hours, max) {
 			$(this).val(hours);
+			$(this).next("#hourDisplayContainer").children("#currentHours").text(hours);
 			if(max) {
 				$(this).attr("max", max);
 			}
@@ -559,6 +567,22 @@
 			});
 		}
 		
+		function getProgressHourDisplay(totalHours) {
+			totalHours = parseInt(totalHours);
+			var $display = $("<span>", {
+				id: "hourDisplayContainer"
+			});
+			$display.append($("<span>", {
+				id: "currentHours",
+				text: "0"
+			}));
+			$display.append($("<span>", {
+				id: "totalHours",
+				text: "/" + totalHours
+			}));
+			return $display;
+		}
+		
 		function processRequirements(degreeObject, requiredList, $progressBarTotal, $progressBarContainer, requirement, displayApplicableCourses, applicableCourseList) {
 			var hourString;
 			var maxProgressHours;
@@ -582,6 +606,7 @@
 			}
 			if(degreeObject.requiredHours !== undefined) {
 				$progressBarTotal.attr("max", degreeObject.requiredHours.toString());
+				getProgressHourDisplay(degreeObject.requiredHours).insertAfter($progressBarTotal);
 				requirement.setRequiredHours(degreeObject.requiredHours, degreeHoursEvent.bind($progressBarTotal));
 			}
 			if(degreeObject.hours400) {
@@ -602,6 +627,8 @@
 						max: maxProgressHours
 					});
 					$progressBarContainer.append($label).append($hours400Bar);
+					$("<br>").insertAfter($hours400Bar);
+					getProgressHourDisplay(maxProgressHours).insertAfter($hours400Bar);
 					requirement.set400MinLevelHours(degreeObject.hours400.minimum.hours, getHourType(degreeObject.hours400.minimum.type), degreeHoursEvent.bind($hours400Bar));
 				}
 			}
@@ -622,8 +649,12 @@
 						value: 0,
 						max: maxProgressHours
 					});
-					$progressBarContainer.append($label).append($hours500Bar);
+					$("<br>").insertAfter($hours500Bar);
+
 					requirement.set500MinLevelHours(degreeObject.hours500.minimum.hours, getHourType(degreeObject.hours500.minimum.type), degreeHoursEvent.bind($hours500Bar));
+					$progressBarContainer.append($label).append($hours500Bar);
+					$("<br>").insertAfter($hours500Bar);
+					getProgressHourDisplay(maxProgressHours).insertAfter($hours500Bar);
 				}
 			}
 			if(degreeObject.hours600) {
@@ -643,8 +674,10 @@
 						value: 0,
 						max: maxProgressHours
 					});
-					$progressBarContainer.append($label).append($hours600Bar);
 					requirement.set600MinLevelHours(degreeObject.hours600.minimum.hours, getHourType(degreeObject.hours600.minimum.type), degreeHoursEvent.bind($hours600Bar));
+					$progressBarContainer.append($label).append($hours600Bar);
+					$("<br>").insertAfter($hours600Bar);
+					getProgressHourDisplay(maxProgressHours).insertAfter($hours600Bar);
 				}
 			}
 			if(degreeObject.hoursTransfer) {
@@ -673,6 +706,8 @@
 							max: maxProgressHours
 						});
 						$progressBarContainer.append($label).append($hoursPhDOnlyBar);
+						$("<br>").insertAfter($hoursPhDOnlyBar);
+						getProgressHourDisplay(maxProgressHours).insertAfter($hoursPhDOnlyBar);
 						requirement.setPhDMinHours(degreeObject.hoursPhDOnly.minimum.hours, getHourType(degreeObject.hoursPhDOnly.minimum.type), degreeHoursEvent.bind($hoursPhDOnlyBar));
 					}
 				}	
@@ -928,6 +963,7 @@
     <footer>
         <img src="../routes/botlogo.png" width="245" height="80" alt="logo" class="center" />
     </footer>
+	
 </body>
 
 </html>
