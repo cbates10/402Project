@@ -1899,12 +1899,13 @@
             <div id="globalModal" class="modal">
                 <div class="modal-content-flexible">
                     <div class="closeR">
-                    <span onclick="closeGlobal()" class="close">&times;</span>
+                    <!--<span onclick="closeGlobal()" class="close">&times;</span>-->
                     </div>
                     <div id="globalContent">
                         <label for="globalGrade">Minimum Grade: </label><input type="text" id="globalGrade" size="2" maxlength="2" pattern="([ABCDF]{1}[-+]{0,1}){0,1}">
                         <label for="globalGPA">Minimum GPA: </label><input type="number" id="globalGPA" step="0.01" style="width:70px">
-                        <input id="saveGlobal" type="submit" value="Save"></input>
+						<input id="saveGlobal" type="submit" value="Save"></input>
+						<input onclick="closeGlobal()" type="submit" value="Close"></input>
                     </div>
                 </div>
             </div>
@@ -2072,7 +2073,8 @@
                         <br>
                     </div>
                     <input id="saveForm" type="submit" value="Save"></input>
-                    <input id="deleteForm" type="button" value="Delete Program"></input>
+					<input id="deleteForm" type="button" value="Delete Program"></input>
+					<input type="submit" value="Close" onclick="closepopup()"></input>
                 </div>
             </div>
         </div>
