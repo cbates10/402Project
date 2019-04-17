@@ -88,9 +88,15 @@ input[type=submit]{
     margin: 10px auto;
     
 }
+
+td {
+	text-align:center;
+	vertical-align: center;
+}
+
 table{
-border-collapse: collapse;
-width: 100%;
+	border-collapse: collapse;
+	width: 100%;
 }
 
 th {
