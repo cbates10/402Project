@@ -109,6 +109,10 @@
 				$("#courseMenu").show();
 			});
 			
+			$("#closeCourse").click(function() {
+				$("#courseMenu").hide();
+			});
+			
 			$("#submitCourse").click(function(event) {
 				event.preventDefault();
 				if(!$("#grade")[0].checkValidity()){
@@ -931,6 +935,7 @@
                     <input id="appliedToMasters" type="checkbox" checked>Applied To Masters</input>
                 </span>
                 <br>
+				<input id="closeCourse" type="submit" value="Cancel"></input>
                 <input id="submitCourse" type="submit"></input>
             </form>
         </div>
