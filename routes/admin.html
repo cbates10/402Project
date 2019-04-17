@@ -158,7 +158,16 @@
                     }
                 });
             });
-
+			
+			$("input[type='radio']").change(function() {
+				console.log($(this).val());
+				if($(this).val() == "variable") {
+					$(this).prevAll("span[name='percent']:first").show().css("display", "inline-block");
+				} else {
+					$(this).prevAll("span[name='percent']:first").hide();
+				}
+			});
+			
             $("#committeeMembers").change(function() {
                 if ($(this).val() == "newMember") {
                     $("#newCommitteeMemberContainer").show();
@@ -488,7 +497,7 @@
                 resetAddedRemovedValues();
             });
         });
-
+			
         function saveCatalogs(objectId, callback) {
 				$.ajax({
 					type: "POST",
@@ -614,6 +623,13 @@
 				});
 			}
 			
+			// Utility function simply to convert percentage variable hours back to its decimal form.
+			function convertHours(hoursObject) {
+				if(hoursObject.type == "variable") {
+					hoursObject.val = hoursObject.val/100;
+				}
+			}
+			
 			function saveHours(objectId, callback) {
 				var addData = [];
 				var modifyData = [];
@@ -627,55 +643,64 @@
 					val: $("#400HrsMin").val(),
 					type: $("input[name='400HrsMinOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs400MinObj);
 				hoursForm.Hrs400MaxObj = {
 					hour: 400,
 					cap: 'maximum',
 					val: $("#400HrsMax").val(),
 					type: $("input[name='400HrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs400MaxObj);
 				hoursForm.Hrs500MinObj = {
 					hour: 500,
 					cap: 'minimum',
 					val: $("#500HrsMin").val(),
 					type: $("input[name='500HrsMinOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs500MinObj);
 				hoursForm.Hrs500MaxObj = {
 					hour: 500,
 					cap: 'maximum',
 					val: $("#500HrsMax").val(),
 					type: $("input[name='500HrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs500MaxObj);
 				hoursForm.Hrs600MinObj = {
 					hour: 600,
 					cap: 'minimum',
 					val: $("#600HrsMin").val(),
 					type: $("input[name='600HrsMinOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs600MinObj);
 				hoursForm.Hrs600MaxObj = {
 					hour: 600,
 					cap: 'maximum',
 					val: $("#600HrsMax").val(),
 					type: $("input[name='600HrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs600MaxObj);
 				hoursForm.HrsTransferMaxObj = {
 					hour: "Transfer",
 					cap: 'maximum',
 					val: $("#trhrs").val(),
 					type: $("input[name='TransferHrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.HrsTransferMaxObj);
 				hoursForm.HrsOutsideMaxObj = {
 					hour: "Outside",
 					cap: 'maximum',
 					val: $("#ohrs").val(),
 					type: $("input[name='OutsideHrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.HrsOutsideMaxObj);
 				hoursForm.HrsPhDMinObj = {
 					hour: "PhDOnly",
 					cap: 'minimum',
 					val: $("#PhDonly").val(),
 					type: $("input[name='PhDHrsMinOption']:checked").val()
 				}
-
+				convertHours(hoursForm.HrsPhDMinObj);
+				
 				// Check to see if an hour type is not provided for any hour field with a value
 				if(hoursForm.Hrs400MinObj.val != "" && !hoursForm.Hrs400MinObj.type){
 					alert("Fixed or Variable option must be selected for 400 Min Hours");
@@ -1381,67 +1406,113 @@
 				$("#requiredHrs").val(catalogRule["Degree Program"].requiredHours);
 				if(catalogRule["Degree Program"].hours400) {
 					if(catalogRule["Degree Program"].hours400.minimum) {
-						$("#400HrsMin").val(catalogRule["Degree Program"].hours400.minimum.hours);
 						$("#400HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours400.minimum.hours);
 						$("input[name='400HrsMinOption']").val([catalogRule["Degree Program"].hours400.minimum.type]);
 						$("#400HrsMin").attr("oldtype", catalogRule["Degree Program"].hours400.minimum.type);
+						if(catalogRule["Degree Program"].hours400.minimum.type == "variable") {
+							$("#400HrsMin").val(catalogRule["Degree Program"].hours400.minimum.hours * 100);
+							$("#400HrsMin").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#400HrsMin").val(parseInt(catalogRule["Degree Program"].hours400.minimum.hours));
+						}
 					}
 					if(catalogRule["Degree Program"].hours400.maximum) {
-						$("#400HrsMax").val(catalogRule["Degree Program"].hours400.maximum.hours);
 						$("#400HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours400.maximum.hours);
 						$("input[name='400HrsMaxOption']").val([catalogRule["Degree Program"].hours400.maximum.type]);
 						$("#400HrsMax").attr("oldtype", catalogRule["Degree Program"].hours400.maximum.type);
+						if(catalogRule["Degree Program"].hours400.maximum.type == "variable") {
+							$("#400HrsMax").val(catalogRule["Degree Program"].hours400.maximum.hours * 100);
+							$("#400HrsMax").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#400HrsMax").val(parseInt(catalogRule["Degree Program"].hours400.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hours500) {
 					if(catalogRule["Degree Program"].hours500.minimum) {
-						$("#500HrsMin").val(catalogRule["Degree Program"].hours500.minimum.hours);
 						$("#500HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours500.minimum.hours);
 						$("input[name='500HrsMinOption']").val([catalogRule["Degree Program"].hours500.minimum.type]);
 						$("#500HrsMin").attr("oldtype", catalogRule["Degree Program"].hours500.minimum.type);
+						if(catalogRule["Degree Program"].hours500.minimum.type == "variable") {
+							$("#500HrsMin").val(catalogRule["Degree Program"].hours500.minimum.hours * 100);
+							$("#500HrsMin").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#500HrsMin").val(parseInt(catalogRule["Degree Program"].hours500.minimum.hours));
+						}
 					}if(catalogRule["Degree Program"].hours500.maximum) {
-						$("#500HrsMax").val(catalogRule["Degree Program"].hours500.maximum.hours);
 						$("#500HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours500.maximum.hours);
 						$("input[name='500HrsMaxOption']").val([catalogRule["Degree Program"].hours500.maximum.type]);
 						$("#500HrsMax").attr("oldtype", catalogRule["Degree Program"].hours500.maximum.type);
+						if(catalogRule["Degree Program"].hours500.maximum.type == "variable") {
+							$("#500HrsMax").val(catalogRule["Degree Program"].hours500.maximum.hours * 100);
+							$("#500HrsMax").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#500HrsMax").val(parseInt(catalogRule["Degree Program"].hours500.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hours600) {
 					if(catalogRule["Degree Program"].hours600.minimum) {
-						$("#600HrsMin").val(catalogRule["Degree Program"].hours600.minimum.hours);
 						$("#600HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours600.minimum.hours);
 						$("input[name='600HrsMinOption']").val([catalogRule["Degree Program"].hours600.minimum.type]);
 						$("#600HrsMin").attr("oldtype", catalogRule["Degree Program"].hours600.minimum.type);
+						if(catalogRule["Degree Program"].hours600.minimum.type == "variable") {
+							$("#600HrsMin").val(catalogRule["Degree Program"].hours600.minimum.hours * 100);
+							$("#600HrsMin").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#600HrsMin").val(parseInt(catalogRule["Degree Program"].hours600.minimum.hours));
+						}
 					}
 					if(catalogRule["Degree Program"].hours600.maximum) {
-						$("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours);
 						$("#600HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours600.maximum.hours);
 						$("input[name='600HrsMaxOption']").val([catalogRule["Degree Program"].hours600.maximum.type]);
 						$("#600HrsMax").attr("oldtype", catalogRule["Degree Program"].hours600.maximum.type);
+						if(catalogRule["Degree Program"].hours600.maximum.type == "variable") {
+							$("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours * 100);
+							$("#600HrsMax").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#600HrsMax").val(parseInt(catalogRule["Degree Program"].hours600.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hoursTransfer) {
 					if(catalogRule["Degree Program"].hoursTransfer.maximum) {                     
-						$("#trhrs").val(catalogRule["Degree Program"].hoursTransfer.maximum.hours);
 						$("#trhrs").attr('oldvalue',catalogRule["Degree Program"].hoursTransfer.maximum.hours);
 						$("input[name='TransferHrsMaxOption']").val([catalogRule["Degree Program"].hoursTransfer.maximum.type]);
 						$("#trhrs").attr("oldtype", catalogRule["Degree Program"].hoursTransfer.maximum.type);
+						if(catalogRule["Degree Program"].hoursTransfer.maximum.type == "variable") {
+							$("#trhrs").val(catalogRule["Degree Program"].hoursTransfer.maximum.hours * 100);
+							$("#trhrs").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#trhrs").val(parseInt(catalogRule["Degree Program"].hoursTransfer.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hoursOutside) {
 					if(catalogRule["Degree Program"].hoursOutside.maximum) {                     
-						$("#ohrs").val(catalogRule["Degree Program"].hoursOutside.maximum.hours);
 						$("#ohrs").attr('oldvalue',catalogRule["Degree Program"].hoursOutside.maximum.hours);
 						$("input[name='OutsideHrsMaxOption']").val([catalogRule["Degree Program"].hoursOutside.maximum.type]);
 						$("#ohrs").attr("oldtype", catalogRule["Degree Program"].hoursOutside.maximum.type);
+						if(catalogRule["Degree Program"].hoursOutside.maximum.type == "variable") {
+							$("#ohrs").val(catalogRule["Degree Program"].hoursOutside.maximum.hours * 100);
+							$("#ohrs").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#ohrs").val(parseInt(catalogRule["Degree Program"].hoursOutside.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hoursPhDOnly) {
 					if(catalogRule["Degree Program"].hoursPhDOnly.minimum) {                     
-						$("#PhDonly").val(catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
+						
 						$("#PhDonly").attr('oldvalue',catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
 						$("input[name='PhDHrsMinOption']").val([catalogRule["Degree Program"].hoursPhDOnly.minimum.type]);
 						$("#PhDonly").attr("oldtype", catalogRule["Degree Program"].hoursPhDOnly.minimum.type);
+						if(catalogRule["Degree Program"].hoursPhDOnly.minimum.type == "variable") {
+							$("#PhDonly").val(catalogRule["Degree Program"].hoursPhDOnly.minimum.hours * 100);
+							$("#PhDonly").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#PhDonly").val(parseInt(catalogRule["Degree Program"].hoursPhDOnly.minimum.hours));
+						}
 					}
 				}
 				$("#grade").val(catalogRule["Degree Program"].minGrade);
@@ -1543,7 +1614,7 @@
 			}
 			
 			function processCatalog(catalogArray, catalogName) {
-				console.log("Processing catalog");
+				("Processing catalog");
 				if(!catalogs) {
 					catalogs = {};
 					catalogs = Object.assign(catalogs, catalogArray); // Make a copy since the catalogs will hold all the courses as they are loaded
@@ -1578,7 +1649,7 @@
 			}
 			
 			function courseHandler(catalogArray, catalogName){
-				console.log(catalogArray);
+				(catalogArray);
 				selectedOverrides = [];
 				applicableCourseIds = [];
 				requiredCourseIds = [];
@@ -1787,6 +1858,7 @@
 				$("#minorList").empty();
 				$("#applicableCatalogsList").empty();
 				$("#classsublist").empty();
+				$("span[name='percent']").hide();
 				$("#popupform").children("input[type='number']").val("");
 				$("#popupform").children("input[type='number']").attr("oldvalue", "");
 				$("#popupform").children("input[type='radio']:checked").prop("checked", false);
@@ -1899,40 +1971,40 @@
                     <div id="popupform">
                         Required Hours: <input type="number" id="requiredHrs" style="width:70px">
                         <br>
-                        400 Hours Minimum: <input type="number" id="400HrsMin" style="width:70px">
+                        400 Hours Minimum: <input type="number" id="400HrsMin" style="width:70px"><span name="percent" hidden>%</span>
                         <label for="400HrsMinOptionFixed">Fixed</label><input type="radio" id="400HrsMinOptionFixed" name="400HrsMinOption" value="fixed">
                         <label for="400HrsMinOptionVariable">Variable</label><input type="radio" id="400HrsMinOptionVariable" name="400HrsMinOption" value="variable">
                         <br>
-                        400 Hours Maximum: <input type="number" id="400HrsMax" style="width:70px">
+                        400 Hours Maximum: <input type="number" id="400HrsMax" style="width:70px"><span name="percent" hidden>%</span>
                         <label for="400HrsMaxOptionFixed">Fixed</label><input type="radio" id="400HrsMaxOptionFixed" name="400HrsMaxOption" value="fixed">
                         <label for="400HrsMaxOptionVariable">Variable</label><input type="radio" id="400HrsMaxOptionVariable" name="400HrsMaxOption" value="variable">
                         <br>
-                        500 Hours Minimum: <input type="number" id="500HrsMin" style="width:70px">
+                        500 Hours Minimum: <input type="number" id="500HrsMin" style="width:70px"><span name="percent" hidden>%</span>
                         <label for="500HrsMinOptionFixed">Fixed</label><input type="radio" id="500HrsMinOptionFixed" name="500HrsMinOption" value="fixed">
                         <label for="500HrsMinOptionVariable">Variable</label><input type="radio" id="500HrsMinOptionVariable" name="500HrsMinOption" value="variable">
                         <br>
-                        500 Hours Maximum: <input type="number" id="500HrsMax" style="width:70px">
+                        500 Hours Maximum: <input type="number" id="500HrsMax" style="width:70px"><span name="percent" hidden>%</span>
                         <label for="500HrsMaxOptionFixed">Fixed</label><input type="radio" id="500HrsMaxOptionFixed" name="500HrsMaxOption" value="fixed">
                         <label for="500HrsMaxOptionVariable">Variable</label><input type="radio" id="500HrsMaxOptionVariable" name="500HrsMaxOption" value="variable">
                         <br>
-                        600 Hours Minimum: <input type="number" id="600HrsMin" style="width:70px">
+                        600 Hours Minimum: <input type="number" id="600HrsMin" style="width:70px"><span name="percent" hidden>%</span>
                         <label for="600HrsMinOptionFixed">Fixed</label><input type="radio" id="600HrsMinOptionFixed" name="600HrsMinOption" value="fixed">
                         <label for="600HrsMinOptionVariable">Variable</label><input type="radio" id="600HrsMinOptionVariable" name="600HrsMinOption" value="variable">
                         <br>
-                        600 Hours Maximum: <input type="number" id="600HrsMax" style="width:70px">
+                        600 Hours Maximum: <input type="number" id="600HrsMax" style="width:70px"><span name="percent" hidden>%</span>
                         <label for="600HrsMaxOptionFixed">Fixed</label><input type="radio" id="600HrsMaxOptionFixed" name="600HrsMaxOption" value="fixed">
                         <label for="600HrsMaxOptionVariable">Variable</label><input type="radio" id="600HrsMaxOptionVariable" name="600HrsMaxOption" value="variable">
                         <br>
-                        Transfer Hours Maximum: <input type="number" id="trhrs" style="width:70px">
+                        Transfer Hours Maximum: <input type="number" id="trhrs" style="width:70px"><span name="percent" hidden>%</span>
                         <label for="TransferHrsMaxOptionFixed">Fixed</label><input type="radio" id="TransferHrsMaxOptionFixed" name="TransferHrsMaxOption" value="fixed">
                         <label for="TransferHrsMaxOptionVariable">Variable</label><input type="radio" id="TransferHrsMaxOptionVariable" name="TransferHrsMaxOption" value="variable">
                         <br>
-                        Outside Hours Maximum: <input type="number" id="ohrs" style="width:70px">
+                        Outside Hours Maximum: <input type="number" id="ohrs" style="width:70px"><span name="percent" hidden>%</span>
                         <label for="OutsideHrsMaxOptionFixed">Fixed</label><input type="radio" id="OutsideHrsMaxOptionFixed" name="OutsideHrsMaxOption" value="fixed">
                         <label for="OutsideHrsMaxOptionVariable">Variable</label><input type="radio" id="OutsideHrsMaxOptionVariable" name="OutsideHrsMaxOption" value="variable">
                         <br>
                         <span id="PhDOptions" hidden>
-                            Graduate Only Hours Minimum: <input type="number" id="PhDonly" style="width:70px">
+                            Graduate Only Hours Minimum: <input type="number" id="PhDonly" style="width:70px"><span name="percent" hidden>%</span>
                             <label for="PhDHrsMinOptionFixed">Fixed</label><input type="radio" id="PhDHrsMinOptionFixed" name="PhDHrsMinOption" value="fixed">
                             <label for="PhDHrsMinOptionVariable">Variable</label><input type="radio" id="PhDHrsMinOptionVariable" name="PhDHrsMinOption" value="variable">
                             <br>
