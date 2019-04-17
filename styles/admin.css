@@ -93,12 +93,6 @@ input[type=radio]{
   width: 16px;
 }
 
-
-#popupform{
-    text-align: right;
-    padding-right: 42%;
-    padding-left: 0px;
-}
 .closeR{
     text-align: right;
     margin-left: 90%;
