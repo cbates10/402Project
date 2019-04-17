@@ -1,129 +1,128 @@
+html {height: 100%;}
+
 body {
-    background-color: #58595B;
+    display: flex;
+    height:100%;
+    flex-direction: column;
+    margin: 0;
 }
 
-h1,h2 {
-    text-align: center;
-    color: white;
-    margin: auto;
-    width: 60%;
-    padding: 10px;
-    font: Gotham;
+header {
+    background-color: #FF8202;
+    margin: 0px;
+    height: 100px;
+    flex flex-shrink: 0;
+    padding: 0px;
+}
+#special{
+    padding-top: 10px;
+    width=100%;
+    background-color: #FF8202;
+    margin: 0px;
+    height: 110px;
+}
+.pro{
+    flex: 1 auto;
+    flex-grow: 1;
+    background : url("bkg.jpg");
+    background-position:right bottom;
+    background-repeat: no-repeat;
 }
 
-.button {
-    background-color: #ffffff;
-    border: none;
-    color: white;
-    padding: 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: auto;
-    cursor: pointer;
+.top{
+    position:absolute;
+
 }
 
-input[type=submit] {
-    padding:5px 15px;
-    background:#ccc;
-    border:0 none;
-    font-size: 15px;
-    cursor:pointer;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
+footer {
+    
+    flex-shrink: 0;
+    width: 100%;
+    height = 100px;
+    background: #8B8C90;
+    border-top: solid;
+    border-color: #FF8202;
+    border-width: 5px;
 }
 
-hr {
+.center{
     display: block;
-    height: 1 px;
-    border: 0;
-    border-top: 9px solid #FF8200;
+    margin-left: auto;
+    margin-right: auto;
 }
-
-input[type=text],input[type=email], input[type=password]{
-    width: 30%;
-    box-sizing: border-box;
+form {
+    font-size: 20px;
+    color: #58595B;
+    text-align: center;
+    width: 90%;
+    height: auto;
     border: 2px solid #58595B;
-    border-radius: 2px;
+    margin: 10px auto;
+}
+input[type=submit]{
+    -moz-box-shadow:inset 0px 39px 0px -24px #e67a73;
+    -webkit-box-shadow:inset 0px 39px 0px -24px #FF8202;
+    box-shadow:inset 0px 39px 0px -24px #FF8202;
+    background-color:#FF8202;
+    -moz-border-radius:7px;
+    -webkit-border-radius:7px;
+    border-radius:7px;
+    border:2px solid #ffffff;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:Arial;
+    font-size:15px;
+    padding:8px 18px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #b23e35;
+}
+.add{
     font-size: 15px;
-    background-color: white;
+    font-family: georgian;
 }
-
-input[type=text]:focus {
-    border: 1px solid black;
-}
-
-label {
-    display: inline-block;
-    width: 70;
-    text-align: right;
-    padding: 5px;
-}
-
-.container {
-    height: 1000px;
-    background-color: white;
-    background-image:
-    linear-gradient(
-    to right,
-    #58595B,
-    #58595B 15%,
-    #ffffff 15%,
-    #ffffff 85%,
-    #58595B 85%
-    );
-}
-
-#box {
-    background: #FF8200;
-    width:950px;
-    height:140px;
-    margin: 0 auto;
-    
-}
-
-#hourbar {
-    background: #FFffff;
-    width:70%;
-    height:140px;
-    margin: 0 auto;
-    
-}
-
-h5{
+.pro{
+    font-size: 20px;
+    color: #58595B;
     text-align: left;
-    color: black;
-    margin: auto;
-    width: 650;
-    padding: 10px;
-    font-size: 25px;
-    font: Gotham;
-}
-#progressBarContainer {
-    background: #FFffff;
-    width:70%;
-    height:30px;
-    margin-left: 0%;
+    width: 90%;
+    height: auto;
+    margin: 10px auto;
     
 }
-#Coursebox{
-    background: #FFFFFF;
-    width: 70%;
-    height:140px;
-    margin: 0 auto;
-    border: 2px solid black;
+
+td {
+	text-align:center;
+	vertical-align: center;
 }
-#centerbox{
-    margin-left: 45%;
-    margin-top: 10px;
+
+table{
+	border-collapse: collapse;
+	width: 100%;
 }
-#candidacyForm{
-    height: 80px;
-    border-radius: 8px;
+
+th {
+    text-align: center;
+    padding: 9px;
 }
-#addCourse
-{
-    height: 50px;
-    border-radius: 8px;
+
+tr:nth-child(even){background-color: #f0ede3}
+
+#addCourse{
+    border:2px solid #ffffff;
+    cursor:pointer;
+    color:#ffffff;
+    background-color:#FF8202;
+    font-family:Arial;
+    font-size:15px;
+    padding:8px 18px
 }
+
+button:disabled,
+button[disabled]{
+    border: 1px solid #999999;
+    background-color: #cccccc;
+    color: #666666;
+}
+
+    
+

@@ -1,478 +1,504 @@
 <!DOCTYPE html>
 <html>
-	<link rel="stylesheet" type="text/css" href="../styles/popup.css">
-    <head>
-        <meta charset="utf8">
-        <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-        <script>
-			var catalogRule;
-			var catalogs;
-			var catalogsByName = {};
-			var $catalogs = {};
-			var $objectSubjects = {};
-			var catalogsLoaded = 0;
-			var catalogNames = [];
-			var requiredCourseIds = []; // This is an array initialized at the start of every modify popup
-			var applicableCourseIds = [];
-			var minors;
-			var $minorsSubjectSelect = {};
-			var selectedMinors = [];
-			var certificates;
-			var forms;
-			var $certificatesSubjectSelect = {};
-			var $formsSubjectSelect = {};
-			var selectedCertificates = [];
-			var selectedForms = [];
-			var selectedOverrides = [];
-			var selectedCatalogs = [];
-			var modifyData = [];
-			var objectsParam = [];
-			var degreeProgramIds = [];
-			var phdIds = [];
-			var removedCatalogs = [];
-			var addedCatalogs = [];
-			var addedRequiredCourses = [];
-			var removedRequiredCourses = [];
-			var addedCourseOverrides = [];
-			var removedCourseOverrides = [];
-			var addedMinors = [];
-			var removedMinors = [];
-			var addedForms = [];
-			var removedForms = [];
-			var addedCertificates = [];
-			var removedCertificates = [];
-			var addedRestrictedCourses = [];
-			var removedRestrictedCourses = [];
-			
-			$(document).ready(function(){			
-				var xhr = new XMLHttpRequest();
-				xhr.addEventListener("load", degreeHandlerInit);
-				xhr.open("GET", "../scripts/degreePrograms.php");
-				xhr.send();
-				
-				$("#deleteForm").click(function() {
-					if(confirm("Are you sure you want to delete this program? Press OK to delete")) {
-						$.ajax({
-							type: "POST",
-							url: "../scripts/deleteObject.php",
-							data: {idObject : $(this).attr("idobjects") },
-							//dataType: "json",
-							success: function(json) {
-								location.reload();
-							},
-							error: function(xhr, ajaxOptions, thrownError) {
-								console.log(thrownError);
-							}
-						});
-					} 
-				});
-				
-				// Event handler for radio change (shows container to specify restricted catalog courses)
-				$("input[name='restrictedOptions']").change(function() {
-					if($(this).val() == "restrictedCourses") {
-						$("#restrictedCatalogOptions").show();
-					} else {
-						$("#restrictedCatalogOptions").hide();
-					}
-				});
-				
-				$("#addNewCommitteeMemberButton").click(function() {
-					var $committeeTitle = $("#committeeTitle option:selected");
-					var $committeeSubject = $("#committeeSubject option:selected");
-					var title = $committeeTitle.attr("id");
-					var subject = $committeeSubject.val();
-					var titleName = $committeeTitle.val();
-					var firstName;
-					var lastName;
-					var newMember = false;
-					var id;
-					if($("#committeeMembers option:selected").val() == "newMember") {
-						firstName = $("#firstName").val();
-						lastName = $("#lastName").val();
-						if(firstName == "" || lastName == "") {
-							alert("Name is required");
-							return false;
-						}
-						newMember = true;
-					} else {
-						firstName = $("#committeeMembers option:selected").attr("firstName");
-						lastName = $("#committeeMembers option:selected").attr("lastName");
-						id = $("#committeeMembers option:selected").attr("id");
-					}
-					$.ajax({
-						type: "POST",
-						url: "../scripts/addNewCommitteeMember.php",
-						data: { firstName : firstName, lastName: lastName, subject: subject, title: title, newMember: newMember, id: id},
-						dataType: "json",
-						success: function(json) {
-						console.log(json);
-							addCommitteeMemberToTable(json, firstName, lastName, titleName, title, subject);
-						},
-						error: function(xhr, ajaxOptions, thrownError) {
-							console.log(thrownError);
-						}
-					});
-				});
-				
-				$("#addNewItemButton").click(function() {
-					console.log("Inside the button");
-					var data = {};
-					if($("#objectSubjects option:selected").val() === "newSubject") {
-						data["subject"] = $("#newObjectSubject").val();
-						if(data["subject"] === "") {
-							alert("Subject name is required");
-							return false;
-						}
-					} else {
-						data["subject"] = $("#objectSubjects option:selected").val();
-					}
-					data["typeName"] = $("#newItemCategories option:selected").val();
-					data["name"] = $("#newItemName").val();
-					if(data["name"] === "") {
-						alert("Name is required");
-						return false;
-					}
-					console.log(data);
-					$.ajax({
-						type: "POST",
-						url: "../scripts/addNewObject.php",
-						data: data,
-						//dataType: "json",
-						success: function(json) {
-							location.reload();
-						},
-						error: function(xhr, ajaxOptions, thrownError) {
-							console.log(thrownError);
-						}
-					});
-				});
-				
-				$("#committeeMembers").change(function() {
-					if($(this).val() == "newMember") {
-						$("#newCommitteeMemberContainer").show();
-					} else {
-						$("#newCommitteeMemberContainer").hide();
-					}
-				});
-				
-				$("#catalogList").change(function(){
-					swapRequired($(this).val())
-				});
-				
-				$("#catalogListOverrides").change(function(){
-					swapOverride($(this).val())
-				});
-				
-				$("#catalogListRestricted").change(function(){
-					swapRestricted($(this).val());
-				});
-				
-				$("#minorSubjectList").change(function(){
-					$("#minorSelect").detach();
-					$minorsSubjectSelect[$(this).val()].insertAfter($("#minorSelectLabel"));
-				});
-				
-				$("#newItemCategories").change(function(){
-					$("#objectSubjects").detach();
-					$objectSubjects[$(this).val()].insertAfter($("#objectSubjectLabel"));
-					if($("#objectSubects option:selected").val() === "newSubject") {
-						$("#newObjectSubjectSpan").show();
-					} else {
-						$("#newObjectSubjectSpan").hide();
-					}
-				});
-				
-				$("#addClassButtonOverrides").click(function(){
-					var courseId = $("#overridesContainer > #courseList option:selected").val();
-					if(!courseId) {
-						return false;
-					}
-					if(!selectedOverrides.includes(courseId)) {
-						selectedOverrides.push(courseId);
-						if(removedCourseOverrides.includes(courseId)) {
-							removedCourseOverrides = removedCourseOverrides.filter(function(id) {
-								id != courseId;
-							});
-						} else {
-							addedCourseOverrides.push(courseId);
-						}
-						var courseOverrideInfo = {};
-						courseOverrideInfo.maxCount = 1;
-						courseOverrideInfo.minGrade = catalogRule["Degree Program"].minGrade;
-						courseOverrideInfo.minHours = catalogs[courseId].lowHours;
-						courseOverrideInfo.maxHours = catalogs[courseId].highHours;
-						attachCourseOverrideEntry(courseId, courseOverrideInfo);
-					}
-				});
-				
-				$("#addCatalogButton").click(function() {
-					var catalogName = $("#applicableCatalogsSelect option:selected").val();
-					if(!selectedCatalogs.includes(catalogName)) {
-						selectedCatalogs.push(catalogName);
-						// Process the catalog name into the added array. If the catalog was previously removed but was readded then it will neither be added or removed in the database
-						if(removedCatalogs.includes(catalogName)) {
-							removedCatalogs = removedCatalogs.filter(function(name) {
-								name != catalogName;
-							});
-						} else {
-							addedCatalogs.push(catalogName);
-						}
-						$.ajax({
-							type: "POST",
-							url: "../scripts/courseCatalog.php",
-							data: {catalogName : catalogName},
-							dataType: "json",
-							success: function(json) {
-								addNewCatalog(json, catalogName);
-							},
-							error: function(xhr, ajaxOptions, thrownError) {
-								console.log(thrownError);
-							}
-						});
-					}
-				});
-				
-				//TODO modularize these click events into one
-				$("#addClassButton").click(function(){
-					var courseId = $("#requiredClasses > #courseList option:selected").val();
-					if(!requiredCourseIds.includes(courseId)) {
-						requiredCourseIds.push(courseId);
-						if(removedRequiredCourses.includes(courseId)) {
-							removedRequiredCourses = removedRequiredCourses.filter(function(id) {
-								id != courseId;
-							});
-						} else {
-							addedRequiredCourses.push(courseId);
-						}
-						var $removeButton = $("<input>", {
-							id: courseId,
-							type: "submit",
-							name: "removeClassButton",
-							value: "Remove"
-						});
-						$removeButton.click(removeRequiredHandler);
-						$("#classsublist").append($("<li>",{
-							text: catalogs[courseId].name,
-							value: getCatalogName(courseId)
-						}).append($removeButton));
-					}
-				});
-				
-				$("#addClassButtonRestricted").click(function(){
-					var courseId = $("#restrictedCatalogOptions > #courseList option:selected").val();
-					if(!courseId) {
-						return false;
-					}
-					if(!applicableCourseIds.includes(courseId)) {
-						applicableCourseIds.push(courseId);
-						if(removedRestrictedCourses.includes(courseId)) {
-							removedRestrictedCourses = removedRestrictedCourses.filter(function(id) {
-								id != courseId;
-							});
-						} else {
-							addedRestrictedCourses.push(courseId);
-						}
-						var $removeButton = $("<input>", {
-							id: courseId,
-							type: "submit",
-							name: "removeRestrictedClassButton",
-							value: "Remove"
-						});
-						$removeButton.click(removeRestrictedHandler);
-						$("#restrictedCourseList").append($("<li>",{
-							text: catalogs[courseId].name,
-							value: getCatalogName(courseId)
-						}).append($removeButton));
-					}
-				});
-				
-				$("#addMinorButton").click(function(){
-					var minorId = parseInt($("#minorSelect option:selected").val());
-					if(!selectedMinors.includes(minorId)) {
-						selectedMinors.push(minorId);
-						if(removedMinors.includes(minorId)) {
-							removedMinors = removedMinors.filter(function(id) {
-								id != minorId;
-							});
-						} else {
-							addedMinors.push(minorId);
-						}
-						var $removeButton = $("<input>", {
-							id: minorId,
-							type: "submit",
-							name: "removeMinorButton",
-							value: "Remove"
-						});
-						$removeButton.click(removeMinorHandler);
-						$("#minorList").append($("<li>",{
-							text: minors[minorId].name
-						}).append($removeButton));
-					}
-				});
-				
-				$("#addCertificateButton").click(function(){
-					var certificateId = parseInt($("#certificateSelect option:selected").val());
-					if(!selectedCertificates.includes(certificateId)) {
-						selectedCertificates.push(certificateId);
-						if(removedCertificates.includes(certificateId)) {
-							removedCertificates = removedCertificates.filter(function(id) {
-								id != certificateId;
-							});
-						} else {
-							addedCertificates.push(certificateId);
-						}
-						var $removeButton = $("<input>", {
-							id: certificateId,
-							type: "submit",
-							name: "removeCertificateButton",
-							value: "Remove"
-						});
-						$removeButton.click(removeCertificateHandler);
-						$("#certificateList").append($("<li>",{
-							text: certificates[certificateId].name
-						}).append($removeButton));
-					}
-				});
-				
-				$("#addFormButton").click(function(){
-					var formId = parseInt($("#formSelect option:selected").val());
-					if(!selectedForms.includes(formId)) {
-						selectedForms.push(formId);
-						if(removedForms.includes(formId)) {
-							removedForms = removedForms.filter(function(id) {
-								id != formId;
-							});
-						} else {
-							addedForms.push(formId);
-						}
-						var $removeButton = $("<input>", {
-							id: formId,
-							type: "submit",
-							name: "removeFormButton",
-							value: "Remove"
-						});
-						$removeButton.click(removeFormHandler);
-						$("#formList").append($("<li>",{
-							text: forms[formId].name
-						}).append($removeButton));
-					}
-				});
+<link rel="stylesheet" type="text/css" href="../styles/popup.css">
+<link rel="stylesheet" type="text/css" href="../styles/admin.css">
 
-				$("#saveGlobal").click(function(){
-					console.log("Inside save global");
-					if(!$("#globalGrade")[0].checkValidity()){
-						alert("Invalid Grade Format (Must be either empty or A+ to F)");
-						return false;
-					}
-					if($("#globalGPA").val() < 0 || $("#globalGPA").val() > 4){
-						alert("Invalid GPA (Must be between 0 and 4)");
-						return false;
-					}
-					var typeName = $(this).attr("typename");
-					$.ajax({
-						type: "POST",
-						url: "../scripts/saveGlobalRequirements.php",
-						data: { Grade : $("#globalGrade").val(), GPA : $("#globalGPA").val(), typeName : typeName },
-						dataType: "json",
-						success: function(json) {
-							alert("Saved Successfully");
-						},
-						error: function(msg){
-							alert("Unable to save requirements");
-						}
-					});
-				});
-				
+<head>
+    <meta charset="utf8">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+        var catalogRule;
+        var catalogs;
+        var catalogsByName = {};
+        var $catalogs = {};
+        var $objectSubjects = {};
+        var catalogsLoaded = 0;
+        var catalogNames = [];
+        var requiredCourseIds = []; // This is an array initialized at the start of every modify popup
+        var applicableCourseIds = [];
+        var minors;
+        var $minorsSubjectSelect = {};
+        var selectedMinors = [];
+        var certificates;
+        var forms;
+        var $certificatesSubjectSelect = {};
+        var $formsSubjectSelect = {};
+        var selectedCertificates = [];
+        var selectedForms = [];
+        var selectedOverrides = [];
+        var selectedCatalogs = [];
+        var modifyData = [];
+        var objectsParam = [];
+        var degreeProgramIds = [];
+        var phdIds = [];
+        var removedCatalogs = [];
+        var addedCatalogs = [];
+        var addedRequiredCourses = [];
+        var removedRequiredCourses = [];
+        var addedCourseOverrides = [];
+        var removedCourseOverrides = [];
+        var addedMinors = [];
+        var removedMinors = [];
+        var addedForms = [];
+        var removedForms = [];
+        var addedCertificates = [];
+        var removedCertificates = [];
+        var addedRestrictedCourses = [];
+        var removedRestrictedCourses = [];
 
-				$("#saveForm").click(function(){
-					var idObjects = $(this).attr("idobjects");
-					saveHours(idObjects, function(wasSuccessful) {
-						if(wasSuccessful) {
-							console.log("Hours by level changes successful");
-						} else {
-							console.log("Error saving hours by level");
-						}
-					});
-					saveObjectInformation(idObjects, function(wasSuccessful) {
-						if(wasSuccessful) {
-							console.log("Object information saved successfully");
-						} else {
-							console.log("Error saving object information");
-						}
-					});
-					return;
-					if(removedCatalogs.length > 0 || addedCatalogs.length > 0) {
-						saveCatalogs(idObjects, function(wasSuccessful) {
-							if(wasSuccessful) {
-								console.log("Catalogs saved successfully");
-							} else {
-								console.log("Error saving catalogs");
-							}
-						});
-					}
-					if(addedRequiredCourses.length > 0 || removedRequiredCourses.length > 0) {
-						saveRequiredCourses(idObjects, function(wasSuccessful) {
-							if(wasSuccessful) {
-								console.log("Required courses saved");
-							} else {
-								console.log("Error saving required courses");
-							}
-						});
-					}
-					if(addedCourseOverrides.length > 0 || removedCourseOverrides.length > 0 || $("#courseOverrideList li").length > 0) {
-						saveCourseOverrides(idObjects, function(wasSuccessful) {
-							if(wasSuccessful) {
-								console.log("Course overrides saved");
-							} else {
-								console.log("Error saving course overrides");
-							}
-						});
-					}
-					// Process Minors and Catalogs if the objectId belongs to a degree program
-					if(degreeProgramIds.includes(idObjects)) {
-						if(addedMinors.length > 0 || removedMinors.length > 0) {
-							saveObjectMapping(idObjects, removedMinors, addedMinors, function(wasSuccessful) {
-								if(wasSuccessful) {
-									console.log("Minors saved");
-								} else {
-									console.log("Error saving minors");
-								}
-							});
-						}
-						if(addedCertificates.length > 0 || removedCertificates.length > 0) {
-							saveObjectMapping(idObjects, removedCertificates, addedCertificates, function(wasSuccessful) {
-								if(wasSuccessful) {
-									console.log("Certificates saved");
-								} else {
-									console.log("Error saving certificates");
-								}
-							});
-						}
-						if(addedForms.length > 0 || removedForms.length > 0) {
-							saveObjectMapping(idObjects, removedForms, addedForms, function(wasSuccessful) {
-								if(wasSuccessful) {
-									console.log("Certificates saved");
-								} else {
-									console.log("Error saving certificates");
-								}
-							});
-						}
-					} else { // Otherwise the objectId is a nondegree program and can have restricted applicable courses
-						saveRestrictedCourses(idObjects, function(wasSuccessful) {
-							if(wasSuccessful) {
-								console.log("Applicable courses saved");
-							} else {
-								console.log("Error saving applicable courses");
-							}
-						});	
-						return;
-					}
-					resetAddedRemovedValues();
-				});
+        $(document).ready(function() {
+            var xhr = new XMLHttpRequest();
+            xhr.addEventListener("load", degreeHandlerInit);
+            xhr.open("GET", "../scripts/degreePrograms.php");
+            xhr.send();
+
+            $("#deleteForm").click(function() {
+                if (confirm("Are you sure you want to delete this program? Press OK to delete")) {
+                    $.ajax({
+                        type: "POST",
+                        url: "../scripts/deleteObject.php",
+                        data: {
+                            idObject: $(this).attr("idobjects")
+                        },
+                        //dataType: "json",
+                        success: function(json) {
+                            location.reload();
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            console.log(thrownError);
+                        }
+                    });
+                }
             });
-            
-			function saveCatalogs(objectId, callback) {
+
+            // Event handler for radio change (shows container to specify restricted catalog courses)
+            $("input[name='restrictedOptions']").change(function() {
+                if ($(this).val() == "restrictedCourses") {
+                    $("#restrictedCatalogOptions").show();
+                } else {
+                    $("#restrictedCatalogOptions").hide();
+                }
+            });
+
+            $("#addNewCommitteeMemberButton").click(function() {
+                var $committeeTitle = $("#committeeTitle option:selected");
+                var $committeeSubject = $("#committeeSubject option:selected");
+                var title = $committeeTitle.attr("id");
+                var subject = $committeeSubject.val();
+                var titleName = $committeeTitle.val();
+                var firstName;
+                var lastName;
+                var newMember = false;
+                var id;
+                if ($("#committeeMembers option:selected").val() == "newMember") {
+                    firstName = $("#firstName").val();
+                    lastName = $("#lastName").val();
+                    if (firstName == "" || lastName == "") {
+                        alert("Name is required");
+                        return false;
+                    }
+                    newMember = true;
+                } else {
+                    firstName = $("#committeeMembers option:selected").attr("firstName");
+                    lastName = $("#committeeMembers option:selected").attr("lastName");
+                    id = $("#committeeMembers option:selected").attr("id");
+                }
+                $.ajax({
+                    type: "POST",
+                    url: "../scripts/addNewCommitteeMember.php",
+                    data: {
+                        firstName: firstName,
+                        lastName: lastName,
+                        subject: subject,
+                        title: title,
+                        newMember: newMember,
+                        id: id
+                    },
+                    dataType: "json",
+                    success: function(json) {
+                        console.log(json);
+                        addCommitteeMemberToTable(json, firstName, lastName, titleName, title, subject);
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError);
+                    }
+                });
+            });
+
+            $("#addNewItemButton").click(function() {
+                console.log("Inside the button");
+                var data = {};
+                if ($("#objectSubjects option:selected").val() === "newSubject") {
+                    data["subject"] = $("#newObjectSubject").val();
+                    if (data["subject"] === "") {
+                        alert("Subject name is required");
+                        return false;
+                    }
+                } else {
+                    data["subject"] = $("#objectSubjects option:selected").val();
+                }
+                data["typeName"] = $("#newItemCategories option:selected").val();
+                data["name"] = $("#newItemName").val();
+                if (data["name"] === "") {
+                    alert("Name is required");
+                    return false;
+                }
+                console.log(data);
+                $.ajax({
+                    type: "POST",
+                    url: "../scripts/addNewObject.php",
+                    data: data,
+                    //dataType: "json",
+                    success: function(json) {
+                        location.reload();
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError);
+                    }
+                });
+            });
+			
+			$("input[type='radio']").change(function() {
+				console.log($(this).val());
+				if($(this).val() == "variable") {
+					$(this).prevAll("span[name='percent']:first").show().css("display", "inline-block");
+				} else {
+					$(this).prevAll("span[name='percent']:first").hide();
+				}
+			});
+			
+            $("#committeeMembers").change(function() {
+                if ($(this).val() == "newMember") {
+                    $("#newCommitteeMemberContainer").show();
+                } else {
+                    $("#newCommitteeMemberContainer").hide();
+                }
+            });
+
+            $("#catalogList").change(function() {
+                swapRequired($(this).val())
+            });
+
+            $("#catalogListOverrides").change(function() {
+                swapOverride($(this).val())
+            });
+
+            $("#catalogListRestricted").change(function() {
+                swapRestricted($(this).val());
+            });
+
+            $("#minorSubjectList").change(function() {
+                $("#minorSelect").detach();
+                $minorsSubjectSelect[$(this).val()].insertAfter($("#minorSelectLabel"));
+            });
+
+            $("#newItemCategories").change(function() {
+                $("#objectSubjects").detach();
+                $objectSubjects[$(this).val()].insertAfter($("#objectSubjectLabel"));
+                if ($("#objectSubects option:selected").val() === "newSubject") {
+                    $("#newObjectSubjectSpan").show();
+                } else {
+                    $("#newObjectSubjectSpan").hide();
+                }
+            });
+
+            $("#addClassButtonOverrides").click(function() {
+                var courseId = $("#overridesContainer > #courseList option:selected").val();
+                if (!courseId) {
+                    return false;
+                }
+                if (!selectedOverrides.includes(courseId)) {
+                    selectedOverrides.push(courseId);
+                    if (removedCourseOverrides.includes(courseId)) {
+                        removedCourseOverrides = removedCourseOverrides.filter(function(id) {
+                            id != courseId;
+                        });
+                    } else {
+                        addedCourseOverrides.push(courseId);
+                    }
+                    var courseOverrideInfo = {};
+                    courseOverrideInfo.maxCount = 1;
+                    courseOverrideInfo.minGrade = catalogRule["Degree Program"].minGrade;
+                    courseOverrideInfo.minHours = catalogs[courseId].lowHours;
+                    courseOverrideInfo.maxHours = catalogs[courseId].highHours;
+                    attachCourseOverrideEntry(courseId, courseOverrideInfo);
+                }
+            });
+
+            $("#addCatalogButton").click(function() {
+                var catalogName = $("#applicableCatalogsSelect option:selected").val();
+                if (!selectedCatalogs.includes(catalogName)) {
+                    selectedCatalogs.push(catalogName);
+                    // Process the catalog name into the added array. If the catalog was previously removed but was readded then it will neither be added or removed in the database
+                    if (removedCatalogs.includes(catalogName)) {
+                        removedCatalogs = removedCatalogs.filter(function(name) {
+                            name != catalogName;
+                        });
+                    } else {
+                        addedCatalogs.push(catalogName);
+                    }
+                    $.ajax({
+                        type: "POST",
+                        url: "../scripts/courseCatalog.php",
+                        data: {
+                            catalogName: catalogName
+                        },
+                        dataType: "json",
+                        success: function(json) {
+                            addNewCatalog(json, catalogName);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            console.log(thrownError);
+                        }
+                    });
+                }
+            });
+
+            //TODO modularize these click events into one
+            $("#addClassButton").click(function() {
+                var courseId = $("#requiredClasses > #courseList option:selected").val();
+                if (!requiredCourseIds.includes(courseId)) {
+                    requiredCourseIds.push(courseId);
+                    if (removedRequiredCourses.includes(courseId)) {
+                        removedRequiredCourses = removedRequiredCourses.filter(function(id) {
+                            id != courseId;
+                        });
+                    } else {
+                        addedRequiredCourses.push(courseId);
+                    }
+                    var $removeButton = $("<input>", {
+                        id: courseId,
+                        type: "submit",
+                        name: "removeClassButton",
+                        value: "Remove"
+                    });
+                    $removeButton.click(removeRequiredHandler);
+                    $("#classsublist").append($("<li>", {
+                        text: catalogs[courseId].name,
+                        value: getCatalogName(courseId)
+                    }).append($removeButton));
+                }
+            });
+
+            $("#addClassButtonRestricted").click(function() {
+                var courseId = $("#restrictedCatalogOptions > #courseList option:selected").val();
+                if (!courseId) {
+                    return false;
+                }
+                if (!applicableCourseIds.includes(courseId)) {
+                    applicableCourseIds.push(courseId);
+                    if (removedRestrictedCourses.includes(courseId)) {
+                        removedRestrictedCourses = removedRestrictedCourses.filter(function(id) {
+                            id != courseId;
+                        });
+                    } else {
+                        addedRestrictedCourses.push(courseId);
+                    }
+                    var $removeButton = $("<input>", {
+                        id: courseId,
+                        type: "submit",
+                        name: "removeRestrictedClassButton",
+                        value: "Remove"
+                    });
+                    $removeButton.click(removeRestrictedHandler);
+                    $("#restrictedCourseList").append($("<li>", {
+                        text: catalogs[courseId].name,
+                        value: getCatalogName(courseId)
+                    }).append($removeButton));
+                }
+            });
+
+            $("#addMinorButton").click(function() {
+                var minorId = parseInt($("#minorSelect option:selected").val());
+                if (!selectedMinors.includes(minorId)) {
+                    selectedMinors.push(minorId);
+                    if (removedMinors.includes(minorId)) {
+                        removedMinors = removedMinors.filter(function(id) {
+                            id != minorId;
+                        });
+                    } else {
+                        addedMinors.push(minorId);
+                    }
+                    var $removeButton = $("<input>", {
+                        id: minorId,
+                        type: "submit",
+                        name: "removeMinorButton",
+                        value: "Remove"
+                    });
+                    $removeButton.click(removeMinorHandler);
+                    $("#minorList").append($("<li>", {
+                        text: minors[minorId].name
+                    }).append($removeButton));
+                }
+            });
+
+            $("#addCertificateButton").click(function() {
+                var certificateId = parseInt($("#certificateSelect option:selected").val());
+                if (!selectedCertificates.includes(certificateId)) {
+                    selectedCertificates.push(certificateId);
+                    if (removedCertificates.includes(certificateId)) {
+                        removedCertificates = removedCertificates.filter(function(id) {
+                            id != certificateId;
+                        });
+                    } else {
+                        addedCertificates.push(certificateId);
+                    }
+                    var $removeButton = $("<input>", {
+                        id: certificateId,
+                        type: "submit",
+                        name: "removeCertificateButton",
+                        value: "Remove"
+                    });
+                    $removeButton.click(removeCertificateHandler);
+                    $("#certificateList").append($("<li>", {
+                        text: certificates[certificateId].name
+                    }).append($removeButton));
+                }
+            });
+
+            $("#addFormButton").click(function() {
+                var formId = parseInt($("#formSelect option:selected").val());
+                if (!selectedForms.includes(formId)) {
+                    selectedForms.push(formId);
+                    if (removedForms.includes(formId)) {
+                        removedForms = removedForms.filter(function(id) {
+                            id != formId;
+                        });
+                    } else {
+                        addedForms.push(formId);
+                    }
+                    var $removeButton = $("<input>", {
+                        id: formId,
+                        type: "submit",
+                        name: "removeFormButton",
+                        value: "Remove"
+                    });
+                    $removeButton.click(removeFormHandler);
+                    $("#formList").append($("<li>", {
+                        text: forms[formId].name
+                    }).append($removeButton));
+                }
+            });
+
+            $("#saveGlobal").click(function() {
+                console.log("Inside save global");
+                if (!$("#globalGrade")[0].checkValidity()) {
+                    alert("Invalid Grade Format (Must be either empty or A+ to F)");
+                    return false;
+                }
+                if ($("#globalGPA").val() < 0 || $("#globalGPA").val() > 4) {
+                    alert("Invalid GPA (Must be between 0 and 4)");
+                    return false;
+                }
+                var typeName = $(this).attr("typename");
+                $.ajax({
+                    type: "POST",
+                    url: "../scripts/saveGlobalRequirements.php",
+                    data: {
+                        Grade: $("#globalGrade").val(),
+                        GPA: $("#globalGPA").val(),
+                        typeName: typeName
+                    },
+                    dataType: "json",
+                    success: function(json) {
+                        alert("Saved Successfully");
+                    },
+                    error: function(msg) {
+                        alert("Unable to save requirements");
+                    }
+                });
+            });
+
+
+            $("#saveForm").click(function() {
+                var idObjects = $(this).attr("idobjects");
+                saveHours(idObjects, function(wasSuccessful) {
+                    if (wasSuccessful) {
+                        console.log("Hours by level changes successful");
+                    } else {
+                        console.log("Error saving hours by level");
+                    }
+                });
+                saveObjectInformation(idObjects, function(wasSuccessful) {
+                    if (wasSuccessful) {
+                        console.log("Object information saved successfully");
+                    } else {
+                        console.log("Error saving object information");
+                    }
+                });
+                return;
+                if (removedCatalogs.length > 0 || addedCatalogs.length > 0) {
+                    saveCatalogs(idObjects, function(wasSuccessful) {
+                        if (wasSuccessful) {
+                            console.log("Catalogs saved successfully");
+                        } else {
+                            console.log("Error saving catalogs");
+                        }
+                    });
+                }
+                if (addedRequiredCourses.length > 0 || removedRequiredCourses.length > 0) {
+                    saveRequiredCourses(idObjects, function(wasSuccessful) {
+                        if (wasSuccessful) {
+                            console.log("Required courses saved");
+                        } else {
+                            console.log("Error saving required courses");
+                        }
+                    });
+                }
+                if (addedCourseOverrides.length > 0 || removedCourseOverrides.length > 0 || $("#courseOverrideList li").length > 0) {
+                    saveCourseOverrides(idObjects, function(wasSuccessful) {
+                        if (wasSuccessful) {
+                            console.log("Course overrides saved");
+                        } else {
+                            console.log("Error saving course overrides");
+                        }
+                    });
+                }
+                // Process Minors and Catalogs if the objectId belongs to a degree program
+                if (degreeProgramIds.includes(idObjects)) {
+                    if (addedMinors.length > 0 || removedMinors.length > 0) {
+                        saveObjectMapping(idObjects, removedMinors, addedMinors, function(wasSuccessful) {
+                            if (wasSuccessful) {
+                                console.log("Minors saved");
+                            } else {
+                                console.log("Error saving minors");
+                            }
+                        });
+                    }
+                    if (addedCertificates.length > 0 || removedCertificates.length > 0) {
+                        saveObjectMapping(idObjects, removedCertificates, addedCertificates, function(wasSuccessful) {
+                            if (wasSuccessful) {
+                                console.log("Certificates saved");
+                            } else {
+                                console.log("Error saving certificates");
+                            }
+                        });
+                    }
+                    if (addedForms.length > 0 || removedForms.length > 0) {
+                        saveObjectMapping(idObjects, removedForms, addedForms, function(wasSuccessful) {
+                            if (wasSuccessful) {
+                                console.log("Certificates saved");
+                            } else {
+                                console.log("Error saving certificates");
+                            }
+                        });
+                    }
+                } else { // Otherwise the objectId is a nondegree program and can have restricted applicable courses
+                    saveRestrictedCourses(idObjects, function(wasSuccessful) {
+                        if (wasSuccessful) {
+                            console.log("Applicable courses saved");
+                        } else {
+                            console.log("Error saving applicable courses");
+                        }
+                    });
+                    return;
+                }
+                resetAddedRemovedValues();
+            });
+        });
+			
+        function saveCatalogs(objectId, callback) {
 				$.ajax({
 					type: "POST",
 					url: "../scripts/saveCatalogs.php",
@@ -597,6 +623,13 @@
 				});
 			}
 			
+			// Utility function simply to convert percentage variable hours back to its decimal form.
+			function convertHours(hoursObject) {
+				if(hoursObject.type == "variable") {
+					hoursObject.val = hoursObject.val/100;
+				}
+			}
+			
 			function saveHours(objectId, callback) {
 				var addData = [];
 				var modifyData = [];
@@ -610,55 +643,64 @@
 					val: $("#400HrsMin").val(),
 					type: $("input[name='400HrsMinOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs400MinObj);
 				hoursForm.Hrs400MaxObj = {
 					hour: 400,
 					cap: 'maximum',
 					val: $("#400HrsMax").val(),
 					type: $("input[name='400HrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs400MaxObj);
 				hoursForm.Hrs500MinObj = {
 					hour: 500,
 					cap: 'minimum',
 					val: $("#500HrsMin").val(),
 					type: $("input[name='500HrsMinOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs500MinObj);
 				hoursForm.Hrs500MaxObj = {
 					hour: 500,
 					cap: 'maximum',
 					val: $("#500HrsMax").val(),
 					type: $("input[name='500HrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs500MaxObj);
 				hoursForm.Hrs600MinObj = {
 					hour: 600,
 					cap: 'minimum',
 					val: $("#600HrsMin").val(),
 					type: $("input[name='600HrsMinOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs600MinObj);
 				hoursForm.Hrs600MaxObj = {
 					hour: 600,
 					cap: 'maximum',
 					val: $("#600HrsMax").val(),
 					type: $("input[name='600HrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.Hrs600MaxObj);
 				hoursForm.HrsTransferMaxObj = {
 					hour: "Transfer",
 					cap: 'maximum',
 					val: $("#trhrs").val(),
 					type: $("input[name='TransferHrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.HrsTransferMaxObj);
 				hoursForm.HrsOutsideMaxObj = {
 					hour: "Outside",
 					cap: 'maximum',
 					val: $("#ohrs").val(),
 					type: $("input[name='OutsideHrsMaxOption']:checked").val()
 				}
+				convertHours(hoursForm.HrsOutsideMaxObj);
 				hoursForm.HrsPhDMinObj = {
 					hour: "PhDOnly",
 					cap: 'minimum',
 					val: $("#PhDonly").val(),
 					type: $("input[name='PhDHrsMinOption']:checked").val()
 				}
-
+				convertHours(hoursForm.HrsPhDMinObj);
+				
 				// Check to see if an hour type is not provided for any hour field with a value
 				if(hoursForm.Hrs400MinObj.val != "" && !hoursForm.Hrs400MinObj.type){
 					alert("Fixed or Variable option must be selected for 400 Min Hours");
@@ -922,7 +964,11 @@
 			}
 			
 			function closeCommittee() {
-				$("#committeeMembers").empty();
+				$("#committeeMembers option").each(function(index, value) {
+					if($(this).val() != "newMember") {
+						$(this).remove();
+					}
+				});
 				$("#committeeTitle").empty();
 				$("#committeeTableBody tr[name='tableEntry']").remove();
 				var modal = document.getElementById('committeeModal');
@@ -1360,67 +1406,113 @@
 				$("#requiredHrs").val(catalogRule["Degree Program"].requiredHours);
 				if(catalogRule["Degree Program"].hours400) {
 					if(catalogRule["Degree Program"].hours400.minimum) {
-						$("#400HrsMin").val(catalogRule["Degree Program"].hours400.minimum.hours);
 						$("#400HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours400.minimum.hours);
 						$("input[name='400HrsMinOption']").val([catalogRule["Degree Program"].hours400.minimum.type]);
 						$("#400HrsMin").attr("oldtype", catalogRule["Degree Program"].hours400.minimum.type);
+						if(catalogRule["Degree Program"].hours400.minimum.type == "variable") {
+							$("#400HrsMin").val(catalogRule["Degree Program"].hours400.minimum.hours * 100);
+							$("#400HrsMin").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#400HrsMin").val(parseInt(catalogRule["Degree Program"].hours400.minimum.hours));
+						}
 					}
 					if(catalogRule["Degree Program"].hours400.maximum) {
-						$("#400HrsMax").val(catalogRule["Degree Program"].hours400.maximum.hours);
 						$("#400HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours400.maximum.hours);
 						$("input[name='400HrsMaxOption']").val([catalogRule["Degree Program"].hours400.maximum.type]);
 						$("#400HrsMax").attr("oldtype", catalogRule["Degree Program"].hours400.maximum.type);
+						if(catalogRule["Degree Program"].hours400.maximum.type == "variable") {
+							$("#400HrsMax").val(catalogRule["Degree Program"].hours400.maximum.hours * 100);
+							$("#400HrsMax").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#400HrsMax").val(parseInt(catalogRule["Degree Program"].hours400.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hours500) {
 					if(catalogRule["Degree Program"].hours500.minimum) {
-						$("#500HrsMin").val(catalogRule["Degree Program"].hours500.minimum.hours);
 						$("#500HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours500.minimum.hours);
 						$("input[name='500HrsMinOption']").val([catalogRule["Degree Program"].hours500.minimum.type]);
 						$("#500HrsMin").attr("oldtype", catalogRule["Degree Program"].hours500.minimum.type);
+						if(catalogRule["Degree Program"].hours500.minimum.type == "variable") {
+							$("#500HrsMin").val(catalogRule["Degree Program"].hours500.minimum.hours * 100);
+							$("#500HrsMin").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#500HrsMin").val(parseInt(catalogRule["Degree Program"].hours500.minimum.hours));
+						}
 					}if(catalogRule["Degree Program"].hours500.maximum) {
-						$("#500HrsMax").val(catalogRule["Degree Program"].hours500.maximum.hours);
 						$("#500HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours500.maximum.hours);
 						$("input[name='500HrsMaxOption']").val([catalogRule["Degree Program"].hours500.maximum.type]);
 						$("#500HrsMax").attr("oldtype", catalogRule["Degree Program"].hours500.maximum.type);
+						if(catalogRule["Degree Program"].hours500.maximum.type == "variable") {
+							$("#500HrsMax").val(catalogRule["Degree Program"].hours500.maximum.hours * 100);
+							$("#500HrsMax").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#500HrsMax").val(parseInt(catalogRule["Degree Program"].hours500.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hours600) {
 					if(catalogRule["Degree Program"].hours600.minimum) {
-						$("#600HrsMin").val(catalogRule["Degree Program"].hours600.minimum.hours);
 						$("#600HrsMin").attr("oldvalue", catalogRule["Degree Program"].hours600.minimum.hours);
 						$("input[name='600HrsMinOption']").val([catalogRule["Degree Program"].hours600.minimum.type]);
 						$("#600HrsMin").attr("oldtype", catalogRule["Degree Program"].hours600.minimum.type);
+						if(catalogRule["Degree Program"].hours600.minimum.type == "variable") {
+							$("#600HrsMin").val(catalogRule["Degree Program"].hours600.minimum.hours * 100);
+							$("#600HrsMin").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#600HrsMin").val(parseInt(catalogRule["Degree Program"].hours600.minimum.hours));
+						}
 					}
 					if(catalogRule["Degree Program"].hours600.maximum) {
-						$("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours);
 						$("#600HrsMax").attr("oldvalue", catalogRule["Degree Program"].hours600.maximum.hours);
 						$("input[name='600HrsMaxOption']").val([catalogRule["Degree Program"].hours600.maximum.type]);
 						$("#600HrsMax").attr("oldtype", catalogRule["Degree Program"].hours600.maximum.type);
+						if(catalogRule["Degree Program"].hours600.maximum.type == "variable") {
+							$("#600HrsMax").val(catalogRule["Degree Program"].hours600.maximum.hours * 100);
+							$("#600HrsMax").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#600HrsMax").val(parseInt(catalogRule["Degree Program"].hours600.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hoursTransfer) {
 					if(catalogRule["Degree Program"].hoursTransfer.maximum) {                     
-						$("#trhrs").val(catalogRule["Degree Program"].hoursTransfer.maximum.hours);
 						$("#trhrs").attr('oldvalue',catalogRule["Degree Program"].hoursTransfer.maximum.hours);
 						$("input[name='TransferHrsMaxOption']").val([catalogRule["Degree Program"].hoursTransfer.maximum.type]);
 						$("#trhrs").attr("oldtype", catalogRule["Degree Program"].hoursTransfer.maximum.type);
+						if(catalogRule["Degree Program"].hoursTransfer.maximum.type == "variable") {
+							$("#trhrs").val(catalogRule["Degree Program"].hoursTransfer.maximum.hours * 100);
+							$("#trhrs").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#trhrs").val(parseInt(catalogRule["Degree Program"].hoursTransfer.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hoursOutside) {
 					if(catalogRule["Degree Program"].hoursOutside.maximum) {                     
-						$("#ohrs").val(catalogRule["Degree Program"].hoursOutside.maximum.hours);
 						$("#ohrs").attr('oldvalue',catalogRule["Degree Program"].hoursOutside.maximum.hours);
 						$("input[name='OutsideHrsMaxOption']").val([catalogRule["Degree Program"].hoursOutside.maximum.type]);
 						$("#ohrs").attr("oldtype", catalogRule["Degree Program"].hoursOutside.maximum.type);
+						if(catalogRule["Degree Program"].hoursOutside.maximum.type == "variable") {
+							$("#ohrs").val(catalogRule["Degree Program"].hoursOutside.maximum.hours * 100);
+							$("#ohrs").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#ohrs").val(parseInt(catalogRule["Degree Program"].hoursOutside.maximum.hours));
+						}
 					}
 				}
 				if(catalogRule["Degree Program"].hoursPhDOnly) {
 					if(catalogRule["Degree Program"].hoursPhDOnly.minimum) {                     
-						$("#PhDonly").val(catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
+						
 						$("#PhDonly").attr('oldvalue',catalogRule["Degree Program"].hoursPhDOnly.minimum.hours);
 						$("input[name='PhDHrsMinOption']").val([catalogRule["Degree Program"].hoursPhDOnly.minimum.type]);
 						$("#PhDonly").attr("oldtype", catalogRule["Degree Program"].hoursPhDOnly.minimum.type);
+						if(catalogRule["Degree Program"].hoursPhDOnly.minimum.type == "variable") {
+							$("#PhDonly").val(catalogRule["Degree Program"].hoursPhDOnly.minimum.hours * 100);
+							$("#PhDonly").nextAll("span[name='percent']:first").show().css("display", "inline-block");
+						} else {
+							$("#PhDonly").val(parseInt(catalogRule["Degree Program"].hoursPhDOnly.minimum.hours));
+						}
 					}
 				}
 				$("#grade").val(catalogRule["Degree Program"].minGrade);
@@ -1474,7 +1566,7 @@
 					id: "overrideCount",
 					type: "number",
 					value: courseOverrideInfo.maxCount,
-					style: "width:50px"
+					style: "width:70px"
 				})).append($("<label>", {
 					for: "overrideGrade",
 					text: "Minimum Grade"
@@ -1484,7 +1576,7 @@
 					value: courseOverrideInfo.minGrade,
 					maxlength: "2",
 					pattern: "[ABCDF]{1}[-+]{0,1}",
-					style: "width:50px"
+					style: "width:70px"
 				})).append($("<label>", {
 					for: "overrideLowHours",
 					text: "Minium Hours"
@@ -1492,7 +1584,7 @@
 					id: "overrideLowHours",
 					type: "number",
 					value: courseOverrideInfo.minHours,
-					style: "width:50px"
+					style: "width:70px"
 				})).append($("<label>", {
 					for: "overrideHighHours",
 					text: "Maximum Hours"
@@ -1500,7 +1592,7 @@
 					id: "overrideHighHours",
 					type: "number",
 					value: courseOverrideInfo.maxHours,
-					style: "width:50px"
+					style: "width:70px"
 				})).append($removeButton));
 			}
 			
@@ -1522,7 +1614,7 @@
 			}
 			
 			function processCatalog(catalogArray, catalogName) {
-				console.log("Processing catalog");
+				("Processing catalog");
 				if(!catalogs) {
 					catalogs = {};
 					catalogs = Object.assign(catalogs, catalogArray); // Make a copy since the catalogs will hold all the courses as they are loaded
@@ -1557,7 +1649,7 @@
 			}
 			
 			function courseHandler(catalogArray, catalogName){
-				console.log(catalogArray);
+				(catalogArray);
 				selectedOverrides = [];
 				applicableCourseIds = [];
 				requiredCourseIds = [];
@@ -1766,6 +1858,7 @@
 				$("#minorList").empty();
 				$("#applicableCatalogsList").empty();
 				$("#classsublist").empty();
+				$("span[name='percent']").hide();
 				$("#popupform").children("input[type='number']").val("");
 				$("#popupform").children("input[type='number']").attr("oldvalue", "");
 				$("#popupform").children("input[type='radio']:checked").prop("checked", false);
@@ -1788,183 +1881,205 @@
 				var modal = document.getElementById('myModal');
 				modal.style.display = "none";	
 			}
-			
         </script>
-    </head>
-    <body>
-        <div id="listContainer">
-			<li name="editCommittee"><a style="cursor:pointer">Edit Graduate Committee Faculty</a></li>
-			<br>
+</head>
+<body>
+    <header>
+    </header>
+    <div class="top">
+		<img src="../routes/logo.png" width="145" height="100" alt="logo" />
+    </div>
+    <div class="marg">
+        <div class="box">
+            <div id="listContainer">
+                <li name="editCommittee"><a style="cursor:pointer">Edit Graduate Committee Faculty</a></li>
+                <br>
 
-		</div>
-		<div id="globalModal" class="modal">
-			<div class="modal-content">
-				<span onclick="closeGlobal()" class="close">&times;</span>
-				<div id="globalContent">
-					<label for="globalGrade">Minimum Grade: </label><input type="text" id="globalGrade" size="2" maxlength="2" pattern="([ABCDF]{1}[-+]{0,1}){0,1}">
-					<label for="globalGPA">Minimum GPA: </label><input type="number" id="globalGPA" step="0.01" style="width:50px">
-					<input id="saveGlobal" type="submit" value="Save"></input>
-				</div>
-			</div>
-		</div>
-		<div id="committeeModal" class="modal">
-			<div class="modal-content">
-				<span onclick="closeCommittee()" class="close">&times;</span>
-				<div id="committeeContent">
-					<h2>Add Members</h2>
-					Subject<select id="committeeSubject"></select>
-					Member<select id="committeeMembers"><option value="newMember">New Member</option></select>
-					<span id="newCommitteeMemberContainer" hidden>
-						<label for="firstName">First Name:</label><input type="text" id="firstName" style="width:100px"></input>
-						<label for="lastName">Last Name:</label><input type="text" id="lastName" style="width:100px"></input>
-					</span>
-					Title<select id="committeeTitle" style="width:100px"></select>
-					<input type="button" id="addNewCommitteeMemberButton" value="Add"></input>
-					<h2>Committee</h2>
-					<table id="committeeTable">
-						<tbody id="committeeTableBody">
-							<tr>
-								<th>Subject</th>
-								<th>First Name</th>
-								<th>Last Name</th>
-								<th>Title</th>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
-		<div id="addNewItemModal" class="modal">
-			<div class="modal-content">
-				<span onclick="closeAddItem()" class="close">&times;</span>
-				<div id="addNewItemContent">
-					<label for="newItemCategories">Category :</label>
-					<select id="newItemCategories">
-				
-					</select>
-					<br>
-					<label for="objectSubect" id="objectSubjectLabel">Subject :</label>
-					<span id="newObjectSubjectSpan" hidden>
-						<label for="newObjectSubject">Subject Name :</label>
-						<input type="text" id="newObjectSubject"></input>
-					</span>
-					<br>
-					<label for="newItemName">Name: </label>
-					<input type="text" id="newItemName"></input>
-					<br>
-					<input type="button" id="addNewItemButton" value="Add"></input>
-				</div>
-			</div>
-		</div>
-		<div id="myModal" class="modal">
-			<div class="modal-content">
-			  <span onclick="closepopup()" class="close">&times;</span>
-			  <div id="popupform">
-					Required Hours: <input type="number" id="requiredHrs" style="width:50px">
-					<br>
-					400 Hours Minimum: <input type="number" id="400HrsMin" style="width:50px">
-					<label for="400HrsMinOptionFixed">Fixed</label><input type="radio" id="400HrsMinOptionFixed" name="400HrsMinOption" value="fixed">
-					<label for="400HrsMinOptionVariable">Variable</label><input type="radio" id="400HrsMinOptionVariable" name="400HrsMinOption" value="variable">
-					<br>
-					400 Hours Maximum: <input type="number" id="400HrsMax" style="width:50px">
-					<label for="400HrsMaxOptionFixed">Fixed</label><input type="radio" id="400HrsMaxOptionFixed" name="400HrsMaxOption" value="fixed">
-					<label for="400HrsMaxOptionVariable">Variable</label><input type="radio" id="400HrsMaxOptionVariable" name="400HrsMaxOption" value="variable">
-					<br>
-					500 Hours Minimum: <input type="number" id="500HrsMin" style="width:50px">
-					<label for="500HrsMinOptionFixed">Fixed</label><input type="radio" id="500HrsMinOptionFixed" name="500HrsMinOption" value="fixed">
-					<label for="500HrsMinOptionVariable">Variable</label><input type="radio" id="500HrsMinOptionVariable" name="500HrsMinOption" value="variable">
-					<br>
-					500 Hours Maximum: <input type="number" id="500HrsMax" style="width:50px">
-					<label for="500HrsMaxOptionFixed">Fixed</label><input type="radio" id="500HrsMaxOptionFixed" name="500HrsMaxOption" value="fixed">
-					<label for="500HrsMaxOptionVariable">Variable</label><input type="radio" id="500HrsMaxOptionVariable" name="500HrsMaxOption" value="variable">
-					<br>
-					600 Hours Minimum: <input type="number" id="600HrsMin" style="width:50px">
-					<label for="600HrsMinOptionFixed">Fixed</label><input type="radio" id="600HrsMinOptionFixed" name="600HrsMinOption" value="fixed">
-					<label for="600HrsMinOptionVariable">Variable</label><input type="radio" id="600HrsMinOptionVariable" name="600HrsMinOption" value="variable">
-					<br>
-					600 Hours Maximum: <input type="number" id="600HrsMax" style="width:50px">
-					<label for="600HrsMaxOptionFixed">Fixed</label><input type="radio" id="600HrsMaxOptionFixed" name="600HrsMaxOption" value="fixed">
-					<label for="600HrsMaxOptionVariable">Variable</label><input type="radio" id="600HrsMaxOptionVariable" name="600HrsMaxOption" value="variable">
-					<br>
-					Transfer Hours Maximum: <input type="number" id="trhrs" style="width:50px">
-					<label for="TransferHrsMaxOptionFixed">Fixed</label><input type="radio" id="TransferHrsMaxOptionFixed" name="TransferHrsMaxOption" value="fixed">
-					<label for="TransferHrsMaxOptionVariable">Variable</label><input type="radio" id="TransferHrsMaxOptionVariable" name="TransferHrsMaxOption" value="variable">
-					<br>
-					Outside Hours Maximum: <input type="number" id="ohrs" style="width:50px">
-					<label for="OutsideHrsMaxOptionFixed">Fixed</label><input type="radio" id="OutsideHrsMaxOptionFixed" name="OutsideHrsMaxOption" value="fixed">
-					<label for="OutsideHrsMaxOptionVariable">Variable</label><input type="radio" id="OutsideHrsMaxOptionVariable" name="OutsideHrsMaxOption" value="variable">
-					<br>
-					<span id="PhDOptions" hidden>
-						Graduate Only Hours Minimum: <input type="number" id="PhDonly" style="width:50px">
-						<label for="PhDHrsMinOptionFixed">Fixed</label><input type="radio" id="PhDHrsMinOptionFixed" name="PhDHrsMinOption" value="fixed">
-						<label for="PhDHrsMinOptionVariable">Variable</label><input type="radio" id="PhDHrsMinOptionVariable" name="PhDHrsMinOption" value="variable">
-					<br>
-					</span>
-					Minimum Grade: <input type="text" id="grade" style="width:50px">
-					<br>
-					Minimum GPA: <input type="number" id="minimumGPA" step="0.01" style="width:50px">
-			  </div>
-			  <div id="applicableCatalogs">
-				<h2>Applicable Catalogs</h2>
-				<ul id="applicableCatalogsList">
-				
-				</ul>
-				Catalog: <select id="applicableCatalogsSelect"></select><input type="button" id="addCatalogButton" value="Add Catalog"/>
-			  </div>
-			  <div id="restrictedCatalog">
-				<h2>Additional Creditable Courses</h2>
-				<input id="allCoursesRadio" type="radio" name="restrictedOptions" value="allCourses"><label for="allCoursesRadio">Entire Catalog Applies</label><br>
-				<input id="requiredOnlyRadio" type="radio" name="restrictedOptions" value="requiredOnlyCourses"><label for="requiredOnlyRadio">Required Courses Only</label><br>
-				<input id="restictedCoursesRadio" type="radio" name="restrictedOptions" value="restrictedCourses"><label for="restrictedCoursesRadio">Specify Catalog Courses</label><br>
-				<div id="restrictedCatalogOptions" hidden>
-					<ul id="restrictedCourseList">
-				
-					</ul>
-					Catalog: <select id="catalogListRestricted"></select><label for="classList" id="classListLabelRestricted">Class:</label><input type="button" id="addClassButtonRestricted" value="Add Class"/>
-				</div>
-			  </div>
-			  <div id="requiredClasses">
-				<h2>Required Courses</h2>
-				<ul id="classsublist">
+            </div>
+            <div id="globalModal" class="modal">
+                <div class="modal-content-flexible">
+                    <div class="closeR">
+                    <span onclick="closeGlobal()" class="close">&times;</span>
+                    </div>
+                    <div id="globalContent">
+                        <label for="globalGrade">Minimum Grade: </label><input type="text" id="globalGrade" size="2" maxlength="2" pattern="([ABCDF]{1}[-+]{0,1}){0,1}">
+                        <label for="globalGPA">Minimum GPA: </label><input type="number" id="globalGPA" step="0.01" style="width:70px">
+                        <input id="saveGlobal" type="submit" value="Save"></input>
+                    </div>
+                </div>
+            </div>
+            <div id="committeeModal" class="modal">
+                <div class="modal-content">
+                    <div class="closeR">
+                    <span onclick="closeCommittee()" class="close">&times;</span>
+                    </div>
+                    <div id="committeeContent">
+                        <h2>Add Members</h2>
+                        Subject<select id="committeeSubject"></select>
+                        Member<select id="committeeMembers">
+                            <option value="newMember">New Member</option>
+                        </select>
+                        <span id="newCommitteeMemberContainer" hidden>
+                            <label for="firstName">First Name:</label><input type="text" id="firstName" style="width:100px"></input>
+                            <label for="lastName">Last Name:</label><input type="text" id="lastName" style="width:100px"></input>
+                        </span>
+                        Title<select id="committeeTitle" style="width:100px"></select>
+                        <input type="button" id="addNewCommitteeMemberButton" value="Add"></input>
+                        <h2>Committee</h2>
+                        <table id="committeeTable">
+                            <tbody id="committeeTableBody">
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Title</th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="addNewItemModal" class="modal">
+                <div class="modal-content-flexible">
+                    <div class="closeR">
+                    <span onclick="closeAddItem()" class="close">&times;</span>
+                    </div>
+                    <div id="addNewItemContent">
+                        <label for="newItemCategories">Category :</label>
+                        <select id="newItemCategories">
 
-				</ul>
-				Catalog: <select id="catalogList"></select><label for="classList" id="classListLabel">Class:</label><input type="button" id="addClassButton" value="Add Class"/>
-			  </div>
-			  <div id="overridesContainer">
-				<h2>Course Overrides</h2>
-				<ul id="courseOverrideList">
-			  
-				</ul>
-			  
-				Catalog: <select id="catalogListOverrides"></select><label for="classList" id="classListLabelOverrides">Class:</label><input type="button" id="addClassButtonOverrides" value="Add Class"/>
-			 </div>
-			 <div id="additionalOptionsContainer" hidden>
-				 <div id="minorContainer">
-					<h2>Applicable Minors</h2>
-					<ul id="minorList">
-					
-					</ul>
-					Subject: <select id="minorSubjectList"></select><label for="minorSelect" id="minorSelectLabel">Minor:</label><input type="button" id="addMinorButton" value="Add Minor"/>
-				  </div>
-				  <div id="certificateContainer">
-					<h2>Applicable Certificates</h2>
-					<ul id="certificateList">
-					
-					</ul>
-					Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Certificate:</label><input type="button" id="addCertificateButton" value="Add Certificate"/>
-				  </div>
-				  <div id="formContainer">
-					<h2>Applicable Forms</h2>
-					<ul id="formList">
-					
-					</ul>
-					Subject: <select id="formSubjectList"></select><label for="formSelect" id="formSelectLabel">Form:</label><input type="button" id="addFormButton" value="Add Form"/>
-				  </div>
-				  <br>
-				</div>
-				<input id="saveForm" type="submit" value="Save"></input>
-				 <input id="deleteForm" type="button" value="Delete Program"></input>
-			</div>
-		</div>
-    </body>
+                        </select>
+                        <br>
+                        <label for="objectSubect" id="objectSubjectLabel">Subject : </label>
+                        <span id="newObjectSubjectSpan" hidden>
+                            <label for="newObjectSubject">Subject Name : </label>
+                            <input type="text" id="newObjectSubject"></input>
+                        </span>
+                        <br>
+                        <label for="newItemName">Name : </label>
+                        <input type="text" id="newItemName"></input>
+                        <br>
+                        <input type="button" id="addNewItemButton" value="Add"></input>
+                    </div>
+                </div>
+            </div>
+            <div id="myModal" class="modal">
+                <div class="modal-content">
+                    <div class="closeR">
+                    <span onclick="closepopup()" class="close">&times;</span>
+                        </div>
+                    <div id="popupform">
+                        Required Hours: <input type="number" id="requiredHrs" style="width:70px">
+                        <br>
+                        400 Hours Minimum: <input type="number" id="400HrsMin" style="width:70px"><span name="percent" hidden>%</span>
+                        <label for="400HrsMinOptionFixed">Fixed</label><input type="radio" id="400HrsMinOptionFixed" name="400HrsMinOption" value="fixed">
+                        <label for="400HrsMinOptionVariable">Variable</label><input type="radio" id="400HrsMinOptionVariable" name="400HrsMinOption" value="variable">
+                        <br>
+                        400 Hours Maximum: <input type="number" id="400HrsMax" style="width:70px"><span name="percent" hidden>%</span>
+                        <label for="400HrsMaxOptionFixed">Fixed</label><input type="radio" id="400HrsMaxOptionFixed" name="400HrsMaxOption" value="fixed">
+                        <label for="400HrsMaxOptionVariable">Variable</label><input type="radio" id="400HrsMaxOptionVariable" name="400HrsMaxOption" value="variable">
+                        <br>
+                        500 Hours Minimum: <input type="number" id="500HrsMin" style="width:70px"><span name="percent" hidden>%</span>
+                        <label for="500HrsMinOptionFixed">Fixed</label><input type="radio" id="500HrsMinOptionFixed" name="500HrsMinOption" value="fixed">
+                        <label for="500HrsMinOptionVariable">Variable</label><input type="radio" id="500HrsMinOptionVariable" name="500HrsMinOption" value="variable">
+                        <br>
+                        500 Hours Maximum: <input type="number" id="500HrsMax" style="width:70px"><span name="percent" hidden>%</span>
+                        <label for="500HrsMaxOptionFixed">Fixed</label><input type="radio" id="500HrsMaxOptionFixed" name="500HrsMaxOption" value="fixed">
+                        <label for="500HrsMaxOptionVariable">Variable</label><input type="radio" id="500HrsMaxOptionVariable" name="500HrsMaxOption" value="variable">
+                        <br>
+                        600 Hours Minimum: <input type="number" id="600HrsMin" style="width:70px"><span name="percent" hidden>%</span>
+                        <label for="600HrsMinOptionFixed">Fixed</label><input type="radio" id="600HrsMinOptionFixed" name="600HrsMinOption" value="fixed">
+                        <label for="600HrsMinOptionVariable">Variable</label><input type="radio" id="600HrsMinOptionVariable" name="600HrsMinOption" value="variable">
+                        <br>
+                        600 Hours Maximum: <input type="number" id="600HrsMax" style="width:70px"><span name="percent" hidden>%</span>
+                        <label for="600HrsMaxOptionFixed">Fixed</label><input type="radio" id="600HrsMaxOptionFixed" name="600HrsMaxOption" value="fixed">
+                        <label for="600HrsMaxOptionVariable">Variable</label><input type="radio" id="600HrsMaxOptionVariable" name="600HrsMaxOption" value="variable">
+                        <br>
+                        Transfer Hours Maximum: <input type="number" id="trhrs" style="width:70px"><span name="percent" hidden>%</span>
+                        <label for="TransferHrsMaxOptionFixed">Fixed</label><input type="radio" id="TransferHrsMaxOptionFixed" name="TransferHrsMaxOption" value="fixed">
+                        <label for="TransferHrsMaxOptionVariable">Variable</label><input type="radio" id="TransferHrsMaxOptionVariable" name="TransferHrsMaxOption" value="variable">
+                        <br>
+                        Outside Hours Maximum: <input type="number" id="ohrs" style="width:70px"><span name="percent" hidden>%</span>
+                        <label for="OutsideHrsMaxOptionFixed">Fixed</label><input type="radio" id="OutsideHrsMaxOptionFixed" name="OutsideHrsMaxOption" value="fixed">
+                        <label for="OutsideHrsMaxOptionVariable">Variable</label><input type="radio" id="OutsideHrsMaxOptionVariable" name="OutsideHrsMaxOption" value="variable">
+                        <br>
+                        <span id="PhDOptions" hidden>
+                            Graduate Only Hours Minimum: <input type="number" id="PhDonly" style="width:70px"><span name="percent" hidden>%</span>
+                            <label for="PhDHrsMinOptionFixed">Fixed</label><input type="radio" id="PhDHrsMinOptionFixed" name="PhDHrsMinOption" value="fixed">
+                            <label for="PhDHrsMinOptionVariable">Variable</label><input type="radio" id="PhDHrsMinOptionVariable" name="PhDHrsMinOption" value="variable">
+                            <br>
+                        </span>
+                        Minimum Grade: <input type="text" id="grade" style="width:70px">
+                        <br>
+                        Minimum GPA: <input type="number" id="minimumGPA" step="0.01" style="width:70px">
+                    </div>
+                    <div id="applicableCatalogs">
+                        <h2>Applicable Course Prefix Catalogs</h2>
+                        <ul id="applicableCatalogsList">
+
+                        </ul>
+                        Catalog: <select id="applicableCatalogsSelect"></select><input type="button" id="addCatalogButton" value="Add Catalog" />
+                    </div>
+                    <div id="restrictedCatalog">
+                        <h2>Additional Creditable Courses</h2>
+                        <input id="allCoursesRadio" type="radio" name="restrictedOptions" value="allCourses"><label for="allCoursesRadio">Entire Catalog Applies</label><br>
+                        <input id="requiredOnlyRadio" type="radio" name="restrictedOptions" value="requiredOnlyCourses"><label for="requiredOnlyRadio">Required Courses Only</label><br>
+                        <input id="restictedCoursesRadio" type="radio" name="restrictedOptions" value="restrictedCourses"><label for="restrictedCoursesRadio">Specify Catalog Courses</label><br>
+                        <div id="restrictedCatalogOptions" hidden>
+                            <ul id="restrictedCourseList">
+
+                            </ul>
+                            Catalog: <select id="catalogListRestricted"></select><label for="classList" id="classListLabelRestricted">Class:</label><input type="button" id="addClassButtonRestricted" value="Add Class" />
+                        </div>
+                    </div>
+                    <div id="requiredClasses">
+                        <h2>Required Courses</h2>
+                        <ul id="classsublist">
+
+                        </ul>
+                        Catalog: <select id="catalogList"></select><label for="classList" id="classListLabel">Class:</label><input type="button" id="addClassButton" value="Add Class" />
+                    </div>
+                    <div id="overridesContainer">
+                        <h2>Course Overrides</h2>
+                        <ul id="courseOverrideList">
+
+                        </ul>
+
+                        Catalog: <select id="catalogListOverrides"></select><label for="classList" id="classListLabelOverrides">Class:</label><input type="button" id="addClassButtonOverrides" value="Add Class" />
+                    </div>
+                    <div id="additionalOptionsContainer" hidden>
+                        <div id="minorContainer">
+                            <h2>Applicable Minors</h2>
+                            <ul id="minorList">
+
+                            </ul>
+                            Subject: <select id="minorSubjectList"></select><label for="minorSelect" id="minorSelectLabel">Minor:</label><input type="button" id="addMinorButton" value="Add Minor" />
+                        </div>
+                        <div id="certificateContainer">
+                            <h2>Applicable Certificates</h2>
+                            <ul id="certificateList">
+
+                            </ul>
+                            Subject: <select id="certificateSubjectList"></select><label for="certificateSelect" id="certificateSelectLabel">Certificate:</label><input type="button" id="addCertificateButton" value="Add Certificate" />
+                        </div>
+                        <div id="formContainer">
+                            <h2>Applicable Forms</h2>
+                            <ul id="formList">
+
+                            </ul>
+                            Subject: <select id="formSubjectList"></select><label for="formSelect" id="formSelectLabel">Form:</label><input type="button" id="addFormButton" value="Add Form" />
+                        </div>
+                        <br>
+                    </div>
+                    <input id="saveForm" type="submit" value="Save"></input>
+                    <input id="deleteForm" type="button" value="Delete Program"></input>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <img src="../routes/botlogo.png" width="245" height="80" alt="logo" class="center" />
+    </footer>
+</body>
+
 </html>

@@ -1,0 +1,133 @@
+html {height: 100%;}
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0
+}
+header {
+    background-color: #FF8202;
+    margin: 0px;
+    flex-shrink: 0;
+    padding: 0px;
+    height: 100px;
+}
+footer {
+    flex-shrink: 0;
+    width: 100%;
+    height: 100px;
+    background: #8B8C90;
+    border-top: solid;
+    border-color: #FF8202;
+    border-width: 5px;
+}
+.top{
+    position:absolute;
+}
+.marg{
+    flex: 1 auto;
+    flex-grow: 1;
+    background : url("bkg.jpg");
+    background-position:right bottom;
+    background-repeat: no-repeat;
+    margin-top:10px;
+    
+}
+
+#listContainer>li {
+	font-size: 25px;
+	font-weight: bold;
+}
+
+#subjectList>li {
+	font-size: 20px;
+	font-weight: bold;
+}
+
+li {
+	list-style: none;
+}
+
+.box{
+    font-size: 20px;
+    color: #58595B;
+    text-align: left;
+    width: 43%;
+    height: auto;
+   border-style: inset;
+	border-radius: 5px;
+	padding: 7px;
+    margin: 0px auto;
+
+}
+.center{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+input[type=text],
+input[type=number] {
+	height: 30px;
+    width: 80px;
+    padding: 4px 4px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font: verdana;
+    font-size: 20;
+}
+
+#certificateContainer, #formContainer, #minorContainer, #overridesContainer, #requiredClasses, #restrictedCatalogs, #applicableCatalogs, #popupform, #restrictedCatalog {
+	border-style: inset;
+	border-radius: 5px;
+	padding: 7px;
+}
+
+input[type=radio]{
+  height: 16px;
+  width: 16px;
+}
+
+.closeR{
+    text-align: right;
+    margin-left: 90%;
+}
+select {
+	height: 30px;
+    padding: 4px 4px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font: verdana;
+    font-size: 20;
+}
+
+input[type=button],input[type=submit], button{
+    -moz-box-shadow: inset 0px 39px 0px -24px #e67a73;
+    -webkit-box-shadow: inset 0px 39px 0px -24px #FF8202;
+    box-shadow: inset 0px 39px 0px -24px #FF8202;
+    background-color: #FF8202;
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    border-radius: 7px;
+    border: 2px solid #ffffff;
+    cursor: pointer;
+    color: #ffffff;
+    font-family: Arial;
+    font-size: 15px;
+    padding: 5px 10px;
+    text-decoration: none;
+    text-shadow: 0px 1px 0px #b23e35;
+    margin-left: auto;
+    margin-right: auto;
+}
