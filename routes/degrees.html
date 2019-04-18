@@ -33,7 +33,7 @@
     }
 
     function degreeHandler() {
-        console.log(this.response);
+        (this.response);
         var degreePrograms = JSON.parse(this.response);
         /* Iterate through Masters, PhD, etc and add to DOM as list item */
         for (var degreeLevel in degreePrograms) {
@@ -63,8 +63,8 @@
                 })));
 
                 var degreeOptions = $("<ul id='optionList'>");
-                console.log(degreePrograms[degreeLevel]);
-                console.log(degreePrograms[degreeLevel][degreeSubject]);
+                (degreePrograms[degreeLevel]);
+                (degreePrograms[degreeLevel][degreeSubject]);
                 for (var degreeOption in degreePrograms[degreeLevel][degreeSubject]) {
                     degreeOptions.append($("<li>", {
                         value: degreeOption

@@ -59,7 +59,7 @@
 				data: { idObjects: getCookie("programId") },
 				dataType: "json",
 				success: function(json) {
-					console.log(json);
+					(json);
 					requirementsHandler(json);
 				}
 			});
@@ -73,8 +73,8 @@
 				$("#courseList").detach();
 				$catalogs[$(this).val()].insertAfter("#catalogList");
 				// The last option is reserved for manual course entry. If it is the last option then display no hour information
-				console.log($(this));
-				console.log($("#catalogList option:last"));
+				($(this));
+				($("#catalogList option:last"));
 				if($(this).val() !== $("#catalogList option:last").val()) {
 					setCourseHours($("#courseList option:selected").val());
 				} else {
@@ -142,7 +142,7 @@
 				} else {
 					selectedCourse = parseInt(selectedCourse);
 				}
-				console.log(courseCatalog);
+				(courseCatalog);
 				var closeButton = $("<button/>", {
 					text: "X"
 				});
@@ -250,7 +250,7 @@
 		}
 		
 		function removeCourseEventHandler() {
-			console.log("Inside the remove course event handler");
+			("Inside the remove course event handler");
 			var $row = $(this).parent();
 			var courseId = $row.attr("id");
 			if(!isNaN(courseId)) {
@@ -259,7 +259,7 @@
 			selectedCourses = selectedCourses.filter(function(id) {
 				return id != courseId;
 			});
-			console.log("This is the hours on the page " + $row.find("#hours").text());
+			("This is the hours on the page " + $row.find("#hours").text());
 			courseObserver.broadcastRemoveEvent(courseId, $row.find("#hours").text());
 			$row.remove();
 		}
@@ -316,7 +316,7 @@
 		}
 		
 		function displayUserInfo() {
-			console.log("Cookie is " + getCookie("option"));
+			("Cookie is " + getCookie("option"));
 			$("#option").text(getCookie("option"));
 			$("#program").text(getCookie("program"));
 		}
@@ -369,7 +369,7 @@
 			$catalogs[name] = $courseList;
 
 			$courseList.change(function() {
-				console.log($(this).val());
+				($(this).val());
 				setCourseHours($(this).val());
 			});
 			catalogsLoaded++;
@@ -442,7 +442,7 @@
 		
 		function requirementsHandler(json) {
 			requirements = json;
-			console.log(json);
+			(json);
 			for(var i in requirements["Catalogs"]) {
 				loadCatalog(requirements["Catalogs"][i]);
 			}
@@ -455,7 +455,7 @@
 			for(var i in courseCatalog) {
 				requirements["Degree Program"].applicableCourses.push(parseInt(i));
 			}
-			console.log(requirements);
+			(requirements);
 			
 			var requiredList = $("#requiredCourses");
 			var requirement = new Requirements();
@@ -748,8 +748,8 @@
 			/* Load in the required courses and substitutable courses for the degree program. Start by looking at requiredCourses array */
 			for(var i in degreeObject.requiredCourses) {
 				
-				console.log(i);
-				console.log(courseCatalog[i]);
+				(i);
+				(courseCatalog[i]);
 				
 				/* For display purposes, add a string detailing the hour range for any course that is variable hours and append the item to the list */
 				if(degreeObject.courseOverride[i]) {
@@ -839,11 +839,11 @@
 				url: "../scripts/getAllCommitteeMembers.php",
 				dataType: "json",
 				success: function(json) {
-					console.log(json);
+					(json);
 					callback(json);
 				},
 				error: function(xhr, ajaxOptions, thrownError) {
-					console.log(thrownError);
+					(thrownError);
 					callback({});
 				}
 			});
@@ -865,7 +865,7 @@
 								value: members[index].subject,
 								text: members[index].subject
 							}));
-							console.log(members[index].id);
+							(members[index].id);
 						}
 						if(!addedCommitteeMembersBySubject[members[index].subject].includes(members[index].id)) {
 							addedCommitteeMembersBySubject[members[index].subject].push(members[index].id);

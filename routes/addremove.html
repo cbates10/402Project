@@ -24,10 +24,10 @@
         });
         $("#addCourse input[type='submit']").click(function(event) {
             event.preventDefault();
-            console.log($("#prefix option:selected").val());
-            console.log($("input[name='courseNumber']").val());
-            console.log($("input[name='courseName']").val());
-            console.log($("input[name='courseHours']").val());
+            ($("#prefix option:selected").val());
+            ($("input[name='courseNumber']").val());
+            ($("input[name='courseName']").val());
+            ($("input[name='courseHours']").val());
             $.ajax({
                 type: "POST",
                 url: "../scripts/addCourse.php",
@@ -136,7 +136,7 @@
                 data: data,
                 dataType: "html",
                 success: function(response) {
-                    console.log(response);
+                    (response);
                 }
             });
         })

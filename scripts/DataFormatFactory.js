@@ -11,7 +11,7 @@ class DataFormatFactory {
 				callback(json);
 			},
 			error: function(xhr, ajaxOptions, thrownError) {
-				console.log(thrownError);
+				(thrownError);
 				callback({});
 			}
 		});
@@ -45,7 +45,7 @@ class DataFormatFactory {
 		data[fieldPrefix + "CourseNumber" + counter] = courseEntry.number;
 		data[fieldPrefix + "CourseTitle" + counter] = courseEntry.name;
 		if(courseEntry.flags.length > 0) {
-			console.log(courseEntry.flags);
+			(courseEntry.flags);
 			for(var i = 0; i < courseEntry.flags.length; i++) {
 				if(!this.violatedRules.includes(courseEntry.flags[i])) {
 					this.violatedRules.push(courseEntry.flags[i]);
@@ -119,7 +119,7 @@ class DataFormatFactory {
 			var chairMembers = [];
 			var directorMembers = [];
 			for(var index in members) {
-				console.log(members[index].title);
+				(members[index].title);
 				if(members[index].title == "Director") {
 					directorMembers.push(members[index].firstName + " " + members[index].lastName);
 				} else if(members[index].title == "Chairperson") {
