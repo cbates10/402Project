@@ -31,6 +31,7 @@ const ruleFlags = {
 	NOCATALOG: "NoCatalog"
 }
 
+/* Used to map the letter grade values to their respective GPA values */
 const gpaMapping = {
 	A: 4.0,
 	AMINUS: 3.7,
@@ -46,6 +47,7 @@ const gpaMapping = {
 	F: 0.0
 }
 
+/* Returns the enum value for a grade based off the string value */
 function getGPA(letterGrade) {
 	switch(letterGrade) {
 		case "A":
@@ -75,6 +77,8 @@ function getGPA(letterGrade) {
 	}
 }
 
+/* This class handles all the requirements for a degree object. A degree program, minor, certificate, etc can be instantiated with this object and all
+the nuances for how degree programs requirements interact can be managed by this class.*/
 class Requirements {
 
 	constructor() {
@@ -96,16 +100,16 @@ class Requirements {
 		this.currentGpaTotal = 0;
 		this.gpaAction = null;
 		this.gradeOverrides = {};
-		this.lowHourOverrides = {};
+		this.lowHourOverrides = {}; // Keeps track of any specific overrides to a specific catalog course, keyed off the course id
 		this.lowHourOverrideAction = null;
 		this.highHourOverrides = {};
 		this.highHourOverrideAction = null;
-		this.requiredHours = 0;
-		this.currentHours = 0;
-		this.hoursAction = null;
-		this.hours400Min = null;
-		this.hours400MinAction = null;
-		this.hours400MinNotification = false;
+		this.requiredHours = 0; // Required total hours
+		this.currentHours = 0; 
+		this.hoursAction = null; // Action to be taken whenever a change in the number of hours applied to the requirement occurs
+		this.hours400Min = null; // Minimum hour number for 400 hours
+		this.hours400MinAction = null; // Action to take when the mininimum hour restriction has been fufilled
+		this.hours400MinNotification = false; // Used to know if a notification about breaking min restriction has been made
 		this.hours400MinType = hourType.FIXED; // Initialized to fixed by default
 		this.hours400Max = null;
 		this.hours400MaxAction = null;
@@ -678,10 +682,19 @@ class Requirements {
 		delete this.coursesTaken[course];
 		var beforeRemovalHours = this.currentHours;
 		this.currentHours -= hours;
+		if(this.hoursAction) {
+			this.hoursAction(this.currentHours);
+		}
 		this.hoursAction(this.currentHours);
+		// Calculate GPA, if there are no courses left, then set GPA as 0
 		this.currentGpaTotal -= getGPA(catalogEntry.grade);
 		if(this.gpaAction) {
-			var gpa = this.currentGpaTotal/Object.keys(this.coursesTaken).length;
+			var gpa;
+			if(Object.keys(this.coursesTaken).length > 0) {
+				gpa = this.currentGpaTotal/Object.keys(this.coursesTaken).length;
+			} else {
+				gpa = 0;
+			}
 			this.gpaAction(gpa, gpa < this.gpaRestriction);
 		}
 		if(this.requiredCourses[course] !== undefined) {
