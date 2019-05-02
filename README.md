@@ -19,6 +19,8 @@ The environment used throughout the development is as follows:
 Any PHP enabled webserver can be used to host the website; however, the proceeding environment setup will describe how the application was configured with XAMMP. Firstly, the MySQL server should be running and open to connections. A MySQL dump file can be found in the resources of this project. This dump file can be used to populate the database. The specification for what database the server uses can be found in *DatabaseInfo.php*. Install XAMMP and ensure PHP is enabled (the setup wizard enables PHP by default). The htdocs folder in XAMMP is where the repository should be placed. With the repository in htdocs the web application can simply be visited at localhost/402Project. 
 ### PDFtoolkit Server
 In order for the PDF form automatic population to function properly PDFtoolkit Server should be installed and added to the Path. 
+### Database connection
+The file *DatabaseInfo.php* specifies which database the application will use. Change the information in the file to point to the MySQL database.
 
 # Database 
 
